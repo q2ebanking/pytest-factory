@@ -17,9 +17,6 @@ def get_fixture_decorator(
     when the function loads, at which case we store all mock responses as HttpResponse objects for
     each path as a list in a dictionary indexed by path, then store that dictionary in the global
     mock response holder indexed by the function name.
-    During the test collection, the pytest_generate_tests pytest hook will check all the lists of responses
-    for each path/function combination, and if the length of the list is more than one it will parameterize
-    the fixture.
     In the inner_wrapper, which is executed when the test function runs and the fixture is loaded,
     we load the dictionary of associated responses for the given function into the global object, where th
     mock server will search for them.  After we run the test function, we clear all the function specific
@@ -70,7 +67,7 @@ def get_fixture_decorator(
 
         return pytest_func_with_fixture
 
-    def fixture_generator(callable_obj: Callable) -> Callable:
+    def fixture_decorator(callable_obj: Callable) -> Callable:
         if inspect.isclass(callable_obj):
             methods = inspect.getmembers(
                 callable_obj, predicate=lambda x: inspect.isfunction(x))  # pylint ignore: unnecessary-lambda
@@ -88,4 +85,4 @@ def get_fixture_decorator(
         else:
             return get_pytest_func_with_fixture(pytest_func=callable_obj)
 
-    return fixture_generator
+    return fixture_decorator
