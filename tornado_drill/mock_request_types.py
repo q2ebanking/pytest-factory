@@ -27,5 +27,8 @@ class BaseMockRequest(Hashable):
 
 
 class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
+    def __init__(self, path: Optional[str] = None, **kwargs):
+        super().__init__(uri=path, **kwargs)
+
     def __hash__(self) -> int:
         return id(str(vars(self)))

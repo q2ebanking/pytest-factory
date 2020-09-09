@@ -3,11 +3,11 @@ import functools
 import sys
 from typing import Callable
 
-from tornado_drill.mock_request import BaseMockRequest, MOCK_HTTP_RESPONSE
+from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
 from tornado_drill.framework.stores import STORES
 
 
-def get_fixture_decorator(
+def get_decorated_callable(
         req_obj: BaseMockRequest,
         response: MOCK_HTTP_RESPONSE = None,
         pre_test: Callable = None,
@@ -33,7 +33,7 @@ def get_fixture_decorator(
 
     # TODO generic logic for plugins goes here! set response = something
 
-    def get_pytest_func_with_fixture(pytest_func: Callable) -> Callable:
+    def pytest_func_wrapper(pytest_func: Callable) -> Callable:
         @functools.wraps(pytest_func)
         async def pytest_func_with_fixture(*args,
                                            **kwargs) -> MOCK_HTTP_RESPONSE:
@@ -63,11 +63,11 @@ def get_fixture_decorator(
 
         return pytest_func_with_fixture
 
-    def fixture_decorator(callable_obj: Callable) -> Callable:
+    def decorated_callable_wrapper(callable_obj: Callable) -> Callable:
         return decorate_family(callable=callable_obj,
-                               decorator=get_pytest_func_with_fixture)
+                               decorator=pytest_func_wrapper)
 
-    return fixture_decorator
+    return decorated_callable_wrapper
 
 
 def decorate_family(decorator: Callable, callable: Callable) -> Callable:

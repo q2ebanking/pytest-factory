@@ -1,7 +1,7 @@
 """
 non async unit tests
 """
-from tornado_drill.fixtures.http import MockHttpRequest
+from tornado_drill.mock_request_types import MockHttpRequest
 
 
 def test_mock_http_request_hash():

@@ -25,13 +25,15 @@ OVERRIDES_TYPE = Optional[Dict[str, Any]]
 # There can only be one in the end
 SETTINGS: SettingsType = None
 
+
 class Settings(SettingsType):
-    def __init__(self, default_request_handler_class: Optional[Callable],
-                 plugins: PLUGINS_TYPE = None,
+    def __init__(self,
+                 default_request_handler_class: Optional[Callable] = None,
+                 plugin_settings: PLUGINS_TYPE = None,
                  global_store: Optional[StoreType] = None,
                  handler_overrides: OVERRIDES_TYPE = None):
         self.default_request_handler_class = default_request_handler_class
-        self.plugins = plugins or []
+        self.plugin_settings = plugin_settings or []
         self.global_store = global_store or {}
         self.handler_overrides = handler_overrides or {}
         """
@@ -42,13 +44,13 @@ class Settings(SettingsType):
         :param handler_overrides:
         :returns:
         """
-        for plugin in self.plugins:
-            self.inherit(plugin.settings)
+        for settings in self.plugin_settings:
+            self.inherit(settings)
 
         global SETTINGS
         SETTINGS = self
 
-    def inherit(self, settings):
+    def inherit(self, settings: SettingsType):
         """
         take Settings from higher in hierarchy and merge them with this
         Settings, with the lower Settings values clobbering the higher.
@@ -59,10 +61,9 @@ class Settings(SettingsType):
         for k, v in vars(settings).items():
             if not hasattr(self, k):
                 setattr(self, k, v)
-            elif k != 'plugins':
+            elif k == 'plugin_settings':
+                for plugin_settings in v:
+                    self.inherit(plugin_settings)
+            elif isinstance(v, dict) and isinstance(getattr(self, k), dict):
                 attribute = getattr(self, k)
-                assert isinstance(
-                    attribute, dict), f'Project settings.py error - attribute {k} is not a dict!'
-                assert isinstance(
-                    v, dict), f'Plugin {settings.__qualname__} settings.py error - attribute {k} is not a dict!'
                 attribute = {**v, **attribute}

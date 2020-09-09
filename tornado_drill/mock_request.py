@@ -9,15 +9,15 @@
 from functools import wraps
 from typing import Callable, Optional
 
-from tornado import Application
+from tornado.web import Application
 
 from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
 from tornado_drill.framework.stores import STORES
-from tornado_drill.framework.wrapper import decorate_family
+from tornado_drill.framework.helpers import decorate_family
 
 
-def run_test(self):
+async def run_test(self):
     """
     this method will be bound to the RequestHandler and provides a way to
     advance the state of the RequestHandler while returning the response to the
@@ -44,7 +44,8 @@ def mock_request(handler_class: Optional[Callable] = None,
     req_obj = req_obj or MockHttpRequest(**kwargs)
 
     handler_class = handler_class or SETTINGS.default_request_handler_class
-    assert handler_class, 'could not load class of RequestHandler being tested!'
+    assert handler_class, \
+        'could not load class of RequestHandler being tested!'
     handler = handler_class(Application(), req_obj, **kwargs)
 
     handler_overrides = {**{'run_test': run_test},
