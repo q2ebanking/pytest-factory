@@ -1,7 +1,7 @@
-from typing import Hashable, Optional, Union
-from requests import Response
-
 from tornado.httputil import HTTPServerRequest
+from typing import Hashable, Optional, Union
+from enum import Enum
+from requests import Response
 
 MOCK_HTTP_RESPONSE = Optional[Union[str, Response]]
 

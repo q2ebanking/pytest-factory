@@ -10,6 +10,9 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE,  # TODO this should be an arr
 # changing response over time
 # and also find a way to track this! like a "fixtures_never_called" report
 # attached to each test case using a pytest hook
+# add timeout simulator?
+# also add a switch for additional modes where:
+# all requests route to this response - for easy happy path testing
                      req_obj: Optional[MockHttpRequest] = None,
                      **kwargs) -> Callable:
     """
