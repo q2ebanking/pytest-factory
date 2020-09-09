@@ -12,10 +12,17 @@ settings.py
 test_x.py
 - tests are being read and decorators executed
 
-request_handler.py or 
+mock_request.py
+- instantiates request object
+- applies overrides
+- updates store with request object
+- iterates over test methods if decorator applies to class
+
+http/mock_http_server.py
+-
 
 wrapper.py
-- registers
+- updates store with mock response
 
 store.py
 - initialized from settings when first imported

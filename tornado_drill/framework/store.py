@@ -1,27 +1,22 @@
 import pytest
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from tornado_drill.fixtures.base import BaseMockRequest, MOCK_HTTP_RESPONSE
-from tornado_drill.settings import Settings
+from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
+from tornado_drill.framework.settings import SETTINGS, StoreType
 
 
-class Store:
+STORES = None
+
+
+class Store(StoreType):
     """
     stores fixtures for a given async test method
     """
 
-    def __init__(self, settings: Settings):
-        self.fixtures_by_test: Dict[str, List[BaseMockRequest]] = {}
-
-        if settings:
-            self.load(settings)
-
-    def load(settings: Settings):
-        """
-        TODO make this load self.fixtures_by_test with '*' as test_qualname
-        so that the test wrapper will attach settings fixtures as fallback if
-        no test class or function defines anything more specific
-        """
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            if v is not None:
+                setattr(self, k, v)
 
     def update(self, test_qualname: str, fixture_name: str,
                req_obj: BaseMockRequest,
@@ -42,16 +37,22 @@ class Store:
                 fixture_def[req_obj] = response
 
 
-# used to store mock request definitions as the test hierarchy is traversed
-global STORE
-STORE = Store()
+class Stores:
+    def __init__(self, default_store: Optional[Store] = None):
+        """
+        initialized with fixtures from SETTINGS mapped to a wildcard test name
+        '*' so that they will apply to all test functions unless otherwise
+        specified.
+        """
+        self.by_test: Dict[str, Store] = {}
+        if SETTINGS.default_fixtures:
+            self.by_test['*'] = default_store
 
+        global STORES
+        STORES = self
 
-@pytest.fixture(scope='function')
-def mocks(request):
-    """
-    fixture container, just used as marker, pytest_generate_tests will set appropriate values based
-    on decorators.
-    :return:
-    """
-    pass
+    def get_store(self, test_name: str):
+        store = self.by_test.get(test_name)
+        if not store:
+            self.by_test[test_name] = store = self.by_test.get('*') or Store()
+        return store

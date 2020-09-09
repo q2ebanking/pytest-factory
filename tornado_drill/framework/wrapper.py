@@ -3,8 +3,8 @@ import functools
 import sys
 from typing import Callable
 
-from tornado_drill.fixtures.base import BaseMockRequest
-from tornado_drill.fixtures.http import MOCK_HTTP_RESPONSE
+from tornado_drill.mock_request import BaseMockRequest, MOCK_HTTP_RESPONSE
+from tornado_drill.framework.stores import STORES
 
 
 def get_fixture_decorator(
@@ -38,51 +38,53 @@ def get_fixture_decorator(
         async def pytest_func_with_fixture(*args,
                                            **kwargs) -> MOCK_HTTP_RESPONSE:
             post_test_args = None
-            try:
-                mocks_arg = kwargs.get('fixtures')
-                assert mocks_arg is not None, 'Missing mocks arg for fixture: {}'.format(
-                    fixture_name)
+            test_name = pytest_func.__qualname__
+            store = STORES.get_store(test_name)
 
-                # Callable is a function, meaning the fixture is defined on a function
-                fixture_holder = None
-                if hasattr(mocks_arg, fixture_name):
-                    fixture_holder = getattr(mocks_arg, fixture_name)
+            fixture_holder = None
+            if hasattr(store, fixture_name):
+                fixture_holder = getattr(store, fixture_name)
+            else:
+                fixture_holder = {}
+                setattr(store, fixture_name, fixture_holder)
+
+            fixture_holder[req_obj] = response
+
+            post_test_args = pre_test() if pre_test else ()
+            kwargs['store'] = store
+            resp = await pytest_func(*args, **kwargs)
+            return resp
+
+            if post_test:
+                if isinstance(post_test_args, tuple):
+                    post_test(*post_test_args)
                 else:
-                    fixture_holder = {}
-                    setattr(mocks_arg, fixture_name, fixture_holder)
-
-                fixture_holder[req_obj] = response
-
-                post_test_args = pre_test() if pre_test else ()
-
-                resp = await pytest_func(*args, **kwargs)
-                return resp
-
-            finally:
-                if post_test:
-                    if isinstance(post_test_args, tuple):
-                        post_test(*post_test_args)
-                    else:
-                        post_test(post_test_args)
+                    post_test(post_test_args)
 
         return pytest_func_with_fixture
 
     def fixture_decorator(callable_obj: Callable) -> Callable:
-        if inspect.isclass(callable_obj):
-            methods = inspect.getmembers(
-                callable_obj, predicate=lambda x: inspect.isfunction(x))  # pylint ignore: unnecessary-lambda
-            if methods is None:
-                return callable_obj
-
-            for name, method in methods:
-                # If fixture is defined at the class level, need to loop through
-                # and add them to each function in the class, so they will be processed
-                # correctly
-                setattr(callable_obj, name,
-                        get_pytest_func_with_fixture(pytest_func=method))
-
-            return callable_obj
-        else:
-            return get_pytest_func_with_fixture(pytest_func=callable_obj)
+        return decorate_family(callable=callable_obj,
+                               decorator=get_pytest_func_with_fixture)
 
     return fixture_decorator
+
+
+def decorate_family(decorator: Callable, callable: Callable) -> Callable:
+    """
+    if callable is a class, this method will iterate and apply the decorator to
+    all children.
+    if a child is itself a class, this method will recurse
+
+    :param decorator: the function that will return the decorated test function
+    :param callable: the class or function or method on which the decorator
+    is defined
+    """
+    if inspect.isclass(callable):
+        for member in inspect.getmembers(callable):
+            decorate_family(member)
+        return callable
+    elif inspect.isfunction(callable):
+        return decorator(pytest_func=callable)
+    else:
+        raise Exception('should not happen!')
