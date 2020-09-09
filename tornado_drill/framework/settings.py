@@ -25,7 +25,6 @@ OVERRIDES_TYPE = Optional[Dict[str, Any]]
 # There can only be one in the end
 SETTINGS: SettingsType = None
 
-
 class Settings(SettingsType):
     def __init__(self, default_request_handler_class: Optional[Callable],
                  plugins: PLUGINS_TYPE = None,

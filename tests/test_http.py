@@ -16,10 +16,12 @@ async def test_function():
     pass
 
 
-@mock_server()
+@mock_server(path='mock_endpoint', response='yup')
 class TestInheritance:
+    @mock_request()
     class TestOverride:
+        @mock_server(path='mock_endpoint', response='nope')
         @mock_request()
-        async def test_a(self, handler, fixtures):
+        async def test_a(self, handler, store):
             resp = await handler.run_test()
-            fixtures
+            store.mock_server

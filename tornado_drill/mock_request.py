@@ -11,10 +11,25 @@ from typing import Callable, Optional
 
 from tornado import Application
 
-from tornado_drill.fixtures.http import MockHttpRequest
+from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
-from tornado_drill.framework.stores import STORES, Store
+from tornado_drill.framework.stores import STORES
 from tornado_drill.framework.wrapper import decorate_family
+
+
+def run_test(self):
+    """
+    this method will be bound to the RequestHandler and provides a way to
+    advance the state of the RequestHandler while returning the response to the
+    test method for assertions
+    """
+    method = self.request.method.lower()
+    assert hasattr(self, method)
+    await getattr(self, method)()
+
+    # TODO maybe reconstitute this as a Response object?
+    if self._write_buffer:
+        return self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
 
 
 def mock_request(handler_class: Optional[Callable] = None,
@@ -27,10 +42,15 @@ def mock_request(handler_class: Optional[Callable] = None,
     :return: returns modified test function or class
     """
     req_obj = req_obj or MockHttpRequest(**kwargs)
-    handler = handler_class(Application(), req_obj, **kwargs)
 
     handler_class = handler_class or SETTINGS.default_request_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
+    handler = handler_class(Application(), req_obj, **kwargs)
+
+    handler_overrides = {**{'run_test': run_test},
+                         **SETTINGS.handler_overrides}
+    for attribute, override in handler_overrides.items():
+        setattr(handler, attribute, override)
 
     def func_wrapper(pytest_func: Callable) -> Callable:
         @wraps(pytest_func)
