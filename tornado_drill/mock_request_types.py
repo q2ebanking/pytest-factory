@@ -1,4 +1,9 @@
-from typing import Hashable
+from typing import Hashable, Optional, Union
+from requests import Response
+
+from tornado.httputil import HTTPServerRequest
+
+MOCK_HTTP_RESPONSE = Optional[Union[str, Response]]
 
 
 class BaseMockRequest(Hashable):
@@ -19,3 +24,8 @@ class BaseMockRequest(Hashable):
         "https://www.test.com?loc=1&id=0"
         """
         raise NotImplementedError
+
+
+class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
+    def __hash__(self) -> int:
+        return id(str(vars(self)))
