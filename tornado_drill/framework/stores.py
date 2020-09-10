@@ -19,7 +19,7 @@ class Store(StoreType):
 
     def update(self, test_qualname: str, fixture_name: str,
                req_obj: BaseMockRequest,
-               response=MOCK_HTTP_RESPONSE):
+               response: MOCK_HTTP_RESPONSE):
         test_fixtures = self.fixtures_by_test.get(test_qualname)
         if not test_fixtures:
             new_fixture = {

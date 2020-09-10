@@ -64,7 +64,7 @@ def monkey_patch_requests(monkeypatch, request) -> None:
                 raise mock_response
             else:
                 assert False, 'should not happen'
-            return response  # TODO if simulating timeout we would respond with None
+            return response
 
         return generic_caller
 
