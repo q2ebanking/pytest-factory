@@ -2,8 +2,12 @@
 settings for entire project including which plugins are needed
 '''
 
-from tests.mock_plugin.settings import plugin_settings
+from tests.mock_plugin.settings import SETTINGS as plugin_settings
 from tornado_drill.framework.settings import Settings
+from tests.app import MainHandler
 
 
-Settings(plugin_settings=[plugin_settings])
+SETTINGS = Settings(
+    default_request_handler_class=MainHandler,
+    plugin_settings=[plugin_settings]
+)

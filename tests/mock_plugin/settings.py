@@ -5,5 +5,5 @@ this is where you integrate plugin code
 '''
 from tornado_drill.framework.settings import Settings
 
-
-plugin_settings = Settings()
+# we're not actually doing anything here but normally you'd add parameters to Settings
+SETTINGS = Settings()

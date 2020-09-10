@@ -22,8 +22,6 @@ class StoreType:
 PLUGINS_TYPE = Optional[List[SettingsType]]
 OVERRIDES_TYPE = Optional[Dict[str, Any]]
 
-# There can only be one in the end
-
 
 class Settings(SettingsType):
     def __init__(self,
@@ -46,16 +44,27 @@ class Settings(SettingsType):
         for settings in self.plugin_settings:
             self.inherit(settings)
 
-        global SETTINGS
-        SETTINGS = self
+    def load(self, settings: SettingsType):
+        """
+        take Settings from lower in hierarchy and merge them into the global settings
+
+        in practice this means that the merged project and plugin hierarchy settings
+        will override tornado-drill defaults
+        :param settings:
+        :return:
+        """
+        for attribute, value in vars(settings).items():
+            setattr(self, attribute, value)
+
 
     def inherit(self, settings: SettingsType):
         """
         take Settings from higher in hierarchy and merge them with this
         Settings, with the lower Settings values clobbering the higher.
 
-        in practice this means that settings at the project level will override
-        settings at the plugin level which will override tornado-drill defaults
+        in practice this means that settings at the project level (of which there
+        can ONLY be one) will override settings at the plugin level, of which
+        there can be MORE than one
         """
         for k, v in vars(settings).items():
             if not hasattr(self, k):
@@ -67,4 +76,6 @@ class Settings(SettingsType):
                 attribute = getattr(self, k)
                 setattr(self, k, {**v, **attribute})
 
-SETTINGS: SettingsType = Settings()
+
+
+SETTINGS = Settings()

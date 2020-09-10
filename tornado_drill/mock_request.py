@@ -48,7 +48,7 @@ def mock_request(handler_class: Optional[Callable] = None,
         'could not load class of RequestHandler being tested!'
     handler = handler_class(Application(), req_obj, **kwargs)
 
-    handler_overrides = {**{'run_test': run_test},
+    handler_overrides = {**{'run_test': run_test},  # we have to bury this here unfortunately to avoid circular imports
                          **SETTINGS.handler_overrides}
     for attribute, override in handler_overrides.items():
         setattr(handler, attribute, override)
