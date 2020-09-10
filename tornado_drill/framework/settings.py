@@ -23,24 +23,23 @@ PLUGINS_TYPE = Optional[List[SettingsType]]
 OVERRIDES_TYPE = Optional[Dict[str, Any]]
 
 # There can only be one in the end
-SETTINGS: SettingsType = None
 
 
 class Settings(SettingsType):
     def __init__(self,
                  default_request_handler_class: Optional[Callable] = None,
                  plugin_settings: PLUGINS_TYPE = None,
-                 global_store: Optional[StoreType] = None,
+                 default_store: Optional[StoreType] = None,
                  handler_overrides: OVERRIDES_TYPE = None):
         self.default_request_handler_class = default_request_handler_class
         self.plugin_settings = plugin_settings or []
-        self.global_store = global_store or {}
+        self.default_store = default_store or {}
         self.handler_overrides = handler_overrides or {}
         """
 
         :param default_request_handler_class:
         :param plugins:
-        :param global_store:
+        :param default_store:
         :param handler_overrides:
         :returns:
         """
@@ -66,4 +65,6 @@ class Settings(SettingsType):
                     self.inherit(plugin_settings)
             elif isinstance(v, dict) and isinstance(getattr(self, k), dict):
                 attribute = getattr(self, k)
-                attribute = {**v, **attribute}
+                setattr(self, k, {**v, **attribute})
+
+SETTINGS: SettingsType = Settings()

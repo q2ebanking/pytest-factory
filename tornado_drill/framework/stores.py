@@ -1,9 +1,8 @@
 import pytest
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
-from tornado_drill.framework.settings import SETTINGS, StoreType
-
+from tornado_drill.framework.settings import StoreType
 
 STORES = None
 
@@ -45,7 +44,7 @@ class Stores:
         specified.
         """
         self.by_test: Dict[str, Store] = {}
-        if SETTINGS.default_fixtures:
+        if default_store:
             self.by_test['*'] = default_store
 
         global STORES
@@ -56,3 +55,15 @@ class Stores:
         if not store:
             self.by_test[test_name] = store = self.by_test.get('*') or Store()
         return store
+
+
+@pytest.fixture(scope='function')
+def store(request):
+    """
+    fixture store
+    :return:
+    """
+    test_name = request.node.name
+    global STORES
+    store = STORES.get_store(test_name=test_name)
+    return store

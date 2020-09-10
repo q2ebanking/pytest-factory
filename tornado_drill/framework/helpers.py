@@ -37,11 +37,9 @@ def get_decorated_callable(
         @functools.wraps(pytest_func)
         async def pytest_func_with_fixture(*args,
                                            **kwargs) -> MOCK_HTTP_RESPONSE:
-            post_test_args = None
             test_name = pytest_func.__qualname__
             store = STORES.get_store(test_name)
 
-            fixture_holder = None
             if hasattr(store, fixture_name):
                 fixture_holder = getattr(store, fixture_name)
             else:
@@ -53,13 +51,13 @@ def get_decorated_callable(
             post_test_args = pre_test() if pre_test else ()
             kwargs['store'] = store
             resp = await pytest_func(*args, **kwargs)
-            return resp
 
             if post_test:
                 if isinstance(post_test_args, tuple):
                     post_test(*post_test_args)
                 else:
                     post_test(post_test_args)
+            return resp
 
         return pytest_func_with_fixture
 
