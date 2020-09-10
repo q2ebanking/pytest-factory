@@ -19,12 +19,12 @@ async def test_function(handler, store):
     assert resp == 'Hello, world'
 
 
-@mock_http_server(path='mock_endpoint', response='yup')
+@mock_http_server(path='http://www.test.com/mock_endpoint', response='yup')
 @mock_request(method='put')
 class TestInheritance:
     @mock_request(method='post')
     class TestOverride:
-        @mock_http_server(path='mock_endpoint', response='nope')
+        @mock_http_server(path='http://www.test.com/mock_endpoint', response='nope')
         @mock_request()
         async def test_a(self, handler, store):
             resp = await handler.run_test()

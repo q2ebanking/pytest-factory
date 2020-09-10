@@ -10,7 +10,7 @@ class MainHandler(RequestHandler):
             self.write("Hello, world")
         else:
             resp = requests.get(url='http://www.test.com/mock_endpoint')
-            self.write(resp)
+            self.write(resp.content)
 
 
 

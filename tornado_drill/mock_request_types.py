@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from typing import Hashable, Optional, Union
 from enum import Enum
 from requests import Response
@@ -42,11 +43,18 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
     def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
         super().__init__(method=method, uri=path, **kwargs)
 
-        # TODO make this more fake later but this dumb trick will work if a user doesn't look too closely in the
-        #  debugger
+        # TODO make this more fake later but this trick will work if a user doesn't look too closely in the debugger
         self.connection = lambda: None
         setattr(self.connection, 'set_close_callback', lambda _: None)
 
     def __hash__(self) -> int:
-        # TODO don't forget to apply basic sorting on anything stored as a dict!
-        return id(str(vars(self)))
+        HASHING_ATTRIBUTES = ('query_arguments', 'body_arguments', 'method', 'protocol', 'host')
+        url_parts = urlparse(self.uri)
+        hashable_dict = {
+            'headers': self.headers._dict,
+            'path': url_parts.path
+        }
+        for attribute in HASHING_ATTRIBUTES:
+            hashable_dict[attribute] = getattr(self, attribute)
+
+        return id(str(hashable_dict))
