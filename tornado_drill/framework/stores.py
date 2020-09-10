@@ -69,7 +69,7 @@ def store(request):
     fixture store
     :return:
     """
-    test_name = get_unique_test_name(request)
+    test_name = request.node.name
     global STORES
     store = STORES.get_store(test_name=test_name)
     return store

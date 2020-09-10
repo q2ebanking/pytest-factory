@@ -15,7 +15,7 @@ from tornado_drill.mock_request_types import MockHttpRequest, HTTP_METHODS
 
 @pytest.fixture(scope='function', autouse=True)
 def monkey_patch_requests(monkeypatch, request) -> None:
-    test_name = request.module.__name__ + '.' + request.node.name
+    test_name = request.node.name
 
     def get_generic_caller(method_name: str) -> Callable:
         def generic_caller(*args, **kwargs) -> requests.Response:

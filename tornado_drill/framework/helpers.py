@@ -7,14 +7,6 @@ from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
 from tornado_drill.framework.stores import STORES
 
 
-# look away!!!
-def find_unique_test_name(frame, func_name: str) -> str:
-    names = str(frame.f_locals['args'][0]).split(' ')[0][1:].split('.')
-    unique_names = [name for name in names if name[:4] != 'Test']
-    full_test_name = '.'.join([*unique_names, func_name])
-    return full_test_name
-
-
 def get_decorated_callable(
         req_obj: BaseMockRequest,
         response: MOCK_HTTP_RESPONSE = None,
@@ -43,8 +35,7 @@ def get_decorated_callable(
         @functools.wraps(pytest_func)
         async def pytest_func_with_fixture(*args,
                                            **kwargs) -> MOCK_HTTP_RESPONSE:
-            frame = inspect.currentframe()
-            test_name = find_unique_test_name(frame, func_name=pytest_func.__name__)
+            test_name = pytest_func.__name__
             store = STORES.get_store(test_name)
 
             if hasattr(store, fixture_name):

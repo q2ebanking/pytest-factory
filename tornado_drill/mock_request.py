@@ -66,7 +66,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     def func_wrapper(pytest_func: Callable) -> Callable:
         @wraps(pytest_func)
         async def pytest_func_with_handler(*args, **kwargs) -> None:
-            test_name = pytest_func.__qualname__
+            test_name = pytest_func.__name__
             kwargs['handler'] = handler
             if not kwargs.get('store'):
                 kwargs['store'] = STORES.get_store(test_name)
