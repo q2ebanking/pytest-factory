@@ -3,7 +3,7 @@ from tornado.web import RequestHandler, Application
 
 
 class MainHandler(RequestHandler):
-    def get(self):
+    async def get(self):
         self.write("Hello, world")
 
 

@@ -26,4 +26,4 @@ class TestInheritance:
         @mock_request()
         async def test_a(self, handler, store):
             resp = await handler.run_test()
-            store.mock_server
+            assert resp == 'Hello, world'

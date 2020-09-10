@@ -7,6 +7,7 @@
 - return RequestHandler to the Store which will pass it to the test function
 """
 import pytest
+import inspect
 from functools import wraps
 from typing import Callable, Optional
 
@@ -14,6 +15,7 @@ from tornado.web import Application
 
 from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
+from tornado_drill.framework.stores import STORES
 from tornado_drill.framework.helpers import decorate_family
 
 
@@ -23,9 +25,11 @@ async def run_test(self):
     advance the state of the RequestHandler while returning the response to the
     test method for assertions
     """
-    method = self.request.method.lower()
-    assert hasattr(self, method)
-    await getattr(self, method)()
+    method_name = self.request.method.lower()
+    assert hasattr(self, method_name)
+    result = getattr(self, method_name)()
+    if inspect.isawaitable(result):
+        await result
 
     # TODO maybe reconstitute this as a Response object?
     if self._write_buffer:
@@ -46,20 +50,27 @@ def mock_request(handler_class: Optional[Callable] = None,
     handler_class = handler_class or SETTINGS.default_request_handler_class
     assert handler_class, \
         'could not load class of RequestHandler being tested!'
-    handler = handler_class(Application(), req_obj)
 
     handler_overrides = {**{'run_test': run_test},  # we have to bury this here unfortunately to avoid circular imports
                          **SETTINGS.handler_overrides}  # but this line will guarantee that plugins can still override it
+
     for attribute, override in handler_overrides.items():
-        setattr(handler, attribute, override)
+        if isinstance(override, Callable):  # setting methods on the class because otherwise they don't get 'self'
+            setattr(handler_class, attribute, override)
+
+    handler = handler_class(Application(), req_obj)
+
+    for attribute, override in handler_overrides.items():
+        if not isinstance(override, Callable):  # setting other properties on the object
+            setattr(handler, attribute, override)
 
     def func_wrapper(pytest_func: Callable) -> Callable:
         @wraps(pytest_func)
         async def pytest_func_with_handler(*args, **kwargs) -> None:
             test_name = pytest_func.__qualname__
-            store = STORES.get_store(test_name)
             kwargs['handler'] = handler
-            kwargs['store'] = store
+            if not kwargs.get('store'):
+                kwargs['store'] = STORES.get_store(test_name)
             return await pytest_func(*args, **kwargs)
 
         return pytest_func_with_handler

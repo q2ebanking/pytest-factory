@@ -48,6 +48,5 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
         setattr(self.connection, 'set_close_callback', lambda _: None)
 
     def __hash__(self) -> int:
-        # todo: need to see in testing if HTTPServerRequest behaves or if we
-        # need a more explicit hashing
-        return str(vars(self))
+        # TODO don't forget to apply basic sorting on anything stored as a dict!
+        return id(str(vars(self)))
