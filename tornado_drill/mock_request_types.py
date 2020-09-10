@@ -49,11 +49,13 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
 
     def __hash__(self) -> int:
         HASHING_ATTRIBUTES = ('query_arguments', 'body_arguments', 'method', 'protocol', 'host')
+
         url_parts = urlparse(self.uri)
         hashable_dict = {
-            'headers': self.headers._dict,
             'path': url_parts.path
         }
+        if self.headers:
+            hashable_dict['headers'] = self.headers if isinstance(self.headers, dict) else self.headers._dict
         for attribute in HASHING_ATTRIBUTES:
             hashable_dict[attribute] = getattr(self, attribute)
 

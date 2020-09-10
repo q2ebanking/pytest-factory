@@ -29,10 +29,6 @@ class Settings(SettingsType):
                  plugin_settings: PLUGINS_TYPE = None,
                  default_store: Optional[StoreType] = None,
                  handler_overrides: OVERRIDES_TYPE = None):
-        self.default_request_handler_class = default_request_handler_class
-        self.plugin_settings = plugin_settings or []
-        self.default_store = default_store or {}
-        self.handler_overrides = handler_overrides or {}
         """
 
         :param default_request_handler_class:
@@ -41,6 +37,10 @@ class Settings(SettingsType):
         :param handler_overrides:
         :returns:
         """
+        self.default_request_handler_class = default_request_handler_class
+        self.plugin_settings = plugin_settings or []
+        self.default_store = default_store or {}
+        self.handler_overrides = handler_overrides or {}
         for settings in self.plugin_settings:
             self.inherit(settings)
 
@@ -55,7 +55,6 @@ class Settings(SettingsType):
         """
         for attribute, value in vars(settings).items():
             setattr(self, attribute, value)
-
 
     def inherit(self, settings: SettingsType):
         """
@@ -75,7 +74,6 @@ class Settings(SettingsType):
             elif isinstance(v, dict) and isinstance(getattr(self, k), dict):
                 attribute = getattr(self, k)
                 setattr(self, k, {**v, **attribute})
-
 
 
 SETTINGS = Settings()

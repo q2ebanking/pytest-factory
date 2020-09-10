@@ -48,8 +48,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     req_obj = req_obj or MockHttpRequest(**kwargs)
 
     handler_class = handler_class or SETTINGS.default_request_handler_class
-    assert handler_class, \
-        'could not load class of RequestHandler being tested!'
+    assert handler_class, 'could not load class of RequestHandler being tested!'
 
     handler_overrides = {**{'run_test': run_test},  # we have to bury this here unfortunately to avoid circular imports
                          **SETTINGS.handler_overrides}  # but this line will guarantee that plugins can still override it

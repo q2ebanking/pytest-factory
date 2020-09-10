@@ -19,9 +19,10 @@ from tornado_drill.mock_request import *  # this is to activate the fixture defi
 
 def pytest_configure(config: Config) -> None:
     try:
-        local_settings = importlib.import_module('settings').SETTINGS
+        local_settings = importlib.import_module('tests.settings').SETTINGS
         SETTINGS.load(local_settings)
     except Exception as _:
-        # no local settings
+        print('TORNADO-DRILL WARNING: could not find settings.py in the expected location: <cwd>/tests/settings.py')
+        print('TORNADO-DRILL WARNING: will proceed but will fail if @mock_request decorators do not define RequestHandler classes')
         pass
     STORES.load(default_store=SETTINGS.default_store)

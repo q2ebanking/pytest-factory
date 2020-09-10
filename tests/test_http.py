@@ -29,3 +29,7 @@ class TestInheritance:
         async def test_a(self, handler, store):
             resp = await handler.run_test()
             assert resp == 'nope'
+
+        async def test_b(self, handler, store):
+            resp = await handler.run_test()
+            assert resp == 'yup'
