@@ -13,6 +13,7 @@ from _pytest.config import Config
 
 from tornado_drill.framework.settings import SETTINGS
 from tornado_drill.framework.stores import *  # this is to activate the fixture defined here.
+from tornado_drill.framework.requests import *
 from tornado_drill.mock_request import *  # this is to activate the fixture defined here.
 
 

@@ -1,10 +1,17 @@
+import requests
+
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application
 
 
 class MainHandler(RequestHandler):
     async def get(self):
-        self.write("Hello, world")
+        if self.request.path == 'solo':
+            self.write("Hello, world")
+        else:
+            resp = requests.get(url='http://www.test.com/mock_endpoint')
+            self.write(resp)
+
 
 
 def make_app():

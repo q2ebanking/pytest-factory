@@ -13,8 +13,10 @@ from tornado_drill.mock_request import mock_request
 pytestmark = pytest.mark.asyncio
 
 
-async def test_function():
-    pass
+@mock_request(path='solo')
+async def test_function(handler, store):
+    resp = await handler.run_test()
+    assert resp == 'Hello, world'
 
 
 @mock_http_server(path='mock_endpoint', response='yup')
@@ -26,4 +28,4 @@ class TestInheritance:
         @mock_request()
         async def test_a(self, handler, store):
             resp = await handler.run_test()
-            assert resp == 'Hello, world'
+            assert resp == 'nope'

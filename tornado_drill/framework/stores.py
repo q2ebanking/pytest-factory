@@ -55,7 +55,13 @@ class Stores:
             self.by_test[test_name] = store = self.by_test.get('*') or Store()
         return store
 
+
 STORES = Stores()
+
+
+def get_unique_test_name(request) -> str:
+    return request.module.__name__ + '.' + request.node.name
+
 
 @pytest.fixture(scope='function')
 def store(request):
@@ -63,7 +69,7 @@ def store(request):
     fixture store
     :return:
     """
-    test_name = request.node.name
+    test_name = get_unique_test_name(request)
     global STORES
     store = STORES.get_store(test_name=test_name)
     return store
