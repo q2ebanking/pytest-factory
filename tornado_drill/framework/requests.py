@@ -41,18 +41,13 @@ def monkey_patch_requests(monkeypatch, request) -> None:
                 mock_http_request_kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
 
             if kwargs.get('body'):
-                # TODO convert to bytes?
+                # TODO check if str and convert to bytes?
                 mock_http_request_kwargs['body'] = kwargs.get('body')
 
-            # TODO need to translate other requests params into params for MockHttpRequest
             req_obj = MockHttpRequest(**mock_http_request_kwargs)
+            mock_response = STORES.get_next_response(test_name=test_name, fixture_name='mock_http_server',
+                                                     req_obj=req_obj)
 
-            store = STORES.get_store(test_name=test_name)
-            fixture = store.mock_http_server  # TODO this is not getting loaded implicitly - see helpers.py?
-            mock_response = fixture.get('*')
-            for k, v in fixture.items():
-                if k.__hash__() == req_obj.__hash__():
-                    mock_response = v
             response = requests.Response()
             if not mock_response:
                 response.status_code = 404

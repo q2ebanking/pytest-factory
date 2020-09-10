@@ -21,6 +21,7 @@ async def test_function(handler, store):
 
 @mock_http_server(path='http://www.test.com/mock_endpoint', response='yup')
 class TestInheritance:
+    @mock_request()
     class TestOverride:
         @mock_http_server(path='http://www.test.com/mock_endpoint', response='nope')
         @mock_request()
@@ -28,7 +29,6 @@ class TestInheritance:
             resp = await handler.run_test()
             assert resp == 'nope'
 
-        @mock_request()
         async def test_b(self, handler, store):
             resp = await handler.run_test()
             assert resp == 'yup'

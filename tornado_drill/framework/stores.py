@@ -1,5 +1,5 @@
 import pytest
-from typing import Dict, Optional
+from typing import Dict, Any
 
 from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
 from tornado_drill.framework.settings import StoreType
@@ -17,25 +17,6 @@ class Store(StoreType):
             if v is not None:
                 setattr(self, k, v)
 
-    def update(self, test_qualname: str, fixture_name: str,
-               req_obj: BaseMockRequest,
-               response: MOCK_HTTP_RESPONSE):
-        test_fixtures = self.fixtures_by_test.get(test_qualname)
-        if not test_fixtures:
-            new_fixture = {
-                fixture_name: {
-                    req_obj: response
-                }
-            }
-            self.fixtures_by_test[test_qualname] = new_fixture
-        else:
-            fixture_def = test_fixtures.get(fixture_name)
-            if not fixture_def:
-                test_fixtures[fixture_name] = {req_obj: response}
-            else:
-                fixture_def[req_obj] = response
-
-
 class Stores:
     def __init__(self):
         self.by_test: Dict[str, Store] = {}
@@ -49,11 +30,54 @@ class Stores:
         if default_store:
             self.by_test['*'] = default_store
 
-    def get_store(self, test_name: str):
+    def update(self, test_name: str, fixture_name: str,
+               req_obj: BaseMockRequest,
+               response: MOCK_HTTP_RESPONSE):
+        # this is how we keep track of which fixtures have been used
+        response = (False, response)
+        responses = [response] if not isinstance(response, list) else response
+
+        test_fixtures = self.get_store(test_name)
+        if not test_fixtures:
+            self.by_test[test_name] = Store(**{
+                fixture_name: {
+                    req_obj: responses
+                }
+            })
+        else:
+            if not hasattr(test_fixtures, fixture_name):
+                setattr(test_fixtures, fixture_name, {req_obj: responses})
+            else:
+                fixture_dict = getattr(test_fixtures, fixture_name)
+                for k, v in fixture_dict.items():
+                    if k.__hash__() != req_obj.__hash__():
+                        fixture_dict[k] = responses
+                        break
+
+    def get_store(self, test_name: str) -> Store:
         store = self.by_test.get(test_name)
         if not store:
-            self.by_test[test_name] = store = self.by_test.get('*') or Store()
+            store = Store()
+            self.by_test[test_name] = store
         return store
+
+    def get_next_response(self, test_name: str, fixture_name: str, req_obj: BaseMockRequest) -> Any:
+        store = self.get_store(test_name=test_name)
+        assert hasattr(store, fixture_name)
+        fixture = getattr(store, fixture_name)  # TODO this is not getting loaded implicitly - see helpers.py?
+        mock_responses = fixture.get('*')
+        for k, v in fixture.items():
+            if k.__hash__() == req_obj.__hash__():
+                mock_responses = v
+
+        for index, (called, response) in enumerate(mock_responses):
+            if called:
+                continue
+            else:
+                mock_responses[index] = (True, response)
+                return response
+
+        return None
 
 
 STORES = Stores()
@@ -72,4 +96,5 @@ def store(request):
     test_name = request.node.name
     global STORES
     store = STORES.get_store(test_name=test_name)
+    assert store, 'TORNADO-DRILL ERROR: you broke something. probably in helpers.py'
     return store

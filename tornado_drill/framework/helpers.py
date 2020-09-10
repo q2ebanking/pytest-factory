@@ -32,21 +32,15 @@ def get_decorated_callable(
     fixture_name = sys._getframe(1).f_code.co_name
 
     def pytest_func_wrapper(pytest_func: Callable) -> Callable:
+        test_name = pytest_func.__name__
+        STORES.update(test_name=test_name, fixture_name=fixture_name, req_obj=req_obj, response=response)
+        new_store = STORES.get_store(test_name=test_name)
+
         @functools.wraps(pytest_func)
         async def pytest_func_with_fixture(*args, **kwargs):
-            test_name = pytest_func.__name__
-            store = STORES.get_store(test_name)
-
-            if hasattr(store, fixture_name):
-                fixture_holder = getattr(store, fixture_name)
-            else:
-                fixture_holder = {}
-                setattr(store, fixture_name, fixture_holder)
-
-            fixture_holder[req_obj] = response
-
+            kwargs['store'] = new_store
             post_test_args = pre_test() if pre_test else ()
-            kwargs['store'] = store
+
             await pytest_func(*args, **kwargs)
 
             if post_test:
