@@ -1,9 +1,21 @@
-from tornado.httputil import HTTPServerRequest
 from typing import Hashable, Optional, Union
 from enum import Enum
 from requests import Response
 
+from tornado.httputil import HTTPServerRequest
+
 MOCK_HTTP_RESPONSE = Optional[Union[str, Response]]
+
+
+# based on what the requests module supports
+class HTTP_METHODS(Enum):
+    GET = 'get'
+    DELETE = 'delete'
+    PUT = 'put'
+    POST = 'post'
+    PATCH = 'patch'
+    HEAD = 'head'
+    OPTIONS = 'options'
 
 
 class BaseMockRequest(Hashable):
@@ -27,8 +39,13 @@ class BaseMockRequest(Hashable):
 
 
 class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
-    def __init__(self, path: Optional[str] = None, **kwargs):
-        super().__init__(uri=path, **kwargs)
+    def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
+        super().__init__(method=method, uri=path, **kwargs)
+
+        # TODO make this more fake later but this dumb trick will work if a user doesn't look too closely in the
+        #  debugger
+        self.connection = lambda: None
+        setattr(self.connection, 'set_close_callback', lambda _: None)
 
     def __hash__(self) -> int:
         # todo: need to see in testing if HTTPServerRequest behaves or if we

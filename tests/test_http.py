@@ -7,7 +7,8 @@
 '''
 import pytest
 
-from tornado_drill import mock_http_server, mock_request
+from tornado_drill.http import mock_http_server
+from tornado_drill.mock_request import mock_request
 
 pytestmark = pytest.mark.asyncio
 
@@ -17,8 +18,9 @@ async def test_function():
 
 
 @mock_http_server(path='mock_endpoint', response='yup')
+@mock_request(method='put')
 class TestInheritance:
-    @mock_request()
+    @mock_request(method='post')
     class TestOverride:
         @mock_http_server(path='mock_endpoint', response='nope')
         @mock_request()

@@ -8,18 +8,7 @@ import pytest
 from enum import Enum
 
 from tornado_drill.framework.stores import STORES
-from tornado_drill.mock_request_types import MockHttpRequest
-
-
-# based on what the requests module supports
-class HTTP_METHODS(Enum):
-    GET = 'get'
-    DELETE = 'delete'
-    PUT = 'put'
-    POST = 'post'
-    PATCH = 'patch'
-    HEAD = 'head'
-    OPTIONS = 'options'
+from tornado_drill.mock_request_types import MockHttpRequest, HTTP_METHODS
 
 
 @pytest.fixture(scope='function', autouse=True)

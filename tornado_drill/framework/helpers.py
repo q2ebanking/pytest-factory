@@ -79,10 +79,10 @@ def decorate_family(decorator: Callable, callable: Callable) -> Callable:
     is defined
     """
     if inspect.isclass(callable):
-        for member in inspect.getmembers(callable):
-            decorate_family(member)
+        for _, member in inspect.getmembers(callable):
+            if inspect.isfunction(member) or inspect.isclass(member) and member.__name__[:4] == 'Test':
+                decorate_family(decorator=decorator, callable=member)
+
         return callable
     elif inspect.isfunction(callable):
         return decorator(pytest_func=callable)
-    else:
-        raise Exception('should not happen!')

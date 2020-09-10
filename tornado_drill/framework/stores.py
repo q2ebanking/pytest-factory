@@ -37,18 +37,17 @@ class Store(StoreType):
 
 
 class Stores:
-    def __init__(self, default_store: Optional[Store] = None):
+    def __init__(self):
+        self.by_test: Dict[str, Store] = {}
+
+    def load(self, default_store: Store):
         """
-        initialized with fixtures from SETTINGS mapped to a wildcard test name
+        load with fixtures from SETTINGS mapped to a wildcard test name
         '*' so that they will apply to all test functions unless otherwise
         specified.
         """
-        self.by_test: Dict[str, Store] = {}
         if default_store:
             self.by_test['*'] = default_store
-
-        global STORES
-        STORES = self
 
     def get_store(self, test_name: str):
         store = self.by_test.get(test_name)
@@ -56,6 +55,7 @@ class Stores:
             self.by_test[test_name] = store = self.by_test.get('*') or Store()
         return store
 
+STORES = Stores()
 
 @pytest.fixture(scope='function')
 def store(request):

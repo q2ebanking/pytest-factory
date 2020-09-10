@@ -6,6 +6,7 @@
 - attach run_test to RequestHandler
 - return RequestHandler to the Store which will pass it to the test function
 """
+import pytest
 from functools import wraps
 from typing import Callable, Optional
 
@@ -13,7 +14,6 @@ from tornado.web import Application
 
 from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
-from tornado_drill.framework.stores import STORES
 from tornado_drill.framework.helpers import decorate_family
 
 
@@ -46,10 +46,10 @@ def mock_request(handler_class: Optional[Callable] = None,
     handler_class = handler_class or SETTINGS.default_request_handler_class
     assert handler_class, \
         'could not load class of RequestHandler being tested!'
-    handler = handler_class(Application(), req_obj, **kwargs)
+    handler = handler_class(Application(), req_obj)
 
     handler_overrides = {**{'run_test': run_test},  # we have to bury this here unfortunately to avoid circular imports
-                         **SETTINGS.handler_overrides}
+                         **SETTINGS.handler_overrides}  # but this line will guarantee that plugins can still override it
     for attribute, override in handler_overrides.items():
         setattr(handler, attribute, override)
 
@@ -68,3 +68,14 @@ def mock_request(handler_class: Optional[Callable] = None,
         return decorate_family(callable=callable_obj, decorator=func_wrapper)
 
     return callable_wrapper
+
+
+@pytest.fixture(scope='function')
+def handler(request):
+    """
+    handler fixture
+
+    this gets overridden later with the actual handler but we are defining it here so pytest picks it up
+    :return:
+    """
+    pass
