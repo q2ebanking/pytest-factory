@@ -48,7 +48,7 @@ def monkey_patch_requests(monkeypatch, request) -> None:
             req_obj = MockHttpRequest(**mock_http_request_kwargs)
 
             store = STORES.get_store(test_name=test_name)
-            fixture = store.mock_http_server
+            fixture = store.mock_http_server  # TODO this is not getting loaded implicitly - see helpers.py?
             mock_response = fixture.get('*')
             for k, v in fixture.items():
                 if k.__hash__() == req_obj.__hash__():

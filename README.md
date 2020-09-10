@@ -9,6 +9,13 @@ plugin architecture for custom request/response types. originally developed
 within Q2 to unit test complex microservices that make multiple intranet and
 internet calls.
 
+## conventions
+there are countless ways to use this tool, but there are some conventions that
+will make code changes minimal and reasonable.
+- test function names should be unique across the project
+    - otherwise it becomes simply too complicated to keep track of test identities
+- 
+
 ## contributing
 please look at the unit tests to get an idea of what needs to be done! or if
 you think there needs to be a feature, add unit tests! how do you unit test
