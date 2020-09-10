@@ -31,4 +31,6 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
         super().__init__(uri=path, **kwargs)
 
     def __hash__(self) -> int:
-        return id(str(vars(self)))
+        # todo: need to see in testing if HTTPServerRequest behaves or if we
+        # need a more explicit hashing
+        return str(vars(self))
