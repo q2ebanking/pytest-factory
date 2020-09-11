@@ -47,6 +47,13 @@ class TestHttp:
         def teardown_method(self, method):
             """
             this is ugly but it's what you get when you write tests for a test framework
+
+            be aware that if AssertionError gets raised here the debugger will likely jump context to a method called
+            f"{test_func}_teardown" that does not exist after the pytest.Session ends.
+
+            for PyCharm this means, when attempting to debug just the method from within the dedicated "Debug" tile,
+            it will try to execute and debug the "_teardown" method which no longer exists, and PyTest will claim
+            it could not find any tests to collect.
             :param method:
             :return:
             """
