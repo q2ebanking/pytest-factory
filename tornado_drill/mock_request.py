@@ -1,10 +1,13 @@
 """
-- access settings to load RequestHandler class and defaults
-- generate the MockHttpRequest
-- instantiate the RequestHandler to be tested
-- load RequestHandler with the generated request
-- attach run_test to RequestHandler
-- return RequestHandler to the Store which will pass it to the test function
+contains fixture decorator @mock_request used to create the request to be passed to RequestHandler
+before test execution.
+
+also definitions for methods to be bound to RequestHandler that can be used to wrap execution of RequestHandler methods
+for testing purposes. this module comes with run_test() but plugins can define many more with the handler_overrides
+parameter.
+
+finally, this contains the pytest fixture definition. make sure this file is imported by pytest.py so the framework
+can pick this up, or you will not have the fixture available in tests!
 """
 import pytest
 import inspect
@@ -64,12 +67,14 @@ def mock_request(handler_class: Optional[Callable] = None,
             setattr(handler, attribute, override)
 
     def func_wrapper(pytest_func: Callable) -> Callable:
+        store = STORES.get_store(test_name=pytest_func.__name__)
+        store.handler = handler
+
         @wraps(pytest_func)
         async def pytest_func_with_handler(*args, **kwargs) -> None:
-            test_name = pytest_func.__name__
+            kwargs['store'] = store
             kwargs['handler'] = handler
-            if not kwargs.get('store'):
-                kwargs['store'] = STORES.get_store(test_name)
+
             return await pytest_func(*args, **kwargs)
 
         return pytest_func_with_handler
@@ -85,7 +90,10 @@ def handler(request):
     """
     handler fixture
 
-    this gets overridden later with the actual handler but we are defining it here so pytest picks it up
+    sets up handlers for test methods that have not received it yet because they lacked explicit @mock_request
+    and so pytest_func_with_handler never gets called for those methods
+    otherwise this method gets overridden to be the handler when pytest_func_with_handler is invoked
     :return:
     """
-    pass
+    store = STORES.get_store(request.node.name)
+    return store.handler
