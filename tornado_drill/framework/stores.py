@@ -1,4 +1,5 @@
 import pytest
+import sys
 from typing import Dict, Any, Optional
 
 from tornado.web import RequestHandler
@@ -16,13 +17,36 @@ class Store(StoreType):
 
     def __init__(self, **kwargs):
         self.handler: Optional[RequestHandler] = None
+        self.assert_no_extra_calls: bool = True
         for k, v in kwargs.items():
             if v is not None:
                 setattr(self, k, v)
 
+    def check_no_uncalled_fixtures(self, raise_assertion_error: bool = False):
+        test_name = sys._getframe(2).f_code.co_name
+        uncalled_fixtures = {}
+        if len(vars(self)) > 1:  # a Store will always at least have handler but we only care if it has other fixtures
+
+            props = {k: v for k, v in vars(self).items() if isinstance(v, dict)}
+            for fixture, response_dict in props.items():
+                uncalled_fixture_endpoints = {}
+                for key, responses in response_dict.items():
+                    uncalled_responses = [resp[1] for resp in responses if not resp[0]]
+                    if uncalled_responses:
+                        uncalled_fixture_endpoints[key] = uncalled_responses
+                if uncalled_fixture_endpoints:
+                    uncalled_fixtures[fixture] = uncalled_fixture_endpoints
+        if uncalled_fixtures:
+            msg = f'{test_name} failed to call the following fixtures: {uncalled_fixtures}!'
+            if raise_assertion_error:
+                LOGGER.error(msg)
+                raise AssertionError(msg)
+            else:
+                LOGGER.warning(msg, 'if this is not expected, consider this a test failure!')
+
     def reset(self):
         for fixture_name, fixture in vars(self).items():
-            if fixture_name != 'handler':
+            if fixture_name not in ['handler', 'assert_no_extra_calls']:
                 for req, responses in fixture.items():
                     reset_responses = [(False, response_tuple[1]) for response_tuple in responses]
                     fixture[req] = reset_responses
@@ -94,29 +118,14 @@ class Stores:
 
         if mock_responses:
             last_response = mock_responses[-1][1]
-            LOGGER.warning(
-                f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}',
-                f'will repeat last response: {last_response}')
+            msg = f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}'
+            if store.assert_no_extra_calls:
+                LOGGER.error(msg)  # TODO do we need these?
+                raise AssertionError(msg)
+            else:
+                LOGGER.warning(msg, f'will repeat last response: {last_response}')
             return last_response
         return None
-
-    def get_uncalled_fixtures(self, test_name: str) -> dict:
-        store = self.get_store(test_name=test_name)
-        uncalled_fixtures = {}
-        if len(vars(
-                store)) > 1:  # a Store will always at least have handler but we only care if it has other fixtures
-
-            props = {k: v for k, v in vars(store).items() if v != store.handler}
-            for fixture, response_dict in props.items():
-                uncalled_fixture_endpoints = {}
-                for key, responses in response_dict.items():
-                    uncalled_responses = [resp[1] for resp in responses if not resp[0]]
-                    if uncalled_responses:
-                        uncalled_fixture_endpoints[key] = uncalled_responses
-                if uncalled_fixture_endpoints:
-                    uncalled_fixtures[fixture] = uncalled_fixture_endpoints
-        return uncalled_fixtures
-
 
 STORES = Stores()
 
@@ -134,5 +143,5 @@ def store(request):
     test_name = request.node.name
     global STORES
     store = STORES.get_store(test_name=test_name)
-    assert store, 'TORNADO-DRILL ERROR: you broke something. probably in helpers.py'
+    assert store, 'TORNADO-DRILL ERROR: you broke something. probably in helpers.py or in this module'
     return store
