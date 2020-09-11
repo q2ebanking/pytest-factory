@@ -3,7 +3,6 @@ non async unit tests
 """
 from tornado_drill.mock_request_types import MockHttpRequest
 
-
 def test_mock_http_request_hash():
     mhr0 = MockHttpRequest(path='abcd/fdsa?a=0&b=true')
     mhr1 = MockHttpRequest(path='abcd/fdsa?a=0&b=true', headers={'a': 'b'})

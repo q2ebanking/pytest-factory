@@ -1,7 +1,7 @@
 import pytest
 
 from tornado_drill.http import mock_http_server
-from tornado_drill.mock_request import mock_request
+from tornado_drill import mock_request
 from tornado_drill.framework.pytest import LOGGER
 
 pytestmark = pytest.mark.asyncio
@@ -17,6 +17,12 @@ class TestHttp:
 
     @mock_http_server(path='http://www.test.com/*', response='wild')
     async def test_http_wildcard_path(self, handler, store):
+        """
+        TODO this might just be stupid hard
+        :param handler:
+        :param store:
+        :return:
+        """
         resp = await handler.run_test()
         assert resp == 'wild'
 
