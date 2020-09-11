@@ -51,15 +51,15 @@ class TestHttp:
             be aware that if AssertionError gets raised here the debugger will likely jump context to a method called
             f"{test_func}_teardown" that does not exist after the pytest.Session ends.
 
-            for PyCharm this means, when attempting to debug just the method from within the dedicated "Debug" tile,
+            for PyCharm this means when attempting to debug just the method from within the dedicated "Debug" tile,
             it will try to execute and debug the "_teardown" method which no longer exists, and PyTest will claim
-            it could not find any tests to collect.
+            it could not find any tests to collect. manually select the actual test method and execute debug instead.
             :param method:
             :return:
             """
             if method == self.test_http_no_calls_warning:
                 assert LOGGER.buffer[-1] == '''
-TORNADO-DRILL WARNING: test_http_no_calls_warning failed to call the following fixtures: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
+TORNADO-DRILL WARNING: the following fixtures have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
 TORNADO-DRILL WARNING: if this is not expected, consider this a test failure!'''
             elif method == self.test_http_extra_call_warning:
                 assert LOGGER.buffer[-1] == '''

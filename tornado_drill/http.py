@@ -1,17 +1,17 @@
-from typing import Union, Dict, Optional, Callable
+from typing import Optional, Callable
 from tornado_drill.framework.helpers import get_decorated_callable
 from tornado_drill.mock_request_types import MockHttpRequest, \
     MOCK_HTTP_RESPONSE
-
-OPT_STR_DICT = Optional[Union[str, Dict[str, str]]]
 
 
 def mock_http_server(response: MOCK_HTTP_RESPONSE,
                      req_obj: Optional[MockHttpRequest] = None,
                      **kwargs) -> Callable:
     """
-    # TODO implement full wildcarding!
-    # TODO load from swagger, WSDL, etc.
+    TODO implement full wildcarding!
+    TODO load from swagger, WSDL, etc.
+
+    TODO document method fully
 
     :param response: can be single response or list of responses (for changing responses to consecutive calls to same
     endpoint) where response is of type:
