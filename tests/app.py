@@ -11,7 +11,9 @@ class MainHandler(RequestHandler):
         elif self.request.path == 'something':
             self.write("yay")
         else:
-            resp = requests.get(url='http://www.test.com/mock_endpoint')
+            num = int(self.get_query_argument(name='num', default='1'))
+            for _ in range(num):
+                resp = requests.get(url='http://www.test.com/mock_endpoint')
             self.write(resp.content)
 
 

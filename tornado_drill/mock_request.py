@@ -14,20 +14,25 @@ import inspect
 from functools import wraps
 from typing import Callable, Optional
 
-from tornado.web import Application
+from tornado.web import Application, RequestHandler
 
 from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
-from tornado_drill.framework.stores import STORES
+from tornado_drill.framework.stores import STORES, Store
 from tornado_drill.framework.helpers import decorate_family
 
 
-async def run_test(self):
+async def run_test(self, store: Optional[Store] = None):
     """
-    this method will be bound to the RequestHandler and provides a way to
-    advance the state of the RequestHandler while returning the response to the
+    this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
+    and provides a way to advance the state of the RequestHandler while returning the response to the
     test method for assertions
+
+    :param store: if provided, will assert that everything in the Store was called exactly as many times as there are
+    fixture responses. if not provided, will
+    :return:
     """
+
     method_name = self.request.method.lower()
     assert hasattr(self, method_name)
     result = getattr(self, method_name)()

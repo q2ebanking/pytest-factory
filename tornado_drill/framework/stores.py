@@ -1,11 +1,10 @@
 import pytest
-from warnings import warn
 from typing import Dict, Any, Optional
 
 from tornado.web import RequestHandler
 
 from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
-from tornado_drill.framework.settings import StoreType
+from tornado_drill.framework.settings import StoreType, LOGGER
 
 STORES = None
 
@@ -27,8 +26,6 @@ class Store(StoreType):
                 for req, responses in fixture.items():
                     reset_responses = [(False, response_tuple[1]) for response_tuple in responses]
                     fixture[req] = reset_responses
-
-
 
 
 class Stores:
@@ -96,7 +93,11 @@ class Stores:
                 return response
 
         if mock_responses:
-            warn(f'TORNADO-DRILL WARNING: UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}')
+            last_response = mock_responses[-1][1]
+            LOGGER.warning(
+                f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}',
+                f'will repeat last response: {last_response}')
+            return last_response
         return None
 
     def get_uncalled_fixtures(self, test_name: str) -> dict:

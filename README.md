@@ -17,11 +17,12 @@ will make code changes minimal and reasonable.
 - 
 
 ## contributing
-please look at the unit tests to get an idea of what needs to be done! or if
-you think there needs to be a feature, add unit tests! how do you unit test
-a test framework? by writing a test using the feature as if it exists, updating
-the fake app.py to exhibit the behavior your want to the new feature to test,
-then running pytest. write code wherever it throws errors.
+please look at the unit tests (either failing or missing cases) to get an idea
+of what needs to be done! or if you think there needs to be a feature, add unit
+tests! 
+how do you unit test a test framework? by writing a test using the feature as
+if it exists, updating the fake app.py to exhibit the behavior your want to the
+new feature to test, then running pytest. write code wherever it throws errors.
 
 there are also TODOs scattered throughout the code where additional work could
 yield a new feature.
