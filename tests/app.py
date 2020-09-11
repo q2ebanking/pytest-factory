@@ -15,7 +15,6 @@ class MainHandler(RequestHandler):
             self.write(resp.content)
 
 
-
 def make_app():
     return Application([
         (r"/", MainHandler),

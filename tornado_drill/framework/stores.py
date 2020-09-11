@@ -1,4 +1,5 @@
 import pytest
+from warnings import warn
 from typing import Dict, Any, Optional
 
 from tornado.web import RequestHandler
@@ -20,10 +21,22 @@ class Store(StoreType):
             if v is not None:
                 setattr(self, k, v)
 
+    def reset(self):
+        for fixture_name, fixture in vars(self).items():
+            if fixture_name != 'handler':
+                for req, responses in fixture.items():
+                    reset_responses = [(False, response_tuple[1]) for response_tuple in responses]
+                    fixture[req] = reset_responses
+
+
+
 
 class Stores:
     def __init__(self):
         self.by_test: Dict[str, Store] = {}
+
+    def reset(self, test_name: str):
+        self.get_store(test_name=test_name).reset()
 
     def load(self, default_store: Store):
         """
@@ -73,6 +86,7 @@ class Stores:
         for k, v in fixture.items():
             if k.__hash__() == req_obj.__hash__():
                 mock_responses = v
+                break
 
         for index, (called, response) in enumerate(mock_responses):
             if called:
@@ -81,6 +95,8 @@ class Stores:
                 mock_responses[index] = (True, response)
                 return response
 
+        if mock_responses:
+            warn(f'TORNADO-DRILL WARNING: UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}')
         return None
 
     def get_uncalled_fixtures(self, test_name: str) -> dict:

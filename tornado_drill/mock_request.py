@@ -18,7 +18,7 @@ from tornado.web import Application
 
 from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
-from tornado_drill.framework.stores import STORES, Store
+from tornado_drill.framework.stores import STORES
 from tornado_drill.framework.helpers import decorate_family
 
 
