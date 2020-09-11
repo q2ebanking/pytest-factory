@@ -14,24 +14,30 @@ import inspect
 from functools import wraps
 from typing import Callable, Optional
 
-from tornado.web import Application, RequestHandler
+from tornado.web import Application
 
 from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
-from tornado_drill.framework.stores import STORES, Store
+from tornado_drill.framework.stores import STORES
 from tornado_drill.framework.helpers import decorate_family
 
 
-async def run_test(self, store: Optional[Store] = None):
+async def run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_calls: bool = True):
     """
     this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
     and provides a way to advance the state of the RequestHandler while returning the response to the
     test method for assertions
 
-    :param store: if provided, will assert that everything in the Store was called exactly as many times as there are
-    fixture responses. if not provided, will
+    :param assert_no_missing_calls: if set to True, will raise AssertionError if handler calls
+    a fixture less times than it has responses; will no longer issue warning via LOGGER
+    :param assert_no_extra_calls: if set to False, will no longer raise AssertionError if handler calls
+    a fixture more times than it has responses; will issue warnings instead via LOGGER
     :return:
     """
+
+    store = self._pytest_store
+    if assert_no_extra_calls is False:
+        store.assert_no_extra_calls = assert_no_extra_calls
 
     method_name = self.request.method.lower()
     assert hasattr(self, method_name)
@@ -39,9 +45,13 @@ async def run_test(self, store: Optional[Store] = None):
     if inspect.isawaitable(result):
         await result
 
+    store.check_no_uncalled_fixtures(raise_assertion_error=assert_no_missing_calls)
+
     # TODO maybe reconstitute this as a Response object?
     if self._write_buffer:
         return self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
+
+    store.reset()
 
 
 def mock_request(handler_class: Optional[Callable] = None,
@@ -74,6 +84,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     def func_wrapper(pytest_func: Callable) -> Callable:
         store = STORES.get_store(test_name=pytest_func.__name__)
         store.handler = handler
+        handler._pytest_store = store
 
         @wraps(pytest_func)
         async def pytest_func_with_handler(*args, **kwargs) -> None:

@@ -21,8 +21,11 @@ class Logger(logging.Logger):
         super().__init__(name='tornado-drill-logger')
         self.buffer = []
 
-    def warning(self, *msgs: List[str]):
-        msg = ''.join([f'\nTORNADO-DRILL WARNING: {msg}' for msg in msgs])
+    def format(self, msgs) -> str:
+        return ''.join([f'\nTORNADO-DRILL WARNING: {msg}' for msg in msgs])
+
+    def warning(self, *msgs):
+        msg = self.format(msgs)
         super().warning(msg=msg)
         self.buffer.append(msg)
 
