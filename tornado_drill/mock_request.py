@@ -112,19 +112,3 @@ def mock_request(handler_class: Optional[Callable] = None,
         return apply_func_recursive(callable=callable_obj, func=register_test_func)
 
     return callable_wrapper
-
-
-@pytest.fixture(scope='function')
-def handler(request):
-    """
-    handler fixture
-
-    sets up handlers for test methods that have not received it yet because they lacked explicit @mock_request
-    and so pytest_func_with_handler never gets called for those methods
-    otherwise this method gets overridden to be the handler when pytest_func_with_handler is invoked
-    :return:
-    """
-    store = STORES.get_store(request.node.name)
-    if store.handler is None:
-        raise Exception
-    return store.handler

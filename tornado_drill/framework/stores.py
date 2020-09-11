@@ -168,16 +168,3 @@ class Stores:
 
 
 STORES = Stores()
-
-
-@pytest.fixture(scope='function')
-def store(request):
-    """
-    fixture store - this is where the test-specific store gets assigned to the test function
-    :return:
-    """
-    test_name = request.node.name
-    global STORES
-    store = STORES.get_store(test_name=test_name)
-    assert store, 'TORNADO-DRILL ERROR: you broke something. probably in helpers.py or in this module'
-    return store
