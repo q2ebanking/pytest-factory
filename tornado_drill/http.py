@@ -7,11 +7,12 @@ OPT_STR_DICT = Optional[Union[str, Dict[str, str]]]
 
 
 def mock_http_server(response: MOCK_HTTP_RESPONSE,
-# TODO find a way to track this! like a "fixtures_never_called" report attached to each test case using a pytest hook
-# TODO implement full wildcarding!
                      req_obj: Optional[MockHttpRequest] = None,
                      **kwargs) -> Callable:
     """
+    # TODO implement full wildcarding!
+    # TODO load from swagger, WSDL, etc.
+
     :param response: can be single response or list of responses (for changing responses to consecutive calls to same
     endpoint) where response is of type:
     - str: will get returned as requests.Response where the response string is the body

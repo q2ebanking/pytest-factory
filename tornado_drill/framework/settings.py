@@ -2,13 +2,32 @@
 when creating plugins, a plugin-level settings.py is where most of the custom
 code should be integrated.
 
+# TODO separate the parts that can be loaded from a file
+# configuration =/= code
+
 at the user project test level there can be another settings.py for project-
 global configurations. this means there can be two levels of settings defined
 by settings.py files. these are loaded and flattened when this file is read,
 with the project-level overriding. the fixtures defined at that point are then
 further extended and overridden by class and function-level fixture decorators.
 """
+import logging
 from typing import Optional, Callable, Any, Dict, List
+
+
+# this is to make assertions that the framework is logging warnings when we should
+class Logger(logging.Logger):
+    def __init__(self):
+        super().__init__(name='tornado-drill-logger')
+        self.buffer = []
+
+    def warning(self, *msgs: List[str]):
+        msg = ''.join([f'\nTORNADO-DRILL WARNING: {msg}' for msg in msgs])
+        super().warning(msg=msg)
+        self.buffer.append(msg)
+
+
+LOGGER = Logger()
 
 
 class SettingsType:
