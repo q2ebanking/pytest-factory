@@ -68,6 +68,8 @@ def mock_request(handler_class: Optional[Callable] = None,
 
     def func_wrapper(pytest_func: Callable) -> Callable:
         store = STORES.get_store(test_name=pytest_func.__name__)
+        store.handler = handler
+
         @wraps(pytest_func)
         async def pytest_func_with_handler(*args, **kwargs) -> None:
             kwargs['store'] = store
@@ -88,7 +90,10 @@ def handler(request):
     """
     handler fixture
 
-    this gets overridden later with the actual handler but we are defining it here so pytest picks it up
+    sets up handlers for test methods that have not received it yet because they lacked explicit @mock_request
+    and so pytest_func_with_handler never gets called for those methods
+    otherwise this method gets overridden to be the handler when pytest_func_with_handler is invoked
     :return:
     """
-    pass
+    store = STORES.get_store(request.node.name)
+    return store.handler

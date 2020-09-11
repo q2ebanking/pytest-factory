@@ -24,11 +24,17 @@ class TestInheritance:
     @mock_request()
     class TestOverride:
         @mock_http_server(path='http://www.test.com/mock_endpoint', response='nope')
-        @mock_request()
-        async def test_a(self, handler, store):
+        async def test_http_func_override(self, handler, store):
             resp = await handler.run_test()
             assert resp == 'nope'
 
-        async def test_b(self, handler, store):
+        async def test_http_inherit_handler(self, handler, store):
             resp = await handler.run_test()
             assert resp == 'yup'
+
+        @mock_request(path='something')
+        async def test_http_explicit_handler_no_calls_warning(self, handler, store, recwarn):
+            resp = await handler.run_test()
+            assert resp == 'yay'
+            # TODO find a way to test this programmatically, but during teardown of this test we SHOULD see warnings
+            # pop up about the mock_http_server never getting hit!
