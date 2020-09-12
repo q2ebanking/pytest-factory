@@ -23,5 +23,5 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE,
     :return: the test class or function being decorated
     """
     expected_request = req_obj or MockHttpRequest(**kwargs)
-    assert expected_request, 'failed to load MockHttpRequest object!'
+    assert expected_request, 'failed to load MockHttpRequest object!'  # todo make test for this
     return get_decorated_callable(req_obj=expected_request, response=response)

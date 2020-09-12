@@ -51,8 +51,6 @@ async def run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_
     if self._write_buffer:
         return self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
 
-    store.reset()
-
 
 def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest) -> RequestHandler:
     handler_class = handler_class or SETTINGS.default_request_handler_class
