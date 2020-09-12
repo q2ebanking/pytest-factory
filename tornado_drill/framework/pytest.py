@@ -1,8 +1,9 @@
 """
 pytest integration hooks
 
-the  following functions are predefined hooks in pytest that we need to
-either cancel out or modify
+the following functions are predefined pytest hooks or pytest fixture definitions to integrate with tornado drill
+
+please keep most fixture-specific logic out of this file
 
 referenced in conftest.py defined in user's project
 
@@ -35,7 +36,7 @@ def pytest_configure(config: Config) -> None:
 # TODO add pytest_collection_finish hook to detect duplicate test names and throw warning
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def store(request):
     """
     fixture store - this is where the test-specific store gets assigned to the test function
@@ -47,7 +48,7 @@ def store(request):
     return store
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def handler(request):
     """
     handler fixture
@@ -63,7 +64,7 @@ def handler(request):
     return store.handler
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(autouse=True)
 def monkey_patch_requests(monkeypatch, request) -> None:
     test_name = request.node.name
 

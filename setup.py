@@ -5,17 +5,17 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tornado-drill",
-    version="0.0.1",
-    author="Peter Kong",
+    version="0.1.0",
+    author="Q2 Software",
     author_email="bansuki@gmail.com",
     description="PyTest for Tornado",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pypa/sampleproject",
+    url="https://github.com/ludocracy/tornado_drill",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        # "License :: OSI Approved :: MIT License",  # TODO
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',

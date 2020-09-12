@@ -48,13 +48,6 @@ class Store(StoreType):
             else:
                 LOGGER.warning(msg, 'if this is not expected, consider this a test failure!')
 
-    def reset(self):
-        for fixture_name, fixture in vars(self).items():
-            if fixture_name not in ['handler', 'assert_no_extra_calls']:
-                for req, responses in fixture.items():
-                    reset_responses = [(False, response_tuple[1]) for response_tuple in responses]
-                    fixture[req] = reset_responses
-
 
 class Stores:
     """

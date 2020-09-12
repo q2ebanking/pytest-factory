@@ -44,6 +44,12 @@ class TestHttp:
             resp = await handler.run_test(assert_no_extra_calls=False)
             assert resp == 'yupyup'
 
+        async def test_http_call_same_endpoint_diff_test(self, handler, store):
+            """
+            """
+            resp = await handler.run_test()
+            assert resp == 'yup'
+
         def teardown_method(self, method):
             """
             this is ugly but it's what you get when you write tests for a test framework
