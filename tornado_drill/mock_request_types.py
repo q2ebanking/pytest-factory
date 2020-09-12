@@ -43,9 +43,11 @@ class BaseMockRequest(Hashable):
 
 class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
     """
-    TODO
+    if creating your own request type for a fixture, you must set FIXTURE_NAME on the class
     """
     HASHING_ATTRIBUTES = ('query_arguments', 'body_arguments', 'method', 'protocol', 'host')
+
+    FIXTURE_NAME = 'mock_http_server'
 
     def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
         """

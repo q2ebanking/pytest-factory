@@ -9,7 +9,6 @@ parameter.
 finally, this contains the pytest fixture definition. make sure this file is imported by pytest.py so the framework
 can pick this up, or you will not have the fixture available in tests!
 """
-import pytest
 import inspect
 import functools
 from typing import Callable, Optional
@@ -47,7 +46,6 @@ async def run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_
 
     store.check_no_uncalled_fixtures(raise_assertion_error=assert_no_missing_calls)
 
-    # TODO maybe reconstitute this as a Response object?
     if self._write_buffer:
         return self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
 
