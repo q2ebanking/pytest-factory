@@ -3,7 +3,13 @@ when creating plugins, a plugin-level settings.py is where most of the custom
 code should be integrated.
 
 # TODO separate the parts that can be loaded from a file
-# configuration =/= code
+# TODO some cool stuff you could do with this: generate mock_http_server fixtures
+# TODO from a swagger yaml. why not? have a set of settings adapters for this
+# TODO another cool idea: generating the requests from a log file of the handler
+# in action, then automatically compare if the output is different from expected
+# generate a report with diffs and timestamps and version differences
+# the previous test output can be stored in a hidden directory for this plugin
+# TODO consider prepending certain methods that could be mistaken for pytest native methods
 
 at the user project test level there can be another settings.py for project-
 global configurations. this means there can be two levels of settings defined

@@ -11,48 +11,48 @@ pytestmark = pytest.mark.asyncio
 @mock_request()
 class TestHttp:
     @mock_http_server(path='http://www.test.com/mock_endpoint', response='nope')
-    async def test_http_func_override(self, handler, store):
-        resp = await handler.run_test()
+    async def test_http_func_override(self, store):
+        resp = await store.handler.run_test()
         assert resp == 'nope'
 
     @mock_http_server(path='http://www.test.com/*', response='wild')
-    async def test_http_wildcard_path(self, handler, store):
+    async def test_http_wildcard_path(self, store):
         """
         TODO this might just be stupid hard
         :param handler:
         :param store:
         :return:
         """
-        resp = await handler.run_test()
+        resp = await store.handler.run_test()
         assert resp == 'wild'
 
     @mock_http_server(path='http://www.test.com/mock_endpoint', response=lambda x: x.path)
-    async def test_http_response_function(self, handler, store):
-        resp = await handler.run_test()
+    async def test_http_response_function(self, store):
+        resp = await store.handler.run_test()
         assert resp == 'http://www.test.com/mock_endpoint'
 
     class TestResponseTracking:
         @mock_request(path='?num=0')
-        async def test_http_no_calls_warning(self, handler, store):
+        async def test_http_no_calls_warning(self, store):
             """
             see self.teardown_method
             """
-            resp = await handler.run_test()
+            resp = await store.handler.run_test()
             assert resp == ''
 
         @mock_request(path='?num=2')
-        async def test_http_extra_call_warning(self, handler, store):
+        async def test_http_extra_call_warning(self, store):
             """
             please note that this test is expected to raise a non-fatal UserWarning
             see self.teardown_method
             """
-            resp = await handler.run_test(assert_no_extra_calls=False)
+            resp = await store.handler.run_test(assert_no_extra_calls=False)
             assert resp == 'yupyup'
 
-        async def test_http_call_same_endpoint_diff_test(self, handler, store):
+        async def test_http_call_same_endpoint_diff_test(self, store):
             """
             """
-            resp = await handler.run_test()
+            resp = await store.handler.run_test()
             assert resp == 'yup'
 
         def teardown_method(self, method):

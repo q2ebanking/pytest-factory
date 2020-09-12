@@ -81,6 +81,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     :return: returns modified test function or class
     """
     req_obj = req_obj or MockHttpRequest(**kwargs)
+    req_obj.FIXTURE_NAME = 'mock_request'
 
     handler = _get_handler_instance(handler_class=handler_class, req_obj=req_obj)
 
@@ -97,8 +98,9 @@ def mock_request(handler_class: Optional[Callable] = None,
             :param qwargs: odd name to avoid shadowing kwargs
             :return:
             """
-            if handler != qwargs.get('handler'):
-                qwargs['handler'] = handler
+            if store.handler != handler:
+                store.handler = handler
+                handler._pytest_store = store
 
             await pytest_func(*args, **qwargs)
 

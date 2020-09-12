@@ -49,22 +49,6 @@ def store(request):
     return store
 
 
-@pytest.fixture()
-def handler(request):
-    """
-    handler fixture
-
-    sets up handlers for test methods that have not received it yet because they lacked explicit @mock_request
-    and so pytest_func_with_handler never gets called for those methods
-    otherwise this method gets overridden to be the handler when pytest_func_with_handler is invoked
-    :return:
-    """
-    store = STORES.get_store(request.node.name)
-    if store.handler is None:
-        raise Exception
-    return store.handler
-
-
 @pytest.fixture(autouse=True)
 def monkey_patch_requests(monkeypatch, request) -> None:
     test_name = request.node.name

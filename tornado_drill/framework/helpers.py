@@ -90,3 +90,12 @@ def get_generic_caller(method_name: str, test_func_name: str,
         return mock_response
 
     return generic_caller
+
+# def parameterize_test(item: Item) -> List[Item]:
+#     new_tests = []
+#
+#     store = STORES.get_store(item.name)
+#
+#
+#
+#     return new_tests

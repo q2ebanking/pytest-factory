@@ -11,6 +11,17 @@ from tornado.httputil import HTTPHeaders
 from tornado_drill.mock_request_types import MockHttpRequest
 
 
+# def parameterize_test(item: Item):
+#     """
+#     if user chooses, this method will generate tests for standard HTTP failure modes (404, 500, timeout) for
+#     every fixture in the Store for this test item.
+#     TODO maybe put a flag on the fixture decorator whether to generate extra tests in the store, then when
+#      pytest_generate_tests gets called those tests can be collected for real
+#
+#     :param item:
+#     :return:
+#     """
+
 def req_generator(method_name: str, *args, **kwargs) -> MockHttpRequest:
     """
     this method will redefine the method with method_name in the module being monkeypatched
