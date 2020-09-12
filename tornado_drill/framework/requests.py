@@ -18,6 +18,9 @@ def get_generic_caller(requests_method_name: str, test_func_name: str) -> Callab
         this method will replace the http method in the requests module
         e.g. requests.get
 
+        TODO this needs to be even more generic - what if the user wants to use a library other than requests to make
+         calls? they'd have copy/paste most of this method
+
         it is important when creating monkeypatches to simulate the error
         behavior of the actual code as much as possible, including raising the
         correct Exception types
@@ -40,7 +43,10 @@ def get_generic_caller(requests_method_name: str, test_func_name: str) -> Callab
             mock_http_request_kwargs['body'] = kwargs.get('body')
 
         req_obj = MockHttpRequest(**mock_http_request_kwargs)
-        mock_response = STORES.get_next_response(test_name=test_func_name, fixture_name='mock_http_server',
+        mock_response = STORES.get_next_response(test_name=test_func_name,
+                                                 fixture_name='mock_http_server',  # TODO make this smarter -
+                                                 # allow plugin developer to provide a function that takes req_obj
+                                                 # and determines if a custom fixture routing is needed!!
                                                  req_obj=req_obj)
 
         response = Response()

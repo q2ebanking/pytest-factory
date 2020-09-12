@@ -69,5 +69,6 @@ def monkey_patch_requests(monkeypatch, request) -> None:
     test_name = request.node.name
 
     for method in HTTP_METHODS:
-        monkeypatch.setattr(requests, method.value, get_generic_caller(requests_method_name=method.value,
-                                                                       test_func_name=test_name))
+        new_method = get_generic_caller(requests_method_name=method.value,
+                                        test_func_name=test_name)
+        monkeypatch.setattr(requests, method.value, new_method)

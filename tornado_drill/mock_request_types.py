@@ -3,7 +3,7 @@ from typing import Hashable, Optional, Union, List
 from enum import Enum
 from requests import Response
 
-from tornado.httputil import HTTPServerRequest
+from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 # responses are optional and can be either a single response or list of responses where
 # the response type is either an Exception, str or requests.Response object
@@ -54,6 +54,9 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
         :param path:
         :param kwargs:
         """
+        if kwargs.get('headers'):
+            kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
+
         super().__init__(method=method, uri=path, **kwargs)
 
         # TODO make this more fake later but this trick will work if a user doesn't look too closely in the debugger
