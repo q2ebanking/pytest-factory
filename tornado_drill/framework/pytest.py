@@ -17,7 +17,8 @@ import requests
 
 from tornado_drill.mock_request_types import HTTP_METHODS
 from tornado_drill.framework.settings import SETTINGS, LOGGER
-from tornado_drill.framework.requests import get_generic_caller
+from tornado_drill.framework.helpers import get_generic_caller
+from tornado_drill.requests import req_generator, resp_generator
 from tornado_drill.framework.stores import STORES
 
 
@@ -69,5 +70,8 @@ def monkey_patch_requests(monkeypatch, request) -> None:
     test_name = request.node.name
 
     for method in HTTP_METHODS:
-        monkeypatch.setattr(requests, method.value, get_generic_caller(requests_method_name=method.value,
-                                                                       test_func_name=test_name))
+        new_method = get_generic_caller(method_name=method.value,
+                                        test_func_name=test_name,
+                                        req_generator=req_generator,
+                                        resp_generator=resp_generator)
+        monkeypatch.setattr(requests, method.value, new_method)

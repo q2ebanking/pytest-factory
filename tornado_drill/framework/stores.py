@@ -74,7 +74,7 @@ class Stores:
 
     def update(self, test_name: str, fixture_name: str,
                req_obj: BaseMockRequest,
-               response: MOCK_HTTP_RESPONSE):
+               response: MOCK_HTTP_RESPONSE = None):
         """
         always use this method to modify STORES AFTER configuration stage ends
 

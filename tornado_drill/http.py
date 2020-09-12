@@ -4,7 +4,7 @@ from tornado_drill.mock_request_types import MockHttpRequest, \
     MOCK_HTTP_RESPONSE
 
 
-def mock_http_server(response: MOCK_HTTP_RESPONSE,
+def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
                      req_obj: Optional[MockHttpRequest] = None,
                      **kwargs) -> Callable:
     """
@@ -18,6 +18,7 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE,
     - str: will get returned as requests.Response where the response string is the body
     - Exception: will get raised as if the requests method failed
     - Response: returned directly
+    - Callable: must be a function that takes the req_obj as argument and returns one of the above types
     :param req_obj: MockHttpRequest if kwargs not provided
     :param kwargs: see help(MockHttpRequest.__init__) if not passing req_obj
     :return: the test class or function being decorated

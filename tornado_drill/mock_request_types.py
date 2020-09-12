@@ -1,13 +1,13 @@
 from urllib.parse import urlparse
-from typing import Hashable, Optional, Union, List
+from typing import Hashable, Optional, Union, List, Callable
 from enum import Enum
 from requests import Response
 
-from tornado.httputil import HTTPServerRequest
+from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 # responses are optional and can be either a single response or list of responses where
-# the response type is either an Exception, str or requests.Response object
-MOCK_HTTP_RESPONSE = Optional[Union[Exception, str, Response, List[Union[Exception, str, Response]]]]
+# the response type is either a Callable, Exception, str or requests.Response object
+MOCK_HTTP_RESPONSE = Optional[Union[Exception, str, Response, List[Union[Callable, Exception, str, Response]]]]
 
 
 # based on what the requests module supports
@@ -43,9 +43,11 @@ class BaseMockRequest(Hashable):
 
 class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
     """
-    TODO
+    if creating your own request type for a fixture, you must set FIXTURE_NAME on the class
     """
     HASHING_ATTRIBUTES = ('query_arguments', 'body_arguments', 'method', 'protocol', 'host')
+
+    FIXTURE_NAME = 'mock_http_server'
 
     def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
         """
@@ -54,6 +56,9 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
         :param path:
         :param kwargs:
         """
+        if kwargs.get('headers'):
+            kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
+
         super().__init__(method=method, uri=path, **kwargs)
 
         # TODO make this more fake later but this trick will work if a user doesn't look too closely in the debugger

@@ -26,6 +26,11 @@ class TestHttp:
         resp = await handler.run_test()
         assert resp == 'wild'
 
+    @mock_http_server(path='http://www.test.com/mock_endpoint', response=lambda x: x.path)
+    async def test_http_response_function(self, handler, store):
+        resp = await handler.run_test()
+        assert resp == 'http://www.test.com/mock_endpoint'
+
     class TestResponseTracking:
         @mock_request(path='?num=0')
         async def test_http_no_calls_warning(self, handler, store):
