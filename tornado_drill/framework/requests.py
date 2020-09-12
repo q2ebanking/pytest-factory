@@ -48,6 +48,8 @@ def get_generic_caller(requests_method_name: str, test_func_name: str) -> Callab
                                                  # allow plugin developer to provide a function that takes req_obj
                                                  # and determines if a custom fixture routing is needed!!
                                                  req_obj=req_obj)
+        if isinstance(mock_response, Callable):
+            mock_response = mock_response(req_obj)
 
         response = Response()
         if not mock_response:

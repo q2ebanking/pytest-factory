@@ -1,13 +1,13 @@
 from urllib.parse import urlparse
-from typing import Hashable, Optional, Union, List
+from typing import Hashable, Optional, Union, List, Callable
 from enum import Enum
 from requests import Response
 
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 # responses are optional and can be either a single response or list of responses where
-# the response type is either an Exception, str or requests.Response object
-MOCK_HTTP_RESPONSE = Optional[Union[Exception, str, Response, List[Union[Exception, str, Response]]]]
+# the response type is either a Callable, Exception, str or requests.Response object
+MOCK_HTTP_RESPONSE = Optional[Union[Exception, str, Response, List[Union[Callable, Exception, str, Response]]]]
 
 
 # based on what the requests module supports

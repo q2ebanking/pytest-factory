@@ -6,7 +6,7 @@ from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
 from tornado_drill.framework.stores import STORES
 
 
-def get_decorated_callable(req_obj: BaseMockRequest, response: MOCK_HTTP_RESPONSE = None) -> Callable:
+def get_decorated_callable(req_obj: BaseMockRequest, response: MOCK_HTTP_RESPONSE) -> Callable:
     """
     Generic decorator maker. For use by contributors and plugin developers to create new fixture decorators. See http.py
     for an example of usage.
