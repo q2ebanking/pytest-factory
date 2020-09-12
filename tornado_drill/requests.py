@@ -22,7 +22,7 @@ from tornado_drill.mock_request_types import MockHttpRequest
 #     :return:
 #     """
 
-def req_generator(method_name: str, *args, **kwargs) -> MockHttpRequest:
+def _req_generator(method_name: str, *args, **kwargs) -> MockHttpRequest:
     """
     this method will redefine the method with method_name in the module being monkeypatched
     while including in the new method the name of test function so it can look up mock responses
@@ -54,7 +54,7 @@ def req_generator(method_name: str, *args, **kwargs) -> MockHttpRequest:
     return req_obj
 
 
-def resp_generator(mock_response: Union[None, Response, str, dict, Exception]) -> Response:
+def _resp_generator(mock_response: Union[None, Response, str, dict, Exception]) -> Response:
     response = Response()
     if not mock_response:
         response.status_code = 404
