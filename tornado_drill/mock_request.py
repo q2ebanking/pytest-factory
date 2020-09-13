@@ -18,10 +18,10 @@ from tornado.web import Application, RequestHandler
 from tornado_drill.mock_request_types import MockHttpRequest
 from tornado_drill.framework.settings import SETTINGS
 from tornado_drill.framework.stores import STORES
-from tornado_drill.framework.helpers import apply_func_recursive
+from tornado_drill.framework.helpers import _apply_func_recursive
 
 
-async def run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_calls: bool = True):
+async def _run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_calls: bool = True):
     """
     this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
     and provides a way to advance the state of the RequestHandler while returning the response to the
@@ -54,7 +54,7 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest) -> 
     handler_class = handler_class or SETTINGS.default_request_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
-    handler_overrides = {**{'run_test': run_test},  # this is here instead of settings.py to avoid circular imports
+    handler_overrides = {**{'run_test': _run_test},  # this is here instead of settings.py to avoid circular imports
                          **SETTINGS.handler_overrides}  # but this will guarantee that plugins can still override it
 
     for attribute, override in handler_overrides.items():
@@ -81,6 +81,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     :return: returns modified test function or class
     """
     req_obj = req_obj or MockHttpRequest(**kwargs)
+    req_obj.FIXTURE_NAME = 'mock_request'
 
     handler = _get_handler_instance(handler_class=handler_class, req_obj=req_obj)
 
@@ -97,14 +98,15 @@ def mock_request(handler_class: Optional[Callable] = None,
             :param qwargs: odd name to avoid shadowing kwargs
             :return:
             """
-            if handler != qwargs.get('handler'):
-                qwargs['handler'] = handler
+            if store.handler != handler:
+                store.handler = handler
+                handler._pytest_store = store
 
             await pytest_func(*args, **qwargs)
 
         return modified_pytest_func
 
     def callable_wrapper(callable_obj: Callable) -> Callable:
-        return apply_func_recursive(callable=callable_obj, func=register_test_func)
+        return _apply_func_recursive(callable=callable_obj, func=register_test_func)
 
     return callable_wrapper

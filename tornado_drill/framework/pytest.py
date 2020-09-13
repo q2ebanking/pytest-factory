@@ -18,7 +18,7 @@ import requests
 from tornado_drill.mock_request_types import HTTP_METHODS
 from tornado_drill.framework.settings import SETTINGS, LOGGER
 from tornado_drill.framework.helpers import get_generic_caller
-from tornado_drill.requests import req_generator, resp_generator
+from tornado_drill.requests import _req_generator, _resp_generator
 from tornado_drill.framework.stores import STORES
 
 
@@ -49,22 +49,6 @@ def store(request):
     return store
 
 
-@pytest.fixture()
-def handler(request):
-    """
-    handler fixture
-
-    sets up handlers for test methods that have not received it yet because they lacked explicit @mock_request
-    and so pytest_func_with_handler never gets called for those methods
-    otherwise this method gets overridden to be the handler when pytest_func_with_handler is invoked
-    :return:
-    """
-    store = STORES.get_store(request.node.name)
-    if store.handler is None:
-        raise Exception
-    return store.handler
-
-
 @pytest.fixture(autouse=True)
 def monkey_patch_requests(monkeypatch, request) -> None:
     test_name = request.node.name
@@ -72,6 +56,6 @@ def monkey_patch_requests(monkeypatch, request) -> None:
     for method in HTTP_METHODS:
         new_method = get_generic_caller(method_name=method.value,
                                         test_func_name=test_name,
-                                        req_generator=req_generator,
-                                        resp_generator=resp_generator)
+                                        req_generator=_req_generator,
+                                        resp_generator=_resp_generator)
         monkeypatch.setattr(requests, method.value, new_method)

@@ -7,10 +7,7 @@ quickly mock up third-party services. runs in the asyncio loop. minimal
 configuration required to start but can be fully customized with inheritable
 plugin architecture for custom request/response types. originally developed
 within Q2 to unit test complex microservices that make multiple intranet and
-internet calls.
-
-
-
+internet calls per request/response cycle.
 
 ## contributing
 please look at the unit tests (either failing or missing cases) to get an idea
