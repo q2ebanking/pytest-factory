@@ -18,7 +18,9 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     - str: will get returned as requests.Response where the response string is the body
     - Exception: will get raised as if the requests method failed
     - Response: returned directly
-    - Callable: must be a function that takes the req_obj as argument and returns one of the above types
+    - Callable: must be a function that takes the req_obj as argument and returns one of the above types for when user
+        wants mock server to have some correlation between request and response (like id of requested asset);
+        if the custom behavior is more sophisticated, consider a fixture adapter instead
     :param req_obj: MockHttpRequest if kwargs not provided
     :param kwargs: see help(MockHttpRequest.__init__) if not passing req_obj
     :return: the test class or function being decorated

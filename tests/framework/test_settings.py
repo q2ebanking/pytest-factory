@@ -11,7 +11,7 @@ class TestAsync:
     """
     integration tests
     """
-    async def test_settings_default_store(self, handler, store):
+    async def test_settings_default_store(self, store):
         """
         settings/store integration test
 
@@ -20,7 +20,7 @@ class TestAsync:
         """
         assert False
 
-    async def test_settings_handler_override(self, handler, store):
+    async def test_settings_handler_override(self, store):
         """
         settings/handler integration test
 
