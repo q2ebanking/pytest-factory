@@ -17,6 +17,7 @@ from tornado_drill.mock_request_types import MockHttpRequest
 #     every fixture in the Store for this test item.
 #     TODO maybe put a flag on the fixture decorator whether to generate extra tests in the store, then when
 #      pytest_generate_tests gets called those tests can be collected for real
+#     TODO redirects! how to test for it?
 #
 #     :param item:
 #     :return:
