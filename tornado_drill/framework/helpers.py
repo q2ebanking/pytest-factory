@@ -86,7 +86,7 @@ def get_generic_caller(method_name: str, test_func_name: str,
             raise mock_response
 
         if resp_generator:
-            mock_response = resp_generator(mock_response)
+            mock_response = resp_generator(mock_response=mock_response, *args, **kwargs)
         return mock_response
 
     return generic_caller
