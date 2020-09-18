@@ -54,7 +54,7 @@ def _req_generator(method_name: str, *args, **kwargs) -> MockHttpRequest:
     return req_obj
 
 
-def _resp_generator(mock_response: Union[None, Response, str, dict, Exception]) -> Response:
+def _resp_generator(mock_response: Union[None, Response, str, dict, Exception], *_, **kwargs) -> Response:
     response = Response()
     if not mock_response:
         response.status_code = 404
@@ -66,4 +66,9 @@ def _resp_generator(mock_response: Union[None, Response, str, dict, Exception]) 
         response = mock_response
     else:
         assert False, 'should not happen'
+
+    # TODO need to replicate redirect behavior unless allow_redirects==False.
+    #  how though? could return an array instead and then it's up to
+    # if response.status_code == 302 and kwargs.get('allow_redirects') is not False:
+        # wut do
     return response
