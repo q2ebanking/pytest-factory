@@ -81,7 +81,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     :return: returns modified test function or class
     """
     req_obj = req_obj or MockHttpRequest(**kwargs)
-    req_obj.FIXTURE_NAME = 'mock_request'
+    req_obj.FACTORY_NAME = 'mock_request'
 
     handler = _get_handler_instance(handler_class=handler_class, req_obj=req_obj)
 

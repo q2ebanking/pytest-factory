@@ -2,7 +2,8 @@
 when creating plugins, a plugin-level settings.py is where most of the custom
 code should be integrated.
 
-# TODO consider prepending certain methods that could be mistaken for pytest native methods
+# TODO consider prepending certain methods that could be mistaken for pytest
+    native methods
 
 at the user project test level there can be another settings.py for project-
 global configurations. this means there can be two levels of settings defined

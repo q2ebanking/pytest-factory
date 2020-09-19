@@ -8,7 +8,7 @@ from pytest_factory.framework.stores import STORES
 
 def make_fixture_factory(req_obj: BaseMockRequest,
                          response: MOCK_HTTP_RESPONSE,
-                         fixture_name: Optional[str] = None) -> Callable:
+                         factory_name: Optional[str] = None) -> Callable:
     """
     Creates a fixture factory. For use by contributors and plugin
     developers to create new fixture factories.
@@ -17,17 +17,17 @@ def make_fixture_factory(req_obj: BaseMockRequest,
 
     :param req_obj: used as key to map to mock responses
     :param response: string or Response
-    :param fixture_name: name of the fixture factory that will be applied to
+    :param factory_name: name of the fixture factory that will be applied to
         to returned Callable; defaults to name of function that called this
         function
     :return: the test class or test function that is being decorated
     """
 
-    fixture_name = fixture_name or sys._getframe(1).f_code.co_name
+    factory_name = factory_name or sys._getframe(1).f_code.co_name
 
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
-        STORES.update(test_name=test_name, fixture_name=fixture_name,
+        STORES.update(test_name=test_name, factory_name=factory_name,
                       req_obj=req_obj, response=response)
 
         return pytest_func
@@ -45,8 +45,10 @@ def _apply_func_recursive(func: Callable, callable: Callable) -> Callable:
     all children.
     if a child is itself a class, this method will recurse
 
-    :param func: the function that will return the test function after doing some work
-    :param callable: if a class, will find children and recurse, if function will apply func
+    :param func: the function that will return the test function after doing
+        some work
+    :param callable: if a class, will find children and recurse, if function
+        will apply func
     is defined
     """
     if inspect.isclass(callable):
@@ -73,8 +75,8 @@ def get_generic_caller(method_name: str, test_func_name: str,
     :param test_func_name: name of the test function that this fixture is for
     :param request_callable: class of the request object or function that will
         return one; must always take method_name as kwarg
-    :param response_callable: class of the response object or function that will
-        return one
+    :param response_callable: class of the response object or function that
+        will return one
     :return: the method that will replace the old one in the module being
         monkeypatched
     """
@@ -85,9 +87,9 @@ def get_generic_caller(method_name: str, test_func_name: str,
         """
 
         req_obj = request_callable(method_name=method_name, *args, **kwargs)
-        fixture_name = req_obj.FIXTURE_NAME
+        factory_name = req_obj.FACTORY_NAME
         mock_response = STORES.get_next_response(test_name=test_func_name,
-                                                 fixture_name=fixture_name,
+                                                 factory_name=factory_name,
                                                  req_obj=req_obj)
         if isinstance(mock_response, Callable):
             mock_response = mock_response(req_obj)

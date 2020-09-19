@@ -18,28 +18,27 @@ but the code is currently being updated to be generic for any network-based
 request handler.
 
 a test suite can define either a single RequestHandler in its settings.py or
-different RequestHandler types at the test class or function level. tests currently
-run in the asyncio loop to fully simulate tornado environment but can be
-updated to be generic.
+different RequestHandler types at the test class or function level. tests
+currently run in the asyncio loop to fully simulate tornado environment but can
+be updated to be generic.
 
 to minimize modifying the behavior of the component under test, a method is
 monkeypatched into the RequestHandler in order to execute the handler code.
 
 ### pytest plugin
 pytest drives the tests and pytest-factory is architected as a pytest plugin.
-see pytest.py for details. though developed on 6.x.x, other versions will likely
-function.
+see pytest.py for details. though developed on 6.x.x, other versions will
+likely function.
 
 ### configurability
-not only is pytest-factory a plugin, you can develop plugins for pytest-factory!
 if your project requires a common set of fixtures and you want to distribute
 them to your team, pytest-factory allows you to create plugins using the pytest
 plugin framework. not only that, if your team is a large organization, or your
-project inherits from a specific customization of tornado, pytest-factory plugins
-can be nested in a hierarchy. for example, your team may use a pytest-factory
-plugin that has fixtures common for the project you are working, but also
-inherits from another plugin containing fixtures for services shared across the
-company
+project inherits from a specific customization of tornado, pytest-factory
+plugins can be nested in a hierarchy. for example, your team may use a pytest-
+factory plugin that has fixtures common for the project you are working, but
+also inherits from another plugin containing fixtures for services shared
+across the company.
 
 ### fixture generation with decorators
 live test fixtures are unpredictable and often unavailable. pytest-factory
@@ -63,8 +62,8 @@ pytest-factory comes with fixtures for:
 - mock_request - generates an inbound http request
 
 these pre-made fixture factories can be used as models for users to create
-their own. the methods in pytest_factory.framework.helpers can make this as easy
-as defining one function containing one function call!
+their own. the methods in pytest_factory.framework.helpers can make this as
+easy as defining one function containing one function call!
 
 #### fixture parser TODO
 fixture factories can even be generated from file. pytest-factory comes with
@@ -106,9 +105,10 @@ this is just a three step process (for the user):
   - use fixture factories
   - based on requirements
 3. run tests and see the generated test results
-pytest-factory parameterizes your happy path tests by generating a new test case
-for each failure mode defined for each fixture defined on that happy test.
-if a fixture does not have failure modes defined it will go with the happy path.
+pytest-factory parameterizes your happy path tests by generating a new test
+case for each failure mode defined for each fixture defined on that happy test.
+if a fixture does not have failure modes defined it will go with the happy
+path.
 
 ####
 
@@ -160,19 +160,20 @@ following limitations in the current code:
     - "end user"
       - develops tests for their tornado server
       - style guide:
-        - methods should be easily accessible via imports, including in __init__.py
+        - methods should be easily accessible via imports, including in
+            __init__.py
         - should be thoroughly documented per parameter and fully type-hinted
         - documentation should include examples where relevant
-        - code inside these methods should be concise and transparent or carefully
-            commented where it is not by necessity
+        - code inside these methods should be concise and transparent or
+            carefully commented where it is not by necessity
     - "plugin developer"
       - develops pytest-factory plugins
       - style guide:
         - all methods, classes, objects should be defined and imported into the
             settings.py for that plugin
-        - any other integrations that require pytest invocations (e.g. pytest.fixture)
-            should be in a module that is included in the pytest_plugins defined
-            in the user's conftest.py
+        - any other integrations that require pytest invocations (e.g.
+            pytest.fixture) should be in a module that is included in the
+            pytest_plugins defined in the user's conftest.py
     - "contributor"
       - develops pytest-factory itself
       - style guide:

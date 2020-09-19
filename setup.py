@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.1.0",
     author="Q2 Software",
     author_email="bansuki@gmail.com",
-    description="PyTest for tornado",
+    description="pytest factories for web services",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/ludocracy/pytest_factory",

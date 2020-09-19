@@ -23,19 +23,21 @@ class Store(StoreType):
 
     def check_no_uncalled_fixtures(self, raise_assertion_error: bool = False):
         """
-        checks if this Store has any fixtures that have not been called the number of times expected
-        by default, it will log warnings to LOGGER
-        :param raise_assertion_error: if True, will raise AssertionError if any uncalled fixtures remain
+        checks if this Store has any fixtures that have not been called the
+        number of times expected by default, it will log warnings to LOGGER
+        :param raise_assertion_error: if True, will raise AssertionError if any
+            uncalled fixtures remain
         :return:
         """
         uncalled_fixtures = {}
-        if len(vars(self)) > 1:  # a Store will always at least have handler but we only care if it has other fixtures
 
-            props = {k: v for k, v in vars(self).items() if isinstance(v, dict)}
-            for fixture, response_dict in props.items():
+        for fixture, response_dict in vars(self).items():
+            if fixture not in ['handler', 'assert_no_extra_calls'] \
+                    and isinstance(response_dict, dict):
                 uncalled_fixture_endpoints = {}
                 for key, responses in response_dict.items():
-                    uncalled_responses = [resp[1] for resp in responses if not resp[0]]
+                    uncalled_responses = [resp[1]
+                                          for resp in responses if not resp[0]]
                     if uncalled_responses:
                         uncalled_fixture_endpoints[key] = uncalled_responses
                 if uncalled_fixture_endpoints:
@@ -46,7 +48,8 @@ class Store(StoreType):
                 LOGGER.error(msg)
                 raise AssertionError(msg)
             else:
-                LOGGER.warning(msg, 'if this is not expected, consider this a test failure!')
+                LOGGER.warning(
+                    msg, 'if this is not expected, consider this a test failure!')
 
 
 class Stores:
@@ -60,29 +63,31 @@ class Stores:
 
     def load(self, default_store: Store):
         """
-        load with fixtures from SETTINGS mapped to a wildcard test name
-        '*' so that they will apply to all test functions unless otherwise
+        load with fixture factories from SETTINGS mapped to a wildcard test
+        name '*' so that they will apply to all test functions unless otherwise
         specified.
 
         always use this method to modify STORES BEFORE configuration stage ends
-        
-        :param default_store: the store to fall back on if no test-specific store is defined
-            normally passed in from Settings
+
+        :param default_store: the store to fall back on if no test-specific
+            store is defined normally passed in from Settings
         """
         if default_store:
             self._by_test['*'] = default_store
 
-    def update(self, test_name: str, fixture_name: str,
+    def update(self, test_name: str, factory_name: str,
                req_obj: BaseMockRequest,
                response: MOCK_HTTP_RESPONSE = None):
         """
         always use this method to modify STORES AFTER configuration stage ends
 
-        :param test_name: name of the pytest test function not including modules or classes 
-        :param fixture_name: name of the pytest-factory fixture e.g. mock_http_server
-        :param req_obj: BaseMockRequest object representing the expected request
+        :param test_name: name of the pytest test function not including
+            modules or classes
+        :param factory_name: name of the fixture factory e.g. mock_http_server
+        :param req_obj: BaseMockRequest object representing the
+            expected request
         :param response: MOCK_HTTP_RESPONSE
-        :return: 
+        :return:
         """
         # this is how we keep track of which fixtures have been used
         response = (False, response)
@@ -91,15 +96,15 @@ class Stores:
         test_fixtures = self.get_store(test_name)
         if not test_fixtures:
             self._by_test[test_name] = Store(**{
-                fixture_name: {
+                factory_name: {
                     req_obj: responses
                 }
             })
         else:
-            if not hasattr(test_fixtures, fixture_name):
-                setattr(test_fixtures, fixture_name, {req_obj: responses})
+            if not hasattr(test_fixtures, factory_name):
+                setattr(test_fixtures, factory_name, {req_obj: responses})
             else:
-                fixture_dict = getattr(test_fixtures, fixture_name)
+                fixture_dict = getattr(test_fixtures, factory_name)
                 for k, v in fixture_dict.items():
                     if hash(k) != hash(req_obj):
                         fixture_dict[k] = responses
@@ -107,9 +112,10 @@ class Stores:
 
     def get_store(self, test_name: str) -> Store:
         """
-        :param test_name: name of the pytest test function associated with the requested store
-        :return: the Store associated with the given test_name; if a Store has not already been created for this test
-            this will be a new, empty Store object
+        :param test_name: name of the pytest test function associated with the
+            requested store
+        :return: the Store associated with the given test_name; a new Store if
+            a Store has not already been created for this test
         """
         store = self._by_test.get(test_name)
         if not store:
@@ -117,22 +123,26 @@ class Stores:
             self._by_test[test_name] = store
         return store
 
-    def get_next_response(self, test_name: str, fixture_name: str, req_obj: BaseMockRequest) -> Any:
+    def get_next_response(self, test_name: str, factory_name: str, req_obj: BaseMockRequest) -> Any:
         """
-        will look up responses corresponding to the given parameters, then find the next response that
-        has not yet been called, and marks it as called.
+        will look up responses corresponding to the given parameters, then find
+        the next response that has not yet been called, and marks it as called.
 
         if it runs out of uncalled responses, it will raise AssertionError
-        unless Store.assert_no_extra_calls is False. otherwise it will log warnings to LOGGER.
+        unless Store.assert_no_extra_calls is False. otherwise it will log
+        warnings to LOGGER.
 
-        :param test_name: name of the pytest test function we are currently executing
-        :param fixture_name: name of the fixture being invoked
-        :param req_obj: the request made by the RequestHandler represented as a BaseMockRequest
-        :return: the next available mock response corresponding to the given req_obj
+        :param test_name: name of the pytest test function we are currently
+            executing
+        :param factory_name: name of the fixture being invoked
+        :param req_obj: the request made by the RequestHandler represented as a
+            BaseMockRequest
+        :return: the next available mock response corresponding to the given
+            req_obj
         """
         store = self.get_store(test_name=test_name)
-        assert hasattr(store, fixture_name)
-        fixture = getattr(store, fixture_name)
+        assert hasattr(store, factory_name)
+        fixture = getattr(store, factory_name)
         mock_responses = fixture.get('*')
         for k, v in fixture.items():
             if hash(k) == hash(req_obj):
@@ -143,7 +153,8 @@ class Stores:
             if called:
                 continue
             else:
-                # this is where we mark the response as having been called so we don't call it again
+                # this is where we mark the response as having been called so
+                # we don't call it again
                 # unless we are allowed by the user
                 mock_responses[index] = (True, response)
                 return response
@@ -155,7 +166,8 @@ class Stores:
                 LOGGER.error(msg)  # TODO do we need these?
                 raise AssertionError(msg)
             else:
-                LOGGER.warning(msg, f'will repeat last response: {last_response}')
+                LOGGER.warning(
+                    msg, f'will repeat last response: {last_response}')
             return last_response
         return None
 

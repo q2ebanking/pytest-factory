@@ -1,7 +1,8 @@
 """
 pytest integration hooks
 
-the following functions are predefined pytest hooks or pytest fixture definitions to integrate with pytest-factory
+the following functions are predefined pytest hooks or pytest fixture
+definitions to integrate with pytest-factory
 
 please keep most fixture-specific logic out of this file
 
@@ -40,7 +41,8 @@ def pytest_configure(config: Config) -> None:
 @pytest.fixture()
 def store(request):
     """
-    fixture store - this is where the test-specific store gets assigned to the test function
+    fixture store - this is where the test-specific store gets assigned to the
+    test function
     :return:
     """
     test_name = request.node.name
