@@ -1,6 +1,6 @@
 from typing import Optional, Callable
-from tornado_drill.framework.helpers import get_decorated_callable
-from tornado_drill.mock_request_types import MockHttpRequest, \
+from pytest_factory.framework.helpers import make_fixture_factory
+from pytest_factory.mock_request_types import MockHttpRequest, \
     MOCK_HTTP_RESPONSE
 
 
@@ -27,4 +27,4 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     """
     expected_request = req_obj or MockHttpRequest(**kwargs)
     assert expected_request, 'failed to load MockHttpRequest object!'  # todo make test for this
-    return get_decorated_callable(req_obj=expected_request, response=response)
+    return make_fixture_factory(req_obj=expected_request, response=response)

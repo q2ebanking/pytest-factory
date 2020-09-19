@@ -26,7 +26,7 @@ class BaseMockRequest(Hashable):
     dual-purpose class used to represent:
     - Actual Requests when created from parameters of @actual_request
     - Expected Requests when created from parameters of @mock_server
-    (or similar fixture decorator)
+    (or similar fixture factory)
 
     these are stored in fixture store by test, fixture name and BaseMockRequest
     object as key where newest hash value always wins
