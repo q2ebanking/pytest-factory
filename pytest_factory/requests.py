@@ -8,29 +8,29 @@ from typing import Union
 
 from tornado.httputil import HTTPHeaders
 
-from tornado_drill.mock_request_types import MockHttpRequest
+from pytest_factory.mock_request_types import MockHttpRequest
 
 
 # def parameterize_test(item: Item):
 #     """
 #     if user chooses, this method will generate tests for standard HTTP failure modes (404, 500, timeout) for
 #     every fixture in the Store for this test item.
-#     TODO maybe put a flag on the fixture decorator whether to generate extra tests in the store, then when
+#     TODO maybe put a flag on the fixture factory whether to generate extra tests in the store, then when
 #      pytest_generate_tests gets called those tests can be collected for real
 #
 #     :param item:
 #     :return:
 #     """
 
-def _req_decorator(method_name: str, *args, **kwargs) -> MockHttpRequest:
+def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
     """
     this method will redefine the method with method_name in the module being monkeypatched
     while including in the new method the name of test function so it can look up mock responses
 
     :param method_name: the name of the method in the module being monkeypatched for this test
     :param test_func_name: name of the test function that this fixture is for
-    :param req_decorator: class of the request object or function that will return one
-    :param resp_decorator: class of the response object or function that will return one
+    :param request_callable: class of the request object or function that will return one
+    :param response_callable: class of the response object or function that will return one
     :return: the method that will replace the old one in the module being monkeypatched
     """
     path = kwargs.get('url') or (args[0] if args else None)
@@ -54,7 +54,7 @@ def _req_decorator(method_name: str, *args, **kwargs) -> MockHttpRequest:
     return req_obj
 
 
-def _resp_decorator(mock_response: Union[None, Response, str, dict, Exception], *_, **kwargs) -> Response:
+def _response_callable(mock_response: Union[None, Response, str, dict, Exception], *_, **kwargs) -> Response:
     response = Response()
     if not mock_response:
         response.status_code = 404

@@ -1,7 +1,7 @@
 """
 pytest integration hooks
 
-the following functions are predefined pytest hooks or pytest fixture definitions to integrate with tornado drill
+the following functions are predefined pytest hooks or pytest fixture definitions to integrate with pytest-factory
 
 please keep most fixture-specific logic out of this file
 
@@ -15,11 +15,11 @@ import pytest
 
 import requests
 
-from tornado_drill.mock_request_types import HTTP_METHODS
-from tornado_drill.framework.settings import SETTINGS, LOGGER
-from tornado_drill.framework.helpers import get_generic_caller
-from tornado_drill.requests import _req_decorator, _resp_decorator
-from tornado_drill.framework.stores import STORES
+from pytest_factory.mock_request_types import HTTP_METHODS
+from pytest_factory.framework.settings import SETTINGS, LOGGER
+from pytest_factory.framework.helpers import get_generic_caller
+from pytest_factory.requests import _request_callable, _response_callable
+from pytest_factory.framework.stores import STORES
 
 
 def pytest_configure(config: Config) -> None:
@@ -45,7 +45,7 @@ def store(request):
     """
     test_name = request.node.name
     store = STORES.get_store(test_name=test_name)
-    assert store, 'TORNADO-DRILL ERROR: you broke something. probably in helpers.py or in this module'
+    assert store, 'pytest-factory ERROR: you broke something. probably in helpers.py or in this module'
     return store
 
 
@@ -56,6 +56,6 @@ def monkey_patch_requests(monkeypatch, request) -> None:
     for method in HTTP_METHODS:
         new_method = get_generic_caller(method_name=method.value,
                                         test_func_name=test_name,
-                                        req_decorator=_req_decorator,
-                                        resp_decorator=_resp_decorator)
+                                        request_callable=_request_callable,
+                                        response_callable=_response_callable)
         monkeypatch.setattr(requests, method.value, new_method)

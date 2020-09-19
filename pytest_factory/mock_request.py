@@ -1,5 +1,5 @@
 """
-contains fixture decorator @mock_request used to create the request to be passed to RequestHandler
+contains fixture factory @mock_request used to create the request to be passed to RequestHandler
 before test execution.
 
 also definitions for methods to be bound to RequestHandler that can be used to wrap execution of RequestHandler methods
@@ -15,10 +15,10 @@ from typing import Callable, Optional
 
 from tornado.web import Application, RequestHandler
 
-from tornado_drill.mock_request_types import MockHttpRequest
-from tornado_drill.framework.settings import SETTINGS
-from tornado_drill.framework.stores import STORES
-from tornado_drill.framework.helpers import _apply_func_recursive
+from pytest_factory.mock_request_types import MockHttpRequest
+from pytest_factory.framework.settings import SETTINGS
+from pytest_factory.framework.stores import STORES
+from pytest_factory.framework.helpers import _apply_func_recursive
 
 
 async def _run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_calls: bool = True):

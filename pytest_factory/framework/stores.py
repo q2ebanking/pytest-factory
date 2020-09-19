@@ -3,8 +3,8 @@ from typing import Dict, Any, Optional
 
 from tornado.web import RequestHandler
 
-from tornado_drill.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
-from tornado_drill.framework.settings import StoreType, LOGGER
+from pytest_factory.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
+from pytest_factory.framework.settings import StoreType, LOGGER
 
 STORES = None
 
@@ -79,7 +79,7 @@ class Stores:
         always use this method to modify STORES AFTER configuration stage ends
 
         :param test_name: name of the pytest test function not including modules or classes 
-        :param fixture_name: name of the tornado-drill fixture e.g. mock_http_server
+        :param fixture_name: name of the pytest-factory fixture e.g. mock_http_server
         :param req_obj: BaseMockRequest object representing the expected request
         :param response: MOCK_HTTP_RESPONSE
         :return: 

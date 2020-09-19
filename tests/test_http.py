@@ -1,8 +1,8 @@
 import pytest
 
-from tornado_drill.http import mock_http_server
-from tornado_drill import mock_request
-from tornado_drill.framework.pytest import LOGGER
+from pytest_factory.http import mock_http_server
+from pytest_factory import mock_request
+from pytest_factory.framework.pytest import LOGGER
 
 pytestmark = pytest.mark.asyncio
 
@@ -70,9 +70,9 @@ class TestHttp:
             """
             if method == self.test_http_no_calls_warning:
                 assert LOGGER.buffer[-1] == '''
-TORNADO-DRILL WARNING: the following fixtures have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
-TORNADO-DRILL WARNING: if this is not expected, consider this a test failure!'''
+pytest-factory WARNING: the following fixtures have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
+pytest-factory WARNING: if this is not expected, consider this a test failure!'''
             elif method == self.test_http_extra_call_warning:
                 assert LOGGER.buffer[-1] == '''
-TORNADO-DRILL WARNING: UNEXPECTED CALL DETECTED. expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None)
-TORNADO-DRILL WARNING: will repeat last response: yup'''
+pytest-factory WARNING: UNEXPECTED CALL DETECTED. expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None)
+pytest-factory WARNING: will repeat last response: yup'''

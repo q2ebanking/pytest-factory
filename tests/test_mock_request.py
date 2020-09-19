@@ -1,6 +1,6 @@
 import pytest
 
-from tornado_drill import mock_request
+from pytest_factory import mock_request
 
 pytestmark = pytest.mark.asyncio
 

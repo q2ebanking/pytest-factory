@@ -8,7 +8,7 @@ at the user project test level there can be another settings.py for project-
 global configurations. this means there can be two levels of settings defined
 by settings.py files. these are loaded and flattened when this file is read,
 with the project-level overriding. the fixtures defined at that point are then
-further extended and overridden by class and function-level fixture decorators.
+further extended and overridden by class and function-level fixture factories.
 """
 import logging
 from typing import Optional, Callable, Any, Dict, List
@@ -17,11 +17,11 @@ from typing import Optional, Callable, Any, Dict, List
 # this is to make assertions that the framework is logging warnings when we should
 class Logger(logging.Logger):
     def __init__(self):
-        super().__init__(name='tornado-drill-logger')
+        super().__init__(name='pytest-factory-logger')
         self.buffer = []
 
     def format(self, msgs) -> str:
-        return ''.join([f'\nTORNADO-DRILL WARNING: {msg}' for msg in msgs])
+        return ''.join([f'\npytest-factory WARNING: {msg}' for msg in msgs])
 
     def warning(self, *msgs):
         msg = self.format(msgs)
@@ -70,7 +70,7 @@ class Settings(SettingsType):
         take Settings from lower in hierarchy and merge them into the global settings
 
         in practice this means that the merged project and plugin hierarchy settings
-        will override tornado-drill defaults
+        will override pytest-factory defaults
         :param settings:
         :return:
         """

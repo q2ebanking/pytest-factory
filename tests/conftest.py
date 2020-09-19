@@ -1,2 +1,2 @@
 # must include this line
-pytest_plugins = "tornado_drill.framework.pytest"
+pytest_plugins = "pytest_factory.framework.pytest"
