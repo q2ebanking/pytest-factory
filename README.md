@@ -1,6 +1,9 @@
 # pytest-factory
-pytest-factory creates request-level unit tests and fixtures for server request
-handlers (currently supports just tornado and http).
+pytest-factory fixture factories create request-level unit tests and fixtures
+for server request handlers without the need for any server to be listening
+(yours or anyone else's).
+currently supports just tornado and http.
+
 fixture factories are implemented as decorators that can be applied to pytest
 classes and functions allowing fixture-reuse and programmability.
 fixture factories
@@ -9,6 +12,61 @@ inheritable plugin architecture for custom request/response types.
 
 originally developed within Q2 to unit test complex microservices that make
 multiple asynchronous intranet and internet calls per request/response cycle.
+
+## example
+given a tornado application app.py (see tests/app.py for a more complex
+example):
+```python
+import requests
+
+from tornado.ioloop import IOLoop
+from tornado.web import RequestHandler, Application
+
+
+class MainHandler(RequestHandler):
+    async def get(self)::
+        resp = requests.get(url='https://www.world.com/hello')
+        self.write(resp.text)
+
+
+def make_app():
+    return Application([
+        (r"/", MainHandler),
+    ])
+
+
+if __name__ == "__main__":
+    app = make_app()
+    app.listen(8888)
+    IOLoop.current().start()
+```
+
+your conftest.py:
+```python
+pytest_plugins = "pytest_factory.framework.pytest"
+```
+
+your test.py (contrived to illustrate point on decorators as fixture
+factories):
+```python
+from pytest_factory import mock_request, mock_http_server
+
+from app import MainHandler
+
+pytestmark = pytest.mark.asyncio
+
+@mock_http_server(method='get', path='/hello', response='blah blah')
+@mock_request(handler_class=MainHandler, method='get')
+class TestClass:
+    async def test_a(self, store):
+        resp = store.handler.run_test()
+        assert resp == 'blah blah'
+
+    @mock_http_server(method='get', path='/hello', response='Hello, world!')
+    async def test_b(self, store):
+        resp = store.handler.run_test()
+        assert resp == 'Hello, world!'
+```
 
 
 ## features
@@ -40,7 +98,7 @@ factory plugin that has fixtures common for the project you are working, but
 also inherits from another plugin containing fixtures for services shared
 across the company.
 
-### fixture generation with decorators
+### fixture factories with decorators
 live test fixtures are unpredictable and often unavailable. pytest-factory
 comes with a set of fixture factories for common client-server interactions
 and tools for users to create their own.
@@ -49,33 +107,33 @@ the test function.
 
 #### decorators
 pytest-factory represents fixture factories with decorators, which are executed
-during test collection to generate the fixture for the test being collected.
-these decorators can be applied to test classes and functions, allowing the
+during test collection to create the fixture for the test being collected.
+these factories can be applied to test classes and functions, allowing the
 user to create a hierarchy of default and override fixture settings when
 representing the possible permutations of call types and response types in a
 complex architecture.
 
 #### included fixture factories
-pytest-factory comes with fixtures for:
+pytest-factory comes with factories for:
 - requests package - intercepts outbound calls and route them to http fixtures
 - http/smtp/ftp - maps outbound http calls to mock responses
 - mock_request - generates an inbound http request
 
-these pre-made fixture factories can be used as models for users to create
-their own. the methods in pytest_factory.framework.helpers can make this as
-easy as defining one function containing one function call!
+these pre-made factories can be used as models for users to create their own.
+the methods in pytest_factory.framework.helpers can make this as easy as
+defining one function containing one function call!
 
-#### fixture parser TODO
-fixture factories can even be generated from file. pytest-factory comes with
-fixture parser with an interface for users to create their own parser adapters.
-the fixture parser can operate in two modes:
-- load the fixtures as a module so the user can manually generate tests by
-importing the fixtures
-- load the fixtures then generate test cases based on the possible permutations
+#### fixture factory parser TODO
+factories can even be generated from file. pytest-factory comes with a
+factory parser with an interface for users to create their own parser adapters.
+the factory parser can operate in two modes:
+- load the factories as a module so the user can manually generate tests by
+importing and applying them where needed
+- load the factories then produce test cases based on the possible permutations
 of request and response. see "test generation" below for more details.
 examples of types of adapters:
 - logging
-  - parses requests/responses from logs then generates a test case that
+  - parses requests/responses from logs then generate test case that
 matches the live behavior
   - TODO maybe add a logging adapter that will format logs to leave breadcrumbs
     for this parser?
@@ -99,14 +157,16 @@ new test results.
 #### predictive - failure modes
 this is just a three step process (for the user):
 1. define failure modes for each fixture
-  - pytest-factory fixtures like http already have defaults (like 404)
+  - pytest-factory factories like mock_http_server already have defaults
+      (like 404)
   - can load from file e.g. swagger.yaml
 2. define the happy paths
   - use fixture factories
   - based on requirements
 3. run tests and see the generated test results
 pytest-factory parameterizes your happy path tests by generating a new test
-case for each failure mode defined for each fixture defined on that happy test.
+case for each failure mode defined for each factory that created a fixture for
+that happy path.
 if a fixture does not have failure modes defined it will go with the happy
 path.
 
