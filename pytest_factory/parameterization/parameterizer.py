@@ -5,3 +5,9 @@ with that Item.
 
 gets used in pytest hook in pytest.py
 """
+from pytest import Item
+from typing import List
+
+
+def parameterize(item: Item) -> List[Item]:
+    return []

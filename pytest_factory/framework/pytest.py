@@ -21,6 +21,7 @@ from pytest_factory.framework.settings import SETTINGS, LOGGER
 from pytest_factory.framework.helpers import get_generic_caller
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
+# from pytest_factory.parameterization import parameterize
 
 
 def pytest_configure(config: Config) -> None:
@@ -36,6 +37,9 @@ def pytest_configure(config: Config) -> None:
 
 
 # TODO add pytest_collection_finish hook to detect duplicate test names and throw warning
+
+def pytest_generate_tests(metafunc: "Metafunc") -> None:
+    pass
 
 
 @pytest.fixture()

@@ -28,11 +28,13 @@ def make_fixture_factory(req_obj: mrt.BaseMockRequest,
     """
 
     factory_name = factory_name or sys._getframe(1).f_code.co_name
+    failure_modes = failure_modes or {}
 
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
         STORES.update(test_name=test_name, factory_name=factory_name,
-                      req_obj=req_obj, response=response)
+                      req_obj=req_obj, response=response,
+                      failure_modes=failure_modes)
 
         return pytest_func
 

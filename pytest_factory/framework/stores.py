@@ -1,15 +1,14 @@
-import pytest
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 from tornado.web import RequestHandler
 
 import pytest_factory.mock_request_types as mrt
-from pytest_factory.framework.settings import StoreType, LOGGER
+from pytest_factory.framework.settings import LOGGER
 
 STORES = None
 
 
-class Store(StoreType):
+class Store:
     """
     stores fixtures for a given async test method
     """
@@ -50,13 +49,14 @@ class Store(StoreType):
             if uncalled_fixture_endpoints:
                 uncalled_fixtures[fixture] = uncalled_fixture_endpoints
         if uncalled_fixtures:
-            msg = f'the following fixtures have not been called: {uncalled_fixtures}!'
+            msg = 'the following fixtures have not been called: ' + \
+                f'{uncalled_fixtures}!'
             if raise_assertion_error:
                 LOGGER.error(msg)
                 raise AssertionError(msg)
             else:
-                LOGGER.warning(
-                    msg, 'if this is not expected, consider this a test failure!')
+                LOGGER.warning(msg, 'if this is not expected, consider '
+                               + 'this a test failure!')
 
 
 class Stores:
@@ -84,7 +84,8 @@ class Stores:
 
     def update(self, test_name: str, factory_name: str,
                req_obj: mrt.BaseMockRequest,
-               response: mrt.MOCK_HTTP_RESPONSE = None):
+               response: mrt.MOCK_HTTP_RESPONSE = None,
+               failure_modes: Optional[mrt.ROUTING_TYPE] = None):
         """
         always use this method to modify STORES AFTER configuration stage ends
 
@@ -94,24 +95,26 @@ class Stores:
         :param req_obj: BaseMockRequest object representing the
             expected request
         :param response: MOCK_HTTP_RESPONSE
+        :param failure_modes: failure modes associated with the given factory
         :return:
         """
         # this is how we keep track of which fixtures have been used
         response = (False, response)
         responses = [response] if not isinstance(response, list) else response
 
-        test_fixtures = self.get_store(test_name)
-        if not test_fixtures:
+        store = self.get_store(test_name)
+        if not store:
             self._by_test[test_name] = Store(**{
                 factory_name: {
-                    req_obj: responses
+                    req_obj: responses,
+                    '_failure_modes': failure_modes
                 }
             })
         else:
-            if not hasattr(test_fixtures, factory_name):
-                setattr(test_fixtures, factory_name, {req_obj: responses})
+            if not hasattr(store, factory_name):
+                setattr(store, factory_name, {req_obj: responses})
             else:
-                fixture_dict = getattr(test_fixtures, factory_name)
+                fixture_dict = getattr(store, factory_name)
                 for k, v in fixture_dict.items():
                     if hash(k) != hash(req_obj):
                         fixture_dict[k] = responses
@@ -169,7 +172,8 @@ class Stores:
 
         if mock_responses:
             last_response = mock_responses[-1][1]
-            msg = f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}'
+            msg = 'UNEXPECTED CALL DETECTED. expected only ' + \
+                f'{len(mock_responses)} calls to {req_obj}'
             if store.assert_no_extra_calls:
                 LOGGER.error(msg)  # TODO do we need these?
                 raise AssertionError(msg)
