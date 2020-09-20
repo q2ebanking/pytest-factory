@@ -1,12 +1,15 @@
 # pytest-factory
-pytest-factory fixture factories create request-level unit tests and fixtures
-for server request handlers without the need for any server to be listening
-(yours or anyone else's).
-currently supports just tornado and http.
+pytest-factory creates request-level unit tests and fixtures for server request
+handlers without the need for any server to be listening (yours or anyone
+  else's).
+currently supports tornado and http.
 
-fixture factories are implemented as decorators that can be applied to pytest
-classes and functions allowing fixture-reuse and programmability.
-fixture factories
+what is a factory? see https://docs.pytest.org/en/stable/fixture.html#factories-as-fixtures
+
+pytest-factory takes that concept of factories as functional fixtures one step
+further: factories as decorators.
+decorators can be applied to both pytest classes and functions allowing
+hierarchical and modular fixture-reuse.
 minimal configuration required to start but can be fully customized with
 inheritable plugin architecture for custom request/response types.
 
@@ -80,9 +83,7 @@ class TestClass:
 
 ## features
 ### web application back-end testing
-the component under test is currently a tornado Application or RequestHandler
-but the code is currently being updated to be generic for any network-based
-request handler.
+the component under test is currently a tornado RequestHandler.
 
 a test suite can define either a single RequestHandler in its settings.py or
 different RequestHandler classes at the test class or function level. tests
@@ -104,11 +105,12 @@ pytest-factory plugin with factories for fixtures the team commonly uses, but
 also inherits from a company-distributed plugin for services shared across the
 company.
 
-### fixture factories with decorators
-pytest-factory comes with a set of fixture factories for common client-server
+### factories as decorators
+pytest-factory comes with a set of factories for common client-server
 interactions and tools for users to create their own.
 these methods use pytest's monkeypatching feature so their scope is limited to
 the test function.
+the features of
 
 #### decorators
 pytest-factory represents fixture factories with decorators, which are executed
@@ -122,7 +124,7 @@ TODO - not implemented!!!
 outbound calls not intercepted by fixtures can be allowed to connect to allow
 hybrid, offline/online functional/integration testing.
 
-#### included fixture factories
+#### included factories
 pytest-factory comes with factories for:
 - requests package - intercepts outbound calls and route them to http fixtures
 - http/smtp/ftp - maps outbound http calls to mock responses
@@ -132,25 +134,33 @@ these pre-made factories can be used as models for users to create their own.
 the methods in pytest_factory.framework.helpers can make this as easy as
 defining one function containing one function call!
 
-#### fixture factory parser - TODO - not yet implemented
-pytest-factory comes with a factory parser with an interface for users to
-create their own parser adapters. the factory parser can operate in two modes:
+## future dev
+### support for other frameworks
+this project is purposefully organized to enable support for other web service
+frameworks like django or flask.
+someone familiar with those frameworks will need to write something equivalent
+to pytest_factory.mock_request though this could be made easier.
+
+support for non-python frameworks like node or rails is another possibility.
+
+### factory parser
+the factory parser loads fixture factories from file and has an interface for
+plugin developers to create parser adapters. the factory parser can operate in
+two modes:
 - load the factories as a module so the user can manually create tests by
 importing and applying them where needed
 - load the factories then produce test cases based on the possible permutations
 of request and response. see "test parameterization" below for more details.
-examples of types of adapters:
+
+examples of types of parser adapters:
 - logging
   - parses requests/responses from logs then create test case that
-matches the live behavior
-  - TODO maybe add a logging adapter that will format logs to leave breadcrumbs
-    for this parser?
+    matches the live behavior
 - WSDL, swagger or similar service interface contracts
   - creates fixture module
   - if interfaces are sufficiently defined can create test suite
 
-
-### test parameterization - TODO - not yet implemented
+### test parameterization
 pytest-factory takes a simple, domain model approach to semi-automating
 test parameterization. new tests are extrapolated from existing test cases by
 comparing differences in the requests and responses of each service or model.
@@ -189,7 +199,7 @@ these strategies use historical data to validate or create tests and
 vary on the type of data:
 - pytest_factory.parameterization.parse_logs
   1. user marks their test or test module with parse_logs
-  2a. either user's request handler inherits pytest-factory.handler_mixin (TODO),
+  2a. either user's request handler inherits pytest-factory.handler_mixin,
       which adds pytest_factory breadcrumbs in logs
   2b. or user defines parser adapter appropriate for their logger of choice
   3. parse_logs creates fixtures' requests/responses from log using either
@@ -209,7 +219,7 @@ this is just a three step process (for the user):
 2. define failure_modes when calling or defining factories
   - pytest-factory factories like mock_http_server already have defaults
       (like 404)
-  - can load from file e.g. swagger.yaml
+  - can load from file see "factory parser"
 3. define the happy paths
   - use fixture factories
   - based on requirements
