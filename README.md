@@ -13,6 +13,14 @@ inheritable plugin architecture for custom request/response types.
 originally developed within Q2 to unit test complex microservices that make
 multiple asynchronous intranet and internet calls per request/response cycle.
 
+*NOTE*
+as with all software tools, this can be used to encourage both good and bad
+laziness. pytest-factory is NOT a substitute for human-written tests! it does
+not guarantee your code will work, it just guarantees it will not break in the
+ways that it tells you about. it is still the responsibility of a human
+developer to decide the happy path and validate the behavior that
+pytest-factory reports with real-world data.
+
 ## example
 given a tornado application app.py (see tests/app.py for a more complex
 example):
@@ -49,6 +57,7 @@ pytest_plugins = "pytest_factory.framework.pytest"
 your test.py (contrived to illustrate point on decorators as fixture
 factories):
 ```python
+import pytest
 from pytest_factory import mock_request, mock_http_server
 
 from app import MainHandler
@@ -70,18 +79,15 @@ class TestClass:
 
 
 ## features
-### web application back-end test factory
+### web application back-end testing
 the component under test is currently a tornado Application or RequestHandler
 but the code is currently being updated to be generic for any network-based
 request handler.
 
 a test suite can define either a single RequestHandler in its settings.py or
-different RequestHandler types at the test class or function level. tests
+different RequestHandler classes at the test class or function level. tests
 currently run in the asyncio loop to fully simulate tornado environment but can
 be updated to be generic.
-
-to minimize modifying the behavior of the component under test, a method is
-monkeypatched into the RequestHandler in order to execute the handler code.
 
 ### pytest plugin
 pytest drives the tests and pytest-factory is architected as a pytest plugin.
@@ -93,15 +99,14 @@ if your project requires a common set of fixtures and you want to distribute
 them to your team, pytest-factory allows you to create plugins using the pytest
 plugin framework. not only that, if your team is a large organization, or your
 project inherits from a specific customization of tornado, pytest-factory
-plugins can be nested in a hierarchy. for example, your team may use a pytest-
-factory plugin that has fixtures common for the project you are working, but
-also inherits from another plugin containing fixtures for services shared
-across the company.
+plugins can be nested in a hierarchy. for example, your team may use a
+pytest-factory plugin with factories for fixtures the team commonly uses, but
+also inherits from a company-distributed plugin for services shared across the
+company.
 
 ### fixture factories with decorators
-live test fixtures are unpredictable and often unavailable. pytest-factory
-comes with a set of fixture factories for common client-server interactions
-and tools for users to create their own.
+pytest-factory comes with a set of fixture factories for common client-server
+interactions and tools for users to create their own.
 these methods use pytest's monkeypatching feature so their scope is limited to
 the test function.
 
@@ -113,64 +118,110 @@ user to create a hierarchy of default and override fixture settings when
 representing the possible permutations of call types and response types in a
 complex architecture.
 
+TODO - not implemented!!!
+outbound calls not intercepted by fixtures can be allowed to connect to allow
+hybrid, offline/online functional/integration testing.
+
 #### included fixture factories
 pytest-factory comes with factories for:
 - requests package - intercepts outbound calls and route them to http fixtures
 - http/smtp/ftp - maps outbound http calls to mock responses
-- mock_request - generates an inbound http request
+- mock_request - mocks an inbound http request
 
 these pre-made factories can be used as models for users to create their own.
 the methods in pytest_factory.framework.helpers can make this as easy as
 defining one function containing one function call!
 
-#### fixture factory parser TODO
-factories can even be generated from file. pytest-factory comes with a
-factory parser with an interface for users to create their own parser adapters.
-the factory parser can operate in two modes:
-- load the factories as a module so the user can manually generate tests by
+#### fixture factory parser - TODO - not yet implemented
+pytest-factory comes with a factory parser with an interface for users to
+create their own parser adapters. the factory parser can operate in two modes:
+- load the factories as a module so the user can manually create tests by
 importing and applying them where needed
 - load the factories then produce test cases based on the possible permutations
-of request and response. see "test generation" below for more details.
+of request and response. see "test parameterization" below for more details.
 examples of types of adapters:
 - logging
-  - parses requests/responses from logs then generate test case that
+  - parses requests/responses from logs then create test case that
 matches the live behavior
   - TODO maybe add a logging adapter that will format logs to leave breadcrumbs
     for this parser?
 - WSDL, swagger or similar service interface contracts
-  - generates fixture module
-  - if interfaces are sufficiently defined can generate test suite
+  - creates fixture module
+  - if interfaces are sufficiently defined can create test suite
 
 
-### test generation - not yet implemented
-test generation is generally speaking an unsolved problem and attempts often
-involve code analysis or variations of genetic algorithms to mutate inputs or
-other computationally intensive and/or insufficiently precise for a given
-domain (for example in http server testing there is usually no improvement in
-test coverage from randomizing url and query params).
-pytest-factory takes a simpler approach divided into two strategies:
+### test parameterization - TODO - not yet implemented
+pytest-factory takes a simple, domain model approach to semi-automating
+test parameterization. new tests are extrapolated from existing test cases by
+comparing differences in the requests and responses of each service or model.
+these differences can be reported along several dimensions:
+- time
+- logs vs test logs
+- failure modes for each fixture
+- test pass vs fail
+
+the parameters reported are saved in a hidden file for analysis:
+`.pytest-factory/<test_name>/<timestamp>`
+as well as a file to track the current state of each test:
+`.pytest-factory/<test_name>/current_expectations`
+it's up to the user if they want to git add all, none or just the
+current_expectations file.
+
+if any parameterized assertion fails and it's because the expectations have
+changed, the user can either specify a test or for all tests call:
+`pytest-factory --update-expected [test-name]`
+or just:
+`pytest-factory -u [test-name]`
+or edit the current_expectations file directly:
+  1. comment out or delete the line that references a given test's data
+    (represented as a timestamp) or set the timestamp to be the latest test's
+    timestamp
+  2. next time pytest_factory runs, for each test missing from
+  current_expectations, that file is updated from last timestamp's test data
+
+the data plus the following pytest_factory tools provide the user with multiple
+strategies for discovering errors in their code or tests or to update the
+expected behavior if the new behavior is correct. these strategies can be
+divided in two categories:
 
 #### descriptive - logs and test report diffing
-this technique involves using historical data to generate tests or interpret
-new test results.
+these strategies use historical data to validate or create tests and
+vary on the type of data:
+- pytest_factory.parameterization.parse_logs
+  1. user marks their test or test module with parse_logs
+  2a. either user's request handler inherits pytest-factory.handler_mixin (TODO),
+      which adds pytest_factory breadcrumbs in logs
+  2b. or user defines parser adapter appropriate for their logger of choice
+  3. parse_logs creates fixtures' requests/responses from log using either
+    parser adapter or pytest_factory breadcrumbs
+  4. define and collect new test function that asserts logged responses match
+      mock/test responses
+- pytest_factory.parameterization.diff_recordings
+  1. user marks their test or test module with diff_recordings
+  2. define and collect new test function that asserts that last recorded
+    responses and handler logs match current test's
 
 #### predictive - failure modes
+this strategy predicts what behavior will be from known requirements as defined
+by the user and any services they are connecting to.
 this is just a three step process (for the user):
-1. define failure modes for each fixture
+1. mark tests with pytest_factory.parameterization.cause_failures
+2. define failure_modes when calling or defining factories
   - pytest-factory factories like mock_http_server already have defaults
       (like 404)
   - can load from file e.g. swagger.yaml
-2. define the happy paths
+3. define the happy paths
   - use fixture factories
   - based on requirements
-3. run tests and see the generated test results
-pytest-factory parameterizes your happy path tests by generating a new test
-case for each failure mode defined for each factory that created a fixture for
-that happy path.
-if a fixture does not have failure modes defined it will go with the happy
-path.
-
-####
+4a. either run tests and see the parameterized test results
+4b. or when either parameterizing a test or factory:
+  `pytest-factory --parameterize [test-name|factory-name]`
+  or to just parameterize for all:
+  `pytest-factory -p`
+to have pytest-factory write the code for the parameterized tests to file for
+the user to review or customize. these tests can be executed like any pytest
+and should be properly formatted for humans. maybe put comments in the
+generated code indicating they were written by pytest-factory?
 
 ## contributing
 please look at the unit tests (either failing or missing cases) to get an idea
