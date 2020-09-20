@@ -120,10 +120,6 @@ user to create a hierarchy of default and override fixture settings when
 representing the possible permutations of call types and response types in a
 complex architecture.
 
-TODO - not implemented!!!
-outbound calls not intercepted by fixtures can be allowed to connect to allow
-hybrid, offline/online functional/integration testing.
-
 #### included factories
 pytest-factory comes with factories for:
 - requests package - intercepts outbound calls and route them to http fixtures
@@ -135,13 +131,22 @@ the methods in pytest_factory.framework.helpers can make this as easy as
 defining one function containing one function call!
 
 ## future dev
+listed in order of difficulty:
+
+### hybrid testing
+outbound calls not intercepted by fixtures can be allowed to connect to allow
+hybrid, offline/online functional/integration testing by configuring the user's
+`Settings.allow_outbound_calls = True`
+
+### wildcard routing
+fixture routes can be defined as wildcards using regex and respond in lower
+priority to matching outbound requests
+
 ### support for other frameworks
 this project is purposefully organized to enable support for other web service
 frameworks like django or flask.
 someone familiar with those frameworks will need to write something equivalent
 to pytest_factory.mock_request though this could be made easier.
-
-support for non-python frameworks like node or rails is another possibility.
 
 ### factory parser
 the factory parser loads fixture factories from file and has an interface for
@@ -153,12 +158,17 @@ importing and applying them where needed
 of request and response. see "test parameterization" below for more details.
 
 examples of types of parser adapters:
-- logging
-  - parses requests/responses from logs then create test case that
-    matches the live behavior
+- logged requests/responses, parsed from either of:
+  - user's request handler can inherit pytest-factory.handler_mixin which adds
+    pytest_factory breadcrumbs in logs
+  - user-defined log parser if existing logger already provides
+    request/response data
 - WSDL, swagger or similar service interface contracts
   - creates fixture module
   - if interfaces are sufficiently defined can create test suite
+
+### support for other languages
+support for non-python frameworks like node or rails is an eventual goal.
 
 ### test parameterization
 pytest-factory takes a simple, domain model approach to semi-automating
@@ -199,11 +209,8 @@ these strategies use historical data to validate or create tests and
 vary on the type of data:
 - pytest_factory.parameterization.parse_logs
   1. user marks their test or test module with parse_logs
-  2a. either user's request handler inherits pytest-factory.handler_mixin,
-      which adds pytest_factory breadcrumbs in logs
-  2b. or user defines parser adapter appropriate for their logger of choice
-  3. parse_logs creates fixtures' requests/responses from log using either
-    parser adapter or pytest_factory breadcrumbs
+  2. user configures log parser to use either adapter or breadcrumbs
+  3. parse_logs creates fixtures' requests/responses from logs
   4. define and collect new test function that asserts logged responses match
       mock/test responses
 - pytest_factory.parameterization.diff_recordings
@@ -234,12 +241,13 @@ and should be properly formatted for humans. maybe put comments in the
 generated code indicating they were written by pytest-factory?
 
 ## contributing
-please look at the unit tests (either failing or missing cases) to get an idea
-of what needs to be done! or if you think there needs to be a feature, add unit
-tests!
+please look at "future dev" and the unit tests (either failing or missing
+cases) to get an idea of what needs to be done! or if you think there needs to
+be a feature, add unit tests!
 how do you unit test a test framework? by writing a test using the feature as
-if it exists, updating the fake app.py to exhibit the behavior your want to the
-new feature to test, then running pytest. write code wherever it throws errors.
+if it exists, updating the fake app.py to exhibit the behavior you want the new
+feature to test. if you're still lost at that point, just run pytest and write
+code wherever it throws errors.
 
 there are also TODOs scattered throughout the code where additional work could
 yield a new feature.
@@ -247,9 +255,8 @@ yield a new feature.
 ### caveats
 testing a test framework is fundamentally challenging. please beware of the
 following limitations in the current code:
-- test function names must be unique across the project
-    - otherwise you get fixture collision
-    - TODO find way to make test names include module at least?
+- test function names must be unique across the project or you get fixture
+  collision
 - the following are functionally tested and may require more work than is
     worthwhile to unit test:
     - framework/helpers.py
