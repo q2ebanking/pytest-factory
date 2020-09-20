@@ -230,15 +230,14 @@ this is just a three step process (for the user):
 3. define the happy paths
   - use fixture factories
   - based on requirements
-4a. either run tests and see the parameterized test results
-4b. or when either parameterizing a test or factory:
-  `pytest-factory --parameterize [test-name|factory-name]`
-  or to just parameterize for all:
-  `pytest-factory -p`
-to have pytest-factory write the code for the parameterized tests to file for
-the user to review or customize. these tests can be executed like any pytest
-and should be properly formatted for humans. maybe put comments in the
-generated code indicating they were written by pytest-factory?
+4. run tests and see the parameterized test results
+5. optionally, when parameterizing a test or factory run:
+  `pytest-factory --reify [test-name|factory-name]`
+  or for all tests:
+  `pytest-factory -r`
+  to have pytest-factory write the code for the parameterized tests to file for
+  the user to review or customize. the generated code will be marked with
+  comments saying it was written by pytest-factory.
 
 ## contributing
 please look at "future dev" and the unit tests (either failing or missing
@@ -290,7 +289,7 @@ organized by user role:
     - have functions be easily accessible via imports, including in
         __init__.py
     - be thoroughly documented per parameter and return value
-    - fully type-hinted
+    - be fully type-hinted
     - document examples where relevant
 - "plugin developer"
   - develops pytest-factory plugins

@@ -6,11 +6,21 @@ from pytest_factory.framework.pytest import LOGGER
 
 pytestmark = pytest.mark.asyncio
 
+EXPECTED_WARNINGS = {
+    'test_http_no_calls_warning': '''
+pytest-factory WARNING: the following fixtures have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
+pytest-factory WARNING: if this is not expected, consider this a test failure!''',
+    'test_http_extra_call_warning': '''
+pytest-factory WARNING: UNEXPECTED CALL DETECTED. expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None)
+pytest-factory WARNING: will repeat last response: yup'''
+}
+
 
 @mock_http_server(path='http://www.test.com/mock_endpoint', response='yup')
 @mock_request()
 class TestHttp:
-    @mock_http_server(path='http://www.test.com/mock_endpoint', response='nope')
+    @mock_http_server(path='http://www.test.com/mock_endpoint',
+                      response='nope')
     async def test_http_func_override(self, store):
         resp = await store.handler.run_test()
         assert resp == 'nope'
@@ -26,7 +36,8 @@ class TestHttp:
         resp = await store.handler.run_test()
         assert resp == 'wild'
 
-    @mock_http_server(path='http://www.test.com/mock_endpoint', response=lambda x: x.path)
+    @mock_http_server(path='http://www.test.com/mock_endpoint',
+                      response=lambda x: x.path)
     async def test_http_response_function(self, store):
         resp = await store.handler.run_test()
         assert resp == 'http://www.test.com/mock_endpoint'
@@ -43,7 +54,8 @@ class TestHttp:
         @mock_request(path='?num=2')
         async def test_http_extra_call_warning(self, store):
             """
-            please note that this test is expected to raise a non-fatal UserWarning
+            please note that this test is expected to raise a non-fatal
+            UserWarning
             see self.teardown_method
             """
             resp = await store.handler.run_test(assert_no_extra_calls=False)
@@ -57,22 +69,21 @@ class TestHttp:
 
         def teardown_method(self, method):
             """
-            this is ugly but it's what you get when you write tests for a test framework
+            be aware that if AssertionError gets raised here the debugger will
+            likely jump context to a method called f"{test_func}_teardown" that
+            does not exist after the pytest.Session ends.
 
-            be aware that if AssertionError gets raised here the debugger will likely jump context to a method called
-            f"{test_func}_teardown" that does not exist after the pytest.Session ends.
+            for PyCharm this means when attempting to debug just the method
+            from within the dedicated "Debug" tile, it will try to execute and
+            debug the "_teardown" method which no longer exists, and PyTest
+            will claim it could not find any tests to collect.
 
-            for PyCharm this means when attempting to debug just the method from within the dedicated "Debug" tile,
-            it will try to execute and debug the "_teardown" method which no longer exists, and PyTest will claim
-            it could not find any tests to collect. manually select the actual test method and execute debug instead.
+            manually select the actual test method and execute debug instead.
+
             :param method:
             :return:
             """
-            if method == self.test_http_no_calls_warning:
-                assert LOGGER.buffer[-1] == '''
-pytest-factory WARNING: the following fixtures have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
-pytest-factory WARNING: if this is not expected, consider this a test failure!'''
-            elif method == self.test_http_extra_call_warning:
-                assert LOGGER.buffer[-1] == '''
-pytest-factory WARNING: UNEXPECTED CALL DETECTED. expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None)
-pytest-factory WARNING: will repeat last response: yup'''
+            expected = EXPECTED_WARNINGS.get(method.__name__)
+            if expected:
+                actual = LOGGER.buffer[-1]
+                assert actual == expected
