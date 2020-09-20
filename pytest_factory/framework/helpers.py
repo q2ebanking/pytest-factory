@@ -1,6 +1,6 @@
 import inspect
 import sys
-from typing import Callable, Optional, Any
+from typing import Callable, Optional, Any, List
 
 import pytest_factory.mock_request_types as mrt
 from pytest_factory.framework.stores import STORES
@@ -8,7 +8,7 @@ from pytest_factory.framework.stores import STORES
 
 def make_fixture_factory(req_obj: mrt.BaseMockRequest,
                          response: mrt.MOCK_HTTP_RESPONSE,
-                         failure_modes: Optional[mrt.ROUTING_TYPE] = None,
+                         failure_modes: Optional[List["FailureMode"]] = None,
                          factory_name: Optional[str] = None) -> Callable:
     """
     Creates a fixture factory. For use by contributors and plugin

@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from tornado.web import RequestHandler
 
@@ -85,7 +85,7 @@ class Stores:
     def update(self, test_name: str, factory_name: str,
                req_obj: mrt.BaseMockRequest,
                response: mrt.MOCK_HTTP_RESPONSE = None,
-               failure_modes: Optional[mrt.ROUTING_TYPE] = None):
+               failure_modes: List["FailureMode"] = None):
         """
         always use this method to modify STORES AFTER configuration stage ends
 
@@ -107,7 +107,7 @@ class Stores:
             self._by_test[test_name] = Store(**{
                 factory_name: {
                     req_obj: responses,
-                    '_failure_modes': failure_modes
+                    '_failure_modes': failure_modes or []
                 }
             })
         else:

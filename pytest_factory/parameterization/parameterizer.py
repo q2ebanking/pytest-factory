@@ -10,4 +10,7 @@ from typing import List
 
 
 def parameterize(item: Item) -> List[Item]:
-    return []
+    # TODO run each parameterizer if the given item is marked for it
+    # TODO and pass the tests they generate on to next parameterizer
+    # TODO then return all
+    return [item]
