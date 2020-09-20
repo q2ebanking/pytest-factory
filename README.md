@@ -289,11 +289,12 @@ organized by user role:
   - code for their use should:
     - have functions be easily accessible via imports, including in
         __init__.py
-    - be thoroughly documented per parameter and fully type-hinted
+    - be thoroughly documented per parameter and return value
+    - fully type-hinted
     - document examples where relevant
 - "plugin developer"
   - develops pytest-factory plugins
-  - code they produce should:
+  - plugin code should:
     - be imported into the settings.py for that plugin
     - define or import all pytest invocations (e.g. pytest.fixture) in a single
       module that will be included in end user's conftest.pytest_plugins
