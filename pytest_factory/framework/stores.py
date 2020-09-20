@@ -1,9 +1,9 @@
 import pytest
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from tornado.web import RequestHandler
 
-from pytest_factory.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
+import pytest_factory.mock_request_types as mrt
 from pytest_factory.framework.settings import StoreType, LOGGER
 
 STORES = None
@@ -21,6 +21,15 @@ class Store(StoreType):
             if v is not None:
                 setattr(self, k, v)
 
+    @property
+    def get_fixtures(self) -> Dict[str, mrt.ROUTING_TYPE]:
+        fixtures = {}
+        for fixture, response_dict in vars(self).items():
+            if fixture not in ['handler', 'assert_no_extra_calls'] \
+                    and isinstance(response_dict, dict):
+                fixtures[fixture] = response_dict
+        return fixtures
+
     def check_no_uncalled_fixtures(self, raise_assertion_error: bool = False):
         """
         checks if this Store has any fixtures that have not been called the
@@ -31,17 +40,15 @@ class Store(StoreType):
         """
         uncalled_fixtures = {}
 
-        for fixture, response_dict in vars(self).items():
-            if fixture not in ['handler', 'assert_no_extra_calls'] \
-                    and isinstance(response_dict, dict):
-                uncalled_fixture_endpoints = {}
-                for key, responses in response_dict.items():
-                    uncalled_responses = [resp[1]
-                                          for resp in responses if not resp[0]]
-                    if uncalled_responses:
-                        uncalled_fixture_endpoints[key] = uncalled_responses
-                if uncalled_fixture_endpoints:
-                    uncalled_fixtures[fixture] = uncalled_fixture_endpoints
+        for fixture, response_dict in self.get_fixtures.items():
+            uncalled_fixture_endpoints = {}
+            for key, responses in response_dict.items():
+                uncalled_responses = [resp[1]
+                                      for resp in responses if not resp[0]]
+                if uncalled_responses:
+                    uncalled_fixture_endpoints[key] = uncalled_responses
+            if uncalled_fixture_endpoints:
+                uncalled_fixtures[fixture] = uncalled_fixture_endpoints
         if uncalled_fixtures:
             msg = f'the following fixtures have not been called: {uncalled_fixtures}!'
             if raise_assertion_error:
@@ -76,8 +83,8 @@ class Stores:
             self._by_test['*'] = default_store
 
     def update(self, test_name: str, factory_name: str,
-               req_obj: BaseMockRequest,
-               response: MOCK_HTTP_RESPONSE = None):
+               req_obj: mrt.BaseMockRequest,
+               response: mrt.MOCK_HTTP_RESPONSE = None):
         """
         always use this method to modify STORES AFTER configuration stage ends
 
@@ -123,7 +130,8 @@ class Stores:
             self._by_test[test_name] = store
         return store
 
-    def get_next_response(self, test_name: str, factory_name: str, req_obj: BaseMockRequest) -> Any:
+    def get_next_response(self, test_name: str, factory_name: str,
+                          req_obj: mrt.BaseMockRequest) -> Any:
         """
         will look up responses corresponding to the given parameters, then find
         the next response that has not yet been called, and marks it as called.

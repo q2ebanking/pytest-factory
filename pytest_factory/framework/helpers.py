@@ -2,12 +2,13 @@ import inspect
 import sys
 from typing import Callable, Optional, Any
 
-from pytest_factory.mock_request_types import BaseMockRequest, MOCK_HTTP_RESPONSE
+import pytest_factory.mock_request_types as mrt
 from pytest_factory.framework.stores import STORES
 
 
-def make_fixture_factory(req_obj: BaseMockRequest,
-                         response: MOCK_HTTP_RESPONSE,
+def make_fixture_factory(req_obj: mrt.BaseMockRequest,
+                         response: mrt.MOCK_HTTP_RESPONSE,
+                         failure_modes: Optional[mrt.ROUTING_TYPE] = None,
                          factory_name: Optional[str] = None) -> Callable:
     """
     Creates a fixture factory. For use by contributors and plugin
@@ -17,6 +18,9 @@ def make_fixture_factory(req_obj: BaseMockRequest,
 
     :param req_obj: used as key to map to mock responses
     :param response: string or Response
+    :param failure_modes: defines the ways the service mocked by this factory
+        could fail independent of the functioning of the component under test;
+        used if your test is marked pytest.mark.cause_failures
     :param factory_name: name of the fixture factory that will be applied to
         to returned Callable; defaults to name of function that called this
         function
