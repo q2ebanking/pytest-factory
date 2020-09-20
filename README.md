@@ -281,30 +281,23 @@ following limitations in the current code:
         their request object so that similar-enough requests result in the same
         hash value, but different-enough requests get differing values
 
-### style and code org
-- TODO - pick lint
-- all documentation should indicate, where appropriate, who the intended
-  user is for that module, class or function:
-    - "end user"
-      - develops tests for their tornado server
-      - style guide:
-        - methods should be easily accessible via imports, including in
-            __init__.py
-        - should be thoroughly documented per parameter and fully type-hinted
-        - documentation should include examples where relevant
-        - code inside these methods should be concise and transparent or
-            carefully commented where it is not by necessity
-    - "plugin developer"
-      - develops pytest-factory plugins
-      - style guide:
-        - all methods, classes, objects should be defined and imported into the
-            settings.py for that plugin
-        - any other integrations that require pytest invocations (e.g.
-            pytest.fixture) should be in a module that is included in the
-            pytest_plugins defined in the user's conftest.py
-    - "contributor"
-      - develops pytest-factory itself
-      - style guide:
-        - attributes not intended for direct access should begin with '_'
-        - modules and classes not intended for the user should be kept in the
-            "framework" directory
+### style and code structure
+style and code structure are organized by user role:
+- "end user"
+  - develops tests for their tornado server
+  - code for their use should:
+    - have functions be easily accessible via imports, including in
+        __init__.py
+    - be thoroughly documented per parameter and fully type-hinted
+    - document examples where relevant
+- "plugin developer"
+  - develops pytest-factory plugins
+  - code they produce should:
+    - be imported into the settings.py for that plugin
+    - define or import all pytest invocations (e.g. pytest.fixture) in a single
+      module that will be included in end user's conftest.pytest_plugins
+- "contributor"
+  - develops pytest-factory itself
+  - contributed code should:
+    - "hide" with '_' attributes not intended for the end user
+    - keep modules and classes not intended for the end user in "framework"
