@@ -282,7 +282,8 @@ following limitations in the current code:
         hash value, but different-enough requests get differing values
 
 ### style and code structure
-style and code structure are organized by user role:
+besides PEP and general code hygiene, the following guidance is recommended,
+organized by user role:
 - "end user"
   - develops tests for their tornado server
   - code for their use should:
