@@ -150,12 +150,9 @@ to pytest_factory.mock_request though this could be made easier.
 
 ### factory parser
 the factory parser loads fixture factories from file and has an interface for
-plugin developers to create parser adapters. the factory parser can operate in
-two modes:
-- load the factories as a module so the user can manually create tests by
+plugin developers to create parser adapters. the factory parser can load the 
+factories as a module so the user can manually create tests by
 importing and applying them where needed
-- load the factories then produce test cases based on the possible permutations
-of request and response. see "test parameterization" below for more details.
 
 examples of types of parser adapters:
 - logged requests/responses, parsed from either of:
@@ -165,79 +162,9 @@ examples of types of parser adapters:
     request/response data
 - WSDL, swagger or similar service interface contracts
   - creates fixture module
-  - if interfaces are sufficiently defined can create test suite
 
 ### support for other languages
 support for non-python frameworks like node or rails is an eventual goal.
-
-### test parameterization
-pytest-factory takes a simple, domain model approach to semi-automating
-test parameterization. new tests are extrapolated from existing test cases by
-comparing differences in the requests and responses of each service or model.
-these differences can be reported along several dimensions:
-- time
-- logs vs test logs
-- failure modes for each fixture
-- test pass vs fail
-
-the parameters reported are saved in a hidden file for analysis:
-`.pytest-factory/<test_name>/<timestamp>`
-as well as a file to track the current state of each test:
-`.pytest-factory/<test_name>/current_expectations`
-it's up to the user if they want to git add all, none or just the
-current_expectations file.
-
-if any parameterized assertion fails and it's because the expectations have
-changed, the user can either specify a test or for all tests call:
-`pytest-factory --update-expected [test-name]`
-or just:
-`pytest-factory -u [test-name]`
-or edit the current_expectations file directly:
-  1. comment out or delete the line that references a given test's data
-    (represented as a timestamp) or set the timestamp to be the latest test's
-    timestamp
-  2. next time pytest_factory runs, for each test missing from
-  current_expectations, that file is updated from last timestamp's test data
-
-the data plus the following pytest_factory tools provide the user with multiple
-strategies for discovering errors in their code or tests or to update the
-expected behavior if the new behavior is correct. these strategies can be
-divided in two categories:
-
-#### descriptive - logs and test report diffing
-these strategies use historical data to validate or create tests and
-vary on the type of data:
-- pytest_factory.parameterization.parse_logs
-  1. user marks their test or test module with parse_logs
-  2. user configures log parser to use either adapter or breadcrumbs
-  3. parse_logs creates fixtures' requests/responses from logs
-  4. define and collect new test function that asserts logged responses match
-      mock/test responses
-- pytest_factory.parameterization.diff_recordings
-  1. user marks their test or test module with diff_recordings
-  2. define and collect new test function that asserts that last recorded
-    responses and handler logs match current test's
-
-#### predictive - failure modes
-this strategy predicts what behavior will be from known requirements as defined
-by the user and any services they are connecting to.
-this is just a three step process (for the user):
-1. mark tests with pytest_factory.parameterization.cause_failures
-2. define failure_modes when calling or defining factories
-  - pytest-factory factories like mock_http_server already have defaults
-      (like 404)
-  - can load from file see "factory parser"
-3. define the happy paths
-  - use fixture factories
-  - based on requirements
-4. run tests and see the parameterized test results
-5. optionally, when parameterizing a test or factory run:
-  `pytest-factory --reify [test-name|factory-name]`
-  or for all tests:
-  `pytest-factory -r`
-  to have pytest-factory write the code for the parameterized tests to file for
-  the user to review or customize. the generated code will be marked with
-  comments saying it was written by pytest-factory.
 
 ## contributing
 please look at "future dev" and the unit tests (either failing or missing
