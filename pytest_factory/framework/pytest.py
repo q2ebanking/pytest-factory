@@ -22,20 +22,21 @@ from pytest_factory.framework.helpers import get_generic_caller
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
 
+# not an unused import!
+from pytest_factory.parameterization import pytest_generate_tests
+
 
 def pytest_configure(config: Config) -> None:
     try:
         local_settings = importlib.import_module('tests.settings').SETTINGS
         SETTINGS.load(local_settings)
     except Exception as _:
-        LOGGER.warning(
-            'could not find settings.py in the expected location: <cwd>/tests/settings.py'
-            'will proceed but will fail if @mock_request decorators do not define RequestHandler classes')
+        LOGGER.warning('could not find settings.py in the expected '
+                       + 'location: <cwd>/tests/settings.py',
+                       'will proceed but will fail if @mock_request '
+                       + 'decorators do not define RequestHandler classes')
         pass
     STORES.load(default_store=SETTINGS.default_store)
-
-
-# TODO add pytest_collection_finish hook to detect duplicate test names and throw warning
 
 
 @pytest.fixture()
@@ -47,7 +48,8 @@ def store(request):
     """
     test_name = request.node.name
     store = STORES.get_store(test_name=test_name)
-    assert store, 'pytest-factory ERROR: you broke something. probably in helpers.py or in this module'
+    assert store, 'pytest-factory ERROR: you broke something. probably in ' + \
+                  'helpers.py or in this module'
     return store
 
 
