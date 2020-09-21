@@ -248,6 +248,13 @@ if it exists, updating the fake app.py to exhibit the behavior you want the new
 feature to test. if you're still lost at that point, just run pytest and write
 code wherever it throws errors.
 
+this project has led me deep into pytest leading me to discover how much wheel-
+reinventing i've done. any refactoring that leads to more code reuse is deeply
+appreciated so long as the integrated pytest feature is a test framework
+pattern that is well-defined and likely to have counterparts in other
+frameworks and languages. while the code is coupled to pytest, the touchpoints
+are few in number and can be genericized. 
+
 there are also TODOs scattered throughout the code where additional work could
 yield a new feature.
 

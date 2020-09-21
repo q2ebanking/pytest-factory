@@ -1,10 +1,9 @@
 """
 TODO parameterize given test by failure modes of its fixtures
 """
-from pytest import Item
 from typing import List
 
-from pytest_factory.framework.stores import STORES
+from pytest_factory.framework.stores import Store
 from pytest_factory.framework.settings import LOGGER
 import pytest_factory.mock_request_types as mrt
 
@@ -17,19 +16,23 @@ class FailureMode:
         self.response = response
 
 
-def cause_failures(item: Item) -> List[Item]:
-    store = STORES.get_store(item.name)
-    new_tests: List[Item] = []
-    for factory_name, response_dict in store.get_fixtures.items():
-        failure_modes = response_dict.get('_failure_modes')
-        if not failure_modes:
-            LOGGER.warning(f'test {item.name} could not be parameterized by'
-                           'failure modes because fixture created by '
-                           '{factory_name} does not define them!')
-            continue
-        for failure_mode in failure_modes:
-            test_name = f'{item.name}_{failure_mode.name}'
-            new_test = Item(name=test_name, parent=item)
-            new_tests.append(new_test)
+def cause_failures(test_name: str, stores: List[Store]) -> List[Store]:
+    for store in stores:
+        for factory_name, response_dict in store.get_fixtures.items():
+            failure_modes = response_dict.get('_failure_modes')
+            if not failure_modes:
+                LOGGER.warning(f'test {test_name} could not be parameterized by'
+                               'failure_modes because fixture created by '
+                               '{factory_name} does not define them!')
+                continue
+            for failure_mode in failure_modes:
+                store_args = {
+                    factory_name: {
+                        failure_mode.request: failure_mode.response
+                    }
+                }
+                parametrized_store = Store(**vars(store))
+                parametrized_store.load_defaults(store_args)
+                stores.append(parametrized_store)
 
-    return new_tests
+    return stores

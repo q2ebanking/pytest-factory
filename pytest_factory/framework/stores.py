@@ -29,6 +29,13 @@ class Store:
                 fixtures[fixture] = response_dict
         return fixtures
 
+    def load_defaults(self, default_routes: Dict[str, mrt.ROUTING_TYPE]):
+        for fixture_name, route in default_routes.items():
+            if hasattr(self, fixture_name):
+                getattr(self, fixture_name).update(route)
+            else:
+                setattr(self, fixture_name, route)
+
     def check_no_uncalled_fixtures(self, raise_assertion_error: bool = False):
         """
         checks if this Store has any fixtures that have not been called the
@@ -70,6 +77,7 @@ class Stores:
 
     def load(self, default_store: Store):
         """
+        # TODO rework so it gets applied to child Store
         load with fixture factories from SETTINGS mapped to a wildcard test
         name '*' so that they will apply to all test functions unless otherwise
         specified.

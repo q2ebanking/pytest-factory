@@ -22,8 +22,8 @@ from pytest_factory.framework.helpers import get_generic_caller
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
 
-
-# from pytest_factory.parameterization import parameterize
+# not an unused import!
+from pytest_factory.parameterization import pytest_generate_tests
 
 
 def pytest_configure(config: Config) -> None:
@@ -33,21 +33,10 @@ def pytest_configure(config: Config) -> None:
     except Exception as _:
         LOGGER.warning('could not find settings.py in the expected '
                        + 'location: <cwd>/tests/settings.py',
-                       'will proceed but will fail if @Òmock_request '
+                       'will proceed but will fail if @mock_request '
                        + 'decorators do not define RequestHandler classes')
         pass
     STORES.load(default_store=SETTINGS.default_store)
-
-
-def pytest_generate_tests(metafunc: "Metafunc") -> None:
-    """
-    takes metafunc and passes the contained Item to the parameterizer
-    which returns a list of new test Items.
-    metafunc is updated with the new test Items
-    :param metafunc: contains metadata for test function and references
-        to test config and definition
-    """
-    pass
 
 
 @pytest.fixture()
