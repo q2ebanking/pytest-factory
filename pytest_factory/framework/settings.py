@@ -2,7 +2,8 @@
 when creating plugins, a plugin-level settings.py is where most of the custom
 code should be integrated.
 
-# TODO consider prepending certain methods that could be mistaken for pytest native methods
+# TODO consider prepending certain methods that could be mistaken for pytest
+    native methods
 
 at the user project test level there can be another settings.py for project-
 global configurations. this means there can be two levels of settings defined
@@ -32,29 +33,21 @@ class Logger(logging.Logger):
 LOGGER = Logger()
 
 
-class SettingsType:
-    pass
-
-
-class StoreType:
-    pass
-
-
-PLUGINS_TYPE = Optional[List[SettingsType]]
+PLUGINS_TYPE = Optional[List["Settings"]]
 OVERRIDES_TYPE = Optional[Dict[str, Any]]
 
 
-class Settings(SettingsType):
+class Settings:
     def __init__(self,
                  default_request_handler_class: Optional[Callable] = None,
                  plugin_settings: PLUGINS_TYPE = None,
-                 default_store: Optional[StoreType] = None,
+                 default_store: Optional = None,
                  handler_overrides: OVERRIDES_TYPE = None):
         """
 
         :param default_request_handler_class:
         :param plugins:
-        :param default_store:
+        :param default_store: of type Store
         :param handler_overrides:
         :returns:
         """
@@ -65,7 +58,7 @@ class Settings(SettingsType):
         for settings in self.plugin_settings:
             self.inherit(settings)
 
-    def load(self, settings: SettingsType):
+    def load(self, settings: "Settings"):
         """
         take Settings from lower in hierarchy and merge them into the global settings
 
@@ -77,7 +70,7 @@ class Settings(SettingsType):
         for attribute, value in vars(settings).items():
             setattr(self, attribute, value)
 
-    def inherit(self, settings: SettingsType):
+    def inherit(self, settings: "Settings"):
         """
         take Settings from higher in hierarchy and merge them with this
         Settings, with the lower Settings values clobbering the higher.

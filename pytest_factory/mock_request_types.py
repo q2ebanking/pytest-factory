@@ -1,13 +1,24 @@
 from urllib.parse import urlparse
-from typing import Hashable, Optional, Union, List, Callable
+from typing import Hashable, Optional, Union, List, Callable, Dict, Any
 from enum import Enum
 from requests import Response
 
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
-# responses are optional and can be either a single response or list of responses where
-# the response type is either a Callable, Exception, str or requests.Response object
-MOCK_HTTP_RESPONSE = Optional[Union[Exception, str, Response, List[Union[Callable, Exception, str, Response]]]]
+# responses are optional and can be either a single response or list of
+# responses where the response type is either a Callable, Exception, str or
+# requests.Response object
+MOCK_HTTP_RESPONSE = Optional[
+    Union[
+        Exception,
+        str,
+        Response,
+        List[
+            Union[
+                Callable,
+                Exception,
+                str,
+                Response]]]]
 
 
 # based on what the requests module supports
@@ -41,13 +52,22 @@ class BaseMockRequest(Hashable):
         raise NotImplementedError
 
 
+ROUTING_TYPE = Dict[
+    Union[
+        Dict[str, Any],
+        BaseMockRequest],
+    MOCK_HTTP_RESPONSE
+    ]
+
+
 class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
     """
-    if creating your own request type for a fixture, you must set FIXTURE_NAME on the class
+    if creating your own request type for a fixture, you must set FACTORY_NAME on the class
     """
-    HASHING_ATTRIBUTES = ('query_arguments', 'body_arguments', 'method', 'protocol', 'host')
+    HASHING_ATTRIBUTES = ('query_arguments', 'body_arguments',
+                          'method', 'protocol', 'host')
 
-    FIXTURE_NAME = 'mock_http_server'
+    FACTORY_NAME = 'mock_http_server'
 
     def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
         """
@@ -76,7 +96,8 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
             'path': url_parts.path
         }
         if self.headers:
-            hashable_dict['headers'] = self.headers if isinstance(self.headers, dict) else self.headers._dict
+            hashable_dict['headers'] = self.headers if isinstance(
+                self.headers, dict) else self.headers._dict
         for attribute in self.HASHING_ATTRIBUTES:
             hashable_dict[attribute] = getattr(self, attribute)
 
