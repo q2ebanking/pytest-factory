@@ -35,7 +35,7 @@ from tornado.web import RequestHandler, Application
 
 
 class MainHandler(RequestHandler):
-    async def get(self)::
+    async def get(self):
         resp = requests.get(url='https://www.world.com/hello')
         self.write(resp.text)
 
