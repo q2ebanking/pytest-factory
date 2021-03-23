@@ -22,9 +22,6 @@ from pytest_factory.framework.helpers import get_generic_caller
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
 
-# not an unused import!
-from pytest_factory.parameterization import pytest_generate_tests
-
 
 def pytest_configure(config: Config) -> None:
     try:
