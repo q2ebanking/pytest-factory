@@ -54,7 +54,7 @@ your test.py:
 import pytest
 from pytest_factory import mock_request, mock_http_server
 
-from app import MainHandler
+from tests.app import MainHandler
 
 pytestmark = pytest.mark.asyncio
 
