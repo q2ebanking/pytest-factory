@@ -4,25 +4,17 @@ handlers without the need for any server to be listening (yours or anyone
   else's).
 currently supports tornado and http.
 
-what is a factory? see https://docs.pytest.org/en/stable/fixture.html#factories-as-fixtures
+what is a test factory? see https://docs.pytest.org/en/stable/fixture.html#factories-as-fixtures
 
-pytest-factory takes that concept of factories as functional fixtures one step
-further: factories as decorators.
-decorators can be applied to both pytest classes and functions allowing
-hierarchical and modular fixture-reuse.
+pytest-factory extends pytest with decorators that define test factories.
+pytest-factory decorators can be applied to both pytest classes and functions allowing
+hierarchical and modular factory-reuse.
 minimal configuration required to start but can be fully customized with
 inheritable plugin architecture for custom request/response types.
 
 originally developed within Q2 to unit test complex microservices that make
 multiple asynchronous intranet and internet calls per request/response cycle.
 
-*NOTE*
-as with all software tools, this can be used to encourage both good and bad
-laziness. pytest-factory is NOT a substitute for human-written tests! it does
-not guarantee your code will work, it just guarantees it will not break in the
-ways that it tells you about. it is still the responsibility of a human
-developer to decide the happy path and validate the behavior that
-pytest-factory reports with real-world data.
 
 ## example
 given a tornado application app.py (see tests/app.py for a more complex
@@ -57,13 +49,12 @@ your conftest.py:
 pytest_plugins = "pytest_factory.framework.pytest"
 ```
 
-your test.py (contrived to illustrate point on decorators as fixture
-factories):
+your test.py:
 ```python
 import pytest
 from pytest_factory import mock_request, mock_http_server
 
-from app import MainHandler
+from tests.app import MainHandler
 
 pytestmark = pytest.mark.asyncio
 
@@ -110,15 +101,13 @@ pytest-factory comes with a set of factories for common client-server
 interactions and tools for users to create their own.
 these methods use pytest's monkeypatching feature so their scope is limited to
 the test function.
-the features of
 
 #### decorators
 pytest-factory represents fixture factories with decorators, which are executed
 during test collection to create the fixture for the test being collected.
 these factories can be applied to test classes and functions, allowing the
 user to create a hierarchy of default and override fixture settings when
-representing the possible permutations of call types and response types in a
-complex architecture.
+representing the possible permutations of call types and response types.
 
 #### included factories
 pytest-factory comes with factories for:
@@ -131,7 +120,7 @@ the methods in pytest_factory.framework.helpers can make this as easy as
 defining one function containing one function call!
 
 ## future dev
-listed in order of difficulty:
+listed in order of increasing complexity:
 
 ### hybrid testing
 outbound calls not intercepted by fixtures can be allowed to connect to allow
@@ -155,7 +144,7 @@ factories as a module so the user can manually create tests by
 importing and applying them where needed
 
 examples of types of parser adapters:
-- logged requests/responses, parsed from either of:
+- logged requests/responses, parsed from either:
   - user's request handler can inherit pytest-factory.handler_mixin which adds
     pytest_factory breadcrumbs in logs
   - user-defined log parser if existing logger already provides
@@ -166,28 +155,9 @@ examples of types of parser adapters:
 ### support for other languages
 support for non-python frameworks like node or rails is an eventual goal.
 
-## contributing
-please look at "future dev" and the unit tests (either failing or missing
-cases) to get an idea of what needs to be done! or if you think there needs to
-be a feature, add unit tests!
-how do you unit test a test framework? by writing a test using the feature as
-if it exists, updating the fake app.py to exhibit the behavior you want the new
-feature to test. if you're still lost at that point, just run pytest and write
-code wherever it throws errors.
-
-this project has led me deep into pytest leading me to discover how much wheel-
-reinventing i've done. any refactoring that leads to more code reuse is deeply
-appreciated so long as the integrated pytest feature is a test framework
-pattern that is well-defined and likely to have counterparts in other
-frameworks and languages. while the code is coupled to pytest, the touchpoints
-are few in number and can be genericized. 
-
-there are also TODOs scattered throughout the code where additional work could
-yield a new feature.
-
 ### caveats
 testing a test framework is fundamentally challenging. please beware of the
-following limitations in the current code:
+following limitations in the current code (re: please submit a PR with a better way!:
 - test function names must be unique across the project or you get fixture
   collision
 - the following are functionally tested and may require more work than is
@@ -201,18 +171,17 @@ following limitations in the current code:
     especially if pytest is suppressing your print or warn statements or if you
     need to assert that a warning/error was emitted by your test code or if you
     are trying to emit from teardown (which pytest is hardcoded to suppress).
-- do not define pytest_runtest_call in pytest.py as it will execute
-    item.runtest() TWICE if you follow pytest official documentation and
-    execute it within your pytest_runtest_call. i do not know if this is a bug
-    or bad docs but it can break pytest-factory and will cause confusing
+- if you define pytest_runtest_call in pytest.py and
+    execute it within your pytest_runtest_call, it will execute
+    item.runtest() TWICE. i do not know if this is a bug
+    or incorrect pytest documentation but it can break pytest-factory and will cause confusing
     behavior.
 - nested decorators - if you get confused, as i did, use a debugger to follow
     their execution.
 - Hashable - all classes representing a request must define __hash__().
     - allows the Store to treat request/response mappings as a pseudo-dict.
-    - plugin developers and contributors should think hard about how to hash
-        their request object so that similar-enough requests result in the same
-        hash value, but different-enough requests get differing values
+    - hashing algorithms must be loose enough so that similar-enough requests result in the same
+        hash value, but different-enough requests get differing values.
 
 ### style and code structure
 besides PEP and general code hygiene, the following guidance is recommended,
