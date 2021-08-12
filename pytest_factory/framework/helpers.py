@@ -1,14 +1,14 @@
 import inspect
 import sys
-from typing import Callable, Optional, Any, List
+from typing import Callable, Optional, Any, List, Union
 
 import pytest_factory.mock_request_types as mrt
 from pytest_factory.framework.stores import STORES
 
 
-def make_fixture_factory(req_obj: mrt.BaseMockRequest,
+def make_fixture_factory(req_signature: Union[mrt.BaseMockRequest, str],
                          response: mrt.MOCK_HTTP_RESPONSE,
-                         failure_modes: Optional[List["FailureMode"]] = None,
+                         failure_modes: Optional[List[mrt.FailureMode]] = None,
                          factory_name: Optional[str] = None) -> Callable:
     """
     Creates a fixture factory. For use by contributors and plugin
@@ -16,7 +16,7 @@ def make_fixture_factory(req_obj: mrt.BaseMockRequest,
 
     See http.py for an example of usage.
 
-    :param req_obj: used as key to map to mock responses
+    :param req_signature: used as key to map to mock responses; either a BaseMockRequest type object or a string
     :param response: string or Response
     :param failure_modes: defines the ways the service mocked by this factory
         could fail independent of the functioning of the component under test;
@@ -32,8 +32,9 @@ def make_fixture_factory(req_obj: mrt.BaseMockRequest,
 
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
+        key = req_signature if isinstance(req_signature, str) else hash(req_signature)
         STORES.update(test_name=test_name, factory_name=factory_name,
-                      req_obj=req_obj, response=response,
+                      key=key, response=response,
                       failure_modes=failure_modes)
 
         return pytest_func

@@ -10,7 +10,6 @@ finally, this contains the pytest fixture definition. make sure this file is imp
 can pick this up, or you will not have the fixture available in tests!
 """
 import inspect
-import sys
 import functools
 from typing import Callable, Optional
 

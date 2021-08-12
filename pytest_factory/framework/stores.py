@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 
 from tornado.web import RequestHandler
 
@@ -57,7 +57,7 @@ class Store:
                 uncalled_fixtures[fixture] = uncalled_fixture_endpoints
         if uncalled_fixtures:
             msg = 'the following fixtures have not been called: ' + \
-                f'{uncalled_fixtures}!'
+                  f'{uncalled_fixtures}!'
             if raise_assertion_error:
                 LOGGER.error(msg)
                 raise AssertionError(msg)
@@ -91,17 +91,17 @@ class Stores:
             self._by_test['*'] = default_store
 
     def update(self, test_name: str, factory_name: str,
-               req_obj: mrt.BaseMockRequest,
+               req_signature: Union[mrt.BaseMockRequest, str],
                response: mrt.MOCK_HTTP_RESPONSE = None,
-               failure_modes: List["FailureMode"] = None):
+               failure_modes: Optional[List[mrt.FailureMode]] = None):
         """
         always use this method to modify STORES AFTER configuration stage ends
 
         :param test_name: name of the pytest test function not including
             modules or classes
         :param factory_name: name of the fixture factory e.g. mock_http_server
-        :param req_obj: BaseMockRequest object representing the
-            expected request
+
+        :param req_signature: used as key to map to mock responses; either a BaseMockRequest type object or a string
         :param response: MOCK_HTTP_RESPONSE
         :param failure_modes: failure modes associated with the given factory
         :return:
@@ -114,17 +114,19 @@ class Stores:
         if not store:
             self._by_test[test_name] = Store(**{
                 factory_name: {
-                    req_obj: responses,
+                    req_signature: responses,
                     '_failure_modes': failure_modes or []
                 }
             })
         else:
             if not hasattr(store, factory_name):
-                setattr(store, factory_name, {req_obj: responses})
+                setattr(store, factory_name, {req_signature: responses})
             else:
                 fixture_dict = getattr(store, factory_name)
                 for k, v in fixture_dict.items():
-                    if hash(k) != hash(req_obj):
+                    existing_key = k if isinstance(k, str) else k.key
+                    new_key = req_signature if isinstance(req_signature, str) else req_signature.key
+                    if existing_key != new_key:
                         fixture_dict[k] = responses
                         break
 
@@ -181,7 +183,7 @@ class Stores:
         if mock_responses:
             last_response = mock_responses[-1][1]
             msg = 'UNEXPECTED CALL DETECTED. expected only ' + \
-                f'{len(mock_responses)} calls to {req_obj}'
+                  f'{len(mock_responses)} calls to {req_obj}'
             if store.assert_no_extra_calls:
                 LOGGER.error(msg)  # TODO do we need these?
                 raise AssertionError(msg)

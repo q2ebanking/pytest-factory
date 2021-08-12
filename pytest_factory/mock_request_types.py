@@ -32,6 +32,11 @@ class HTTP_METHODS(Enum):
     OPTIONS = 'options'
 
 
+class FailureMode:
+    # TODO
+    pass
+
+
 class BaseMockRequest(Hashable):
     """
     dual-purpose class used to represent:
@@ -43,6 +48,9 @@ class BaseMockRequest(Hashable):
     object as key where newest hash value always wins
     """
 
+    def __init__(self, key: str = None):
+        self._key = key
+
     def __hash__(self, **kwargs) -> int:
         """
         hash value must elide non-significant differences to return matches
@@ -51,13 +59,20 @@ class BaseMockRequest(Hashable):
         """
         raise NotImplementedError
 
+    @property
+    def key(self):
+        return self._key or hash(self)
+
+    def __str__(self):
+        return self.key or super().__str__()
+
 
 ROUTING_TYPE = Dict[
     Union[
         Dict[str, Any],
         BaseMockRequest],
     MOCK_HTTP_RESPONSE
-    ]
+]
 
 
 class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
