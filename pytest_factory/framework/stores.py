@@ -1,4 +1,5 @@
 from typing import Dict, Any, Optional, List, Union
+from types import ModuleType
 
 from tornado.web import RequestHandler
 
@@ -78,6 +79,7 @@ class Stores:
     def load(self, default_store: Store):
         """
         # TODO rework so it gets applied to child Store
+        # TODO this needs to work to load mock adapters
         load with fixture factories from SETTINGS mapped to a wildcard test
         name '*' so that they will apply to all test functions unless otherwise
         specified.
@@ -95,6 +97,7 @@ class Stores:
                response: mrt.MOCK_HTTP_RESPONSE = None,
                failure_modes: Optional[List[mrt.FailureMode]] = None):
         """
+        TODO update so when
         always use this method to modify STORES AFTER configuration stage ends
 
         :param test_name: name of the pytest test function not including
@@ -167,7 +170,11 @@ class Stores:
         mock_responses = fixture.get('*')
         for k, v in fixture.items():
             if hash(k) == hash(req_obj):
-                mock_responses = v
+                if type(v) is dict and type(list(v.values)[0]) is ModuleType:
+                    # then we need to go down a level into fixtures associated with module
+                    mock_responses =
+                else:
+                    mock_responses = v
                 break
 
         for index, (called, response) in enumerate(mock_responses):

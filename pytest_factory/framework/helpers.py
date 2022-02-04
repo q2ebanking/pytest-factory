@@ -33,6 +33,7 @@ def make_fixture_factory(req_signature: Union[mrt.BaseMockRequest, str],
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
         key = req_signature if isinstance(req_signature, str) else hash(req_signature)
+        # TODO this needs to handle plugin adapters with compound factory names
         STORES.update(test_name=test_name, factory_name=factory_name,
                       key=key, response=response,
                       failure_modes=failure_modes)

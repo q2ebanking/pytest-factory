@@ -13,6 +13,7 @@ MOCK_HTTP_RESPONSE = Optional[
         Exception,
         str,
         Response,
+        Callable,
         List[
             Union[
                 Callable,

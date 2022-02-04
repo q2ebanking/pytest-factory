@@ -41,19 +41,19 @@ class Settings:
     def __init__(self,
                  default_request_handler_class: Optional[Callable] = None,
                  plugin_settings: PLUGINS_TYPE = None,
-                 default_store: Optional = None,
+                 init_store: Optional = None,
                  handler_overrides: OVERRIDES_TYPE = None):
         """
 
         :param default_request_handler_class:
         :param plugins:
-        :param default_store: of type Store
+        :param init_store: of type Store
         :param handler_overrides:
         :returns:
         """
         self.default_request_handler_class = default_request_handler_class
         self.plugin_settings = plugin_settings or []
-        self.default_store = default_store or {}
+        self.init_store = init_store or {}
         self.handler_overrides = handler_overrides or {}
         for settings in self.plugin_settings:
             self.inherit(settings)
