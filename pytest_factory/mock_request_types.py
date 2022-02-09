@@ -1,9 +1,12 @@
-from urllib.parse import urlparse
+from __future__ import annotations
+from urllib.parse import urlparse, parse_qs
 from typing import Hashable, Optional, Union, List, Callable, Dict, Any
 from enum import Enum
 from requests import Response
 
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
+
+from pytest_factory.framework.config_stub import HTTP_REQ_WILDCARD_FIELDS
 
 # responses are optional and can be either a single response or list of
 # responses where the response type is either a Callable, Exception, str or
@@ -46,26 +49,19 @@ class BaseMockRequest(Hashable):
     (or similar fixture factory)
 
     these are stored in fixture store by test, fixture name and BaseMockRequest
-    object as key where newest hash value always wins
+    object as key where newest key always wins
     """
 
-    def __init__(self, key: str = None):
-        self._key = key
-
-    def __hash__(self, **kwargs) -> int:
+    def compare(self, other) -> bool:
         """
-        hash value must elide non-significant differences to return matches
+        comparison must elide non-significant differences to return matches
         e.g. "https://www.test.com?id=0&loc=1" should match
         "https://www.test.com?loc=1&id=0"
         """
         raise NotImplementedError
 
-    @property
-    def key(self):
-        return self._key or hash(self)
-
-    def __str__(self):
-        return self.key or super().__str__()
+    def __hash__(self) -> int:
+        return id(self)
 
 
 ROUTING_TYPE = Dict[
@@ -76,12 +72,19 @@ ROUTING_TYPE = Dict[
 ]
 
 
-class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
+def _urlparse_to_dict(uri: str) -> dict:
+    url_parts = urlparse(uri)
+    url_component_dict = {key: getattr(url_parts, key) for key in ("scheme", "netloc", "params", "fragment")}
+    url_component_dict["query"] = url_parts.query if url_parts.query == "*" else parse_qs(url_parts.query)
+    for index, path_part in enumerate(url_parts.path.split('/')):
+        url_component_dict[f"path_{index}"] = path_part
+    return url_component_dict
+
+
+class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
     """
     if creating your own request type for a fixture, you must set FACTORY_NAME on the class
     """
-    HASHING_ATTRIBUTES = ('query_arguments', 'body_arguments',
-                          'method', 'protocol', 'host')
 
     FACTORY_NAME = 'mock_http_server'
 
@@ -101,20 +104,22 @@ class MockHttpRequest(BaseMockRequest, HTTPServerRequest):
         self.connection = lambda: None
         setattr(self.connection, 'set_close_callback', lambda _: None)
 
+    def compare(self, other: MockHttpRequest) -> bool:
+        """
+        we are effectively simulating the third-party endpoint's router here
+        """
+
+        this_dict = _urlparse_to_dict(self.uri)
+        that_dict = _urlparse_to_dict(other.uri)
+
+        for key, this_val in this_dict.items():
+            if key not in HTTP_REQ_WILDCARD_FIELDS and this_val != "*":
+                if this_val != that_dict[key]:
+                    return False
+
+        return True
+
     def __hash__(self) -> int:
-        """
-
-        :return: semi-unique integer
-        """
-
-        url_parts = urlparse(self.uri)
-        hashable_dict = {
-            'path': url_parts.path
-        }
-        if self.headers:
-            hashable_dict['headers'] = self.headers if isinstance(
-                self.headers, dict) else self.headers._dict
-        for attribute in self.HASHING_ATTRIBUTES:
-            hashable_dict[attribute] = getattr(self, attribute)
-
-        return id(str(hashable_dict))
+        # TODO this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
+        #  not ideal but necessary
+        return id(self)

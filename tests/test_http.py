@@ -2,7 +2,7 @@ import pytest
 
 from pytest_factory.http import mock_http_server
 from pytest_factory import mock_request
-from pytest_factory.framework.pytest import LOGGER
+from pytest_factory.framework.logger import LOGGER
 
 pytestmark = pytest.mark.asyncio
 

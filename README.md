@@ -100,7 +100,12 @@ company.
 pytest-factory comes with a set of factories for common client-server
 interactions and tools for users to create their own.
 these methods use pytest's monkeypatching feature so their scope is limited to
-the test function.
+the test function. the primary factories involve generating HTTP requests to your 
+handler and faked HTTP responses from services your handler calls.
+if the mocked service needs to model sophisticated behavior (like sub-service routing
+determined by properties within the HTTP body) you can nest a factory within a 
+factory - aka a factory "adapter". ideally this adapter would be maintained and 
+distributed by the owner of that service.
 
 #### decorators
 pytest-factory represents fixture factories with decorators, which are executed
@@ -116,7 +121,7 @@ pytest-factory comes with factories for:
 - mock_request - mocks an inbound http request
 
 these pre-made factories can be used as models for users to create their own.
-the methods in pytest_factory.framework.helpers can make this as easy as
+the methods in pytest_factory.framework.fixture_factory can make this as easy as
 defining one function containing one function call!
 
 ## future dev
@@ -178,10 +183,8 @@ following limitations in the current code (re: please submit a PR with a better 
     behavior.
 - nested decorators - if you get confused, as i did, use a debugger to follow
     their execution.
-- Hashable - all classes representing a request must define __hash__().
-    - allows the Store to treat request/response mappings as a pseudo-dict.
-    - hashing algorithms must be loose enough so that similar-enough requests result in the same
-        hash value, but different-enough requests get differing values.
+- request signatures - all classes representing an outbound request must define __eq__(). this 
+    allows the Store to look up the expected fixtures using criteria appropriate for the request type.
 
 ### style and code structure
 besides PEP and general code hygiene, the following guidance is recommended,

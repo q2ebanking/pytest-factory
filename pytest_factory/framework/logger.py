@@ -1,21 +1,9 @@
 """
-when creating plugins, a plugin-level settings.py is where most of the custom
-code should be integrated.
-
-# TODO consider prepending certain methods that could be mistaken for pytest
-    native methods
-
-at the user project test level there can be another settings.py for project-
-global configurations. this means there can be two levels of settings defined
-by settings.py files. these are loaded and flattened when this file is read,
-with the project-level overriding. the fixtures defined at that point are then
-further extended and overridden by class and function-level fixture factories.
 """
 import logging
-from typing import Optional, Callable, Any, Dict, List
 
 
-# this is to make assertions that the framework is logging warnings when we should
+# this is to enable making assertions that the framework is logging expected warnings
 class Logger(logging.Logger):
     def __init__(self):
         super().__init__(name='pytest-factory-logger')
@@ -31,63 +19,3 @@ class Logger(logging.Logger):
 
 
 LOGGER = Logger()
-
-
-PLUGINS_TYPE = Optional[List["Settings"]]
-OVERRIDES_TYPE = Optional[Dict[str, Any]]
-
-
-class Settings:
-    def __init__(self,
-                 default_request_handler_class: Optional[Callable] = None,
-                 plugin_settings: PLUGINS_TYPE = None,
-                 init_store: Optional = None,
-                 handler_overrides: OVERRIDES_TYPE = None):
-        """
-
-        :param default_request_handler_class:
-        :param plugins:
-        :param init_store: of type Store
-        :param handler_overrides:
-        :returns:
-        """
-        self.default_request_handler_class = default_request_handler_class
-        self.plugin_settings = plugin_settings or []
-        self.init_store = init_store or {}
-        self.handler_overrides = handler_overrides or {}
-        for settings in self.plugin_settings:
-            self.inherit(settings)
-
-    def load(self, settings: "Settings"):
-        """
-        take Settings from lower in hierarchy and merge them into the global settings
-
-        in practice this means that the merged project and plugin hierarchy settings
-        will override pytest-factory defaults
-        :param settings:
-        :return:
-        """
-        for attribute, value in vars(settings).items():
-            setattr(self, attribute, value)
-
-    def inherit(self, settings: "Settings"):
-        """
-        take Settings from higher in hierarchy and merge them with this
-        Settings, with the lower Settings values clobbering the higher.
-
-        in practice this means that settings at the project level (of which there
-        can ONLY be one) will override settings at the plugin level, of which
-        there can be MORE than one
-        """
-        for k, v in vars(settings).items():
-            if not hasattr(self, k):
-                setattr(self, k, v)
-            elif k == 'plugin_settings':
-                for plugin_settings in v:
-                    self.inherit(plugin_settings)
-            elif isinstance(v, dict) and isinstance(getattr(self, k), dict):
-                attribute = getattr(self, k)
-                setattr(self, k, {**v, **attribute})
-
-
-SETTINGS = Settings()

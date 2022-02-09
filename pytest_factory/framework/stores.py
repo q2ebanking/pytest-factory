@@ -4,7 +4,8 @@ from types import ModuleType
 from tornado.web import RequestHandler
 
 import pytest_factory.mock_request_types as mrt
-from pytest_factory.framework.settings import LOGGER
+from pytest_factory.framework.logger import LOGGER
+from pytest_factory.framework.exceptions import FixtureNotFoundException, FixtureNotCalledException
 
 STORES = None
 
@@ -61,7 +62,7 @@ class Store:
                   f'{uncalled_fixtures}!'
             if raise_assertion_error:
                 LOGGER.error(msg)
-                raise AssertionError(msg)
+                raise FixtureNotCalledException(uncalled_fixtures=uncalled_fixtures)
             else:
                 LOGGER.warning(msg, 'if this is not expected, consider '
                                + 'this a test failure!')
@@ -75,61 +76,60 @@ class Stores:
 
     def __init__(self):
         self._by_test: Dict[str, Store] = {}
+        self.default_handler_class = None
+        self.handler_monkeypatches = {}
 
-    def load(self, default_store: Store):
+    def load(self, init_store: Store):
         """
         # TODO rework so it gets applied to child Store
-        # TODO this needs to work to load mock adapters
-        load with fixture factories from SETTINGS mapped to a wildcard test
-        name '*' so that they will apply to all test functions unless otherwise
-        specified.
 
         always use this method to modify STORES BEFORE configuration stage ends
 
-        :param default_store: the store to fall back on if no test-specific
+        :param init_store: the store to fall back on if no test-specific
             store is defined normally passed in from Settings
         """
-        if default_store:
-            self._by_test['*'] = default_store
+        if init_store:
+            self._by_test['*'] = init_store
 
-    def update(self, test_name: str, factory_name: str,
-               req_signature: Union[mrt.BaseMockRequest, str],
+    def update(self, test_name: str, factory_names: Union[str, List[str]],
+               req_obj: Union[mrt.BaseMockRequest, str],
                response: mrt.MOCK_HTTP_RESPONSE = None,
                failure_modes: Optional[List[mrt.FailureMode]] = None):
         """
-        TODO update so when
         always use this method to modify STORES AFTER configuration stage ends
 
         :param test_name: name of the pytest test function not including
             modules or classes
-        :param factory_name: name of the fixture factory e.g. mock_http_server
+        :param factory_names: names of the fixture factories used for the fixture being updated in the store e.g. mock_http_server
 
-        :param req_signature: used as key to map to mock responses; either a BaseMockRequest type object or a string
+        :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
         :param response: MOCK_HTTP_RESPONSE
         :param failure_modes: failure modes associated with the given factory
         :return:
         """
         # this is how we keep track of which fixtures have been used
         response = (False, response)
+        assert 1 <= len(factory_names) <= 2, "" # TODO make something happen here
         responses = [response] if not isinstance(response, list) else response
+        parent_factory = factory_names[0]
+        child_factory = factory_names[1] if len(factory_names) == 2 else None
 
         store = self.get_store(test_name)
         if not store:
             self._by_test[test_name] = Store(**{
-                factory_name: {
-                    req_signature: responses,
+                parent_factory: {
+                    req_obj: responses,
                     '_failure_modes': failure_modes or []
                 }
             })
         else:
-            if not hasattr(store, factory_name):
-                setattr(store, factory_name, {req_signature: responses})
+            if not hasattr(store, parent_factory):
+                setattr(store, parent_factory, {req_obj: responses})
             else:
-                fixture_dict = getattr(store, factory_name)
+                fixture_dict = getattr(store, parent_factory)
                 for k, v in fixture_dict.items():
-                    existing_key = k if isinstance(k, str) else k.key
-                    new_key = req_signature if isinstance(req_signature, str) else req_signature.key
-                    if existing_key != new_key:
+                    if k == req_obj:
+                        # TODO handle child_factory!!!
                         fixture_dict[k] = responses
                         break
 
@@ -146,7 +146,7 @@ class Stores:
             self._by_test[test_name] = store
         return store
 
-    def get_next_response(self, test_name: str, factory_name: str,
+    def get_next_response(self, test_name: str, factory_names: List[str],
                           req_obj: mrt.BaseMockRequest) -> Any:
         """
         will look up responses corresponding to the given parameters, then find
@@ -156,26 +156,32 @@ class Stores:
         unless Store.assert_no_extra_calls is False. otherwise it will log
         warnings to LOGGER.
 
+        if not response can be found, this indicates a user error in setting up factories such that the expected
+        fixture was not generated. this will log errors to LOGGER and raise an
+
         :param test_name: name of the pytest test function we are currently
             executing
-        :param factory_name: name of the fixture being invoked
+        :param factory_names: names of the factories used to create the response fixture
         :param req_obj: the request made by the RequestHandler represented as a
             BaseMockRequest
         :return: the next available mock response corresponding to the given
             req_obj
         """
         store = self.get_store(test_name=test_name)
-        assert hasattr(store, factory_name)
-        fixture = getattr(store, factory_name)
-        mock_responses = fixture.get('*')
-        for k, v in fixture.items():
-            if hash(k) == hash(req_obj):
+        assert hasattr(store, factory_names[0])
+        factory = getattr(store, factory_names[0])
+        mock_responses = None
+        for k, v in factory.items():
+            if k.compare(req_obj):
                 if type(v) is dict and type(list(v.values)[0]) is ModuleType:
                     # then we need to go down a level into fixtures associated with module
-                    mock_responses =
+                    mock_responses = v.get(factory_names[1])  # TODO is this safe to assume only two levels of factory nesting?
                 else:
                     mock_responses = v
                 break
+
+        if mock_responses is None:
+            raise FixtureNotFoundException(req_obj=req_obj)  # TODO do we need to pass more here?
 
         for index, (called, response) in enumerate(mock_responses):
             if called:

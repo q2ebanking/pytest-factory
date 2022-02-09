@@ -4,7 +4,7 @@ Mocking support for SMTP
 from typing import Callable, Union, List
 from smtplib import SMTP, SMTPRecipientsRefused
 
-from pytest_factory.framework.helpers import make_fixture_factory
+from pytest_factory.framework.fixture_factory import make_fixture_factory
 
 
 def smtp(to_addrs: Union[str, List[str]],

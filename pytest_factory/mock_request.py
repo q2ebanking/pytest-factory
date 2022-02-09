@@ -5,9 +5,6 @@ before test execution.
 also definitions for methods to be bound to RequestHandler that can be used to wrap execution of RequestHandler methods
 for testing purposes. this module comes with run_test() but plugins can define many more with the handler_overrides
 parameter.
-
-finally, this contains the pytest fixture definition. make sure this file is imported by pytest.py so the framework
-can pick this up, or you will not have the fixture available in tests!
 """
 import inspect
 import functools
@@ -16,14 +13,13 @@ from typing import Callable, Optional
 from tornado.web import Application, RequestHandler
 
 from pytest_factory.mock_request_types import MockHttpRequest
-from pytest_factory.framework.settings import SETTINGS
 from pytest_factory.framework.stores import STORES
-from pytest_factory.framework.helpers import _apply_func_recursive
+from pytest_factory.framework.fixture_factory import _apply_func_recursive
 
 
 def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
                           response_parser: Optional[Callable] = None) -> RequestHandler:
-    handler_class = handler_class or SETTINGS.default_request_handler_class
+    handler_class = handler_class or STORES.default_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
     async def _run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_calls: bool = True):
@@ -34,6 +30,7 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
 
         :param assert_no_missing_calls: if set to True, will raise AssertionError if handler calls
         a fixture less times than it has responses; will no longer issue warning via LOGGER
+        this can also be set in conftest by setting ASSERT_NO_MISSING_CALLS to True
         :param assert_no_extra_calls: if set to False, will no longer raise AssertionError if handler calls
         a fixture more times than it has responses; will issue warnings instead via LOGGER
         :return:
@@ -56,8 +53,7 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
             parsed_resp = response_parser(raw_resp) if response_parser else raw_resp
             return parsed_resp
 
-    handler_overrides = {**{'run_test': _run_test},  # this is here instead of settings.py to avoid circular imports
-                         **SETTINGS.handler_overrides}  # but this will guarantee that plugins can still override it
+    handler_overrides = {**{'run_test': _run_test}, **STORES.handler_monkeypatches}
 
     for attribute, override in handler_overrides.items():
         if isinstance(override, Callable):  # setting methods on the handler class
