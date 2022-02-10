@@ -14,25 +14,6 @@ further extended and overridden by class and function-level fixture factories.
 import logging
 from typing import Optional, Callable, Any, Dict, List
 
-
-# this is to make assertions that the framework is logging warnings when we should
-class Logger(logging.Logger):
-    def __init__(self):
-        super().__init__(name='pytest-factory-logger')
-        self.buffer = []
-
-    def format(self, msgs) -> str:
-        return ''.join([f'\npytest-factory WARNING: {msg}' for msg in msgs])
-
-    def warning(self, *msgs):
-        msg = self.format(msgs)
-        super().warning(msg=msg)
-        self.buffer.append(msg)
-
-
-LOGGER = Logger()
-
-
 PLUGINS_TYPE = Optional[List["Settings"]]
 OVERRIDES_TYPE = Optional[Dict[str, Any]]
 

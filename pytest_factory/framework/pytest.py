@@ -17,10 +17,13 @@ import pytest
 import requests
 
 from pytest_factory.mock_request_types import HTTP_METHODS
-from pytest_factory.framework.settings import SETTINGS, LOGGER
+from pytest_factory.framework.settings import SETTINGS
 from pytest_factory.framework.helpers import get_generic_caller
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
+from pytest_factory import logger
+
+logger = logger.get_logger(__name__)
 
 
 def pytest_configure(config: Config) -> None:
@@ -28,7 +31,7 @@ def pytest_configure(config: Config) -> None:
         local_settings = importlib.import_module('tests.settings').SETTINGS
         SETTINGS.load(local_settings)
     except Exception as _:
-        LOGGER.warning('could not find settings.py in the expected '
+        logger.warning('could not find settings.py in the expected '
                        + 'location: <cwd>/tests/settings.py',
                        'will proceed but will fail if @mock_request '
                        + 'decorators do not define RequestHandler classes')

@@ -3,7 +3,9 @@ from typing import Dict, Any, Optional, List, Union
 from tornado.web import RequestHandler
 
 import pytest_factory.mock_request_types as mrt
-from pytest_factory.framework.settings import LOGGER
+from pytest_factory import logger
+
+logger = logger.get_logger(__name__)
 
 STORES = None
 
@@ -59,11 +61,10 @@ class Store:
             msg = 'the following fixtures have not been called: ' + \
                   f'{uncalled_fixtures}!'
             if raise_assertion_error:
-                LOGGER.error(msg)
+                logger.error(msg)
                 raise AssertionError(msg)
             else:
-                LOGGER.warning(msg, 'if this is not expected, consider '
-                               + 'this a test failure!')
+                logger.warning(f"{msg}, if this is not expected, consider this a test failure!")
 
 
 class Stores:
@@ -182,14 +183,12 @@ class Stores:
 
         if mock_responses:
             last_response = mock_responses[-1][1]
-            msg = 'UNEXPECTED CALL DETECTED. expected only ' + \
-                  f'{len(mock_responses)} calls to {req_obj}'
+            msg = f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}'
             if store.assert_no_extra_calls:
-                LOGGER.error(msg)  # TODO do we need these?
+                logger.error(msg)  # TODO do we need these?
                 raise AssertionError(msg)
             else:
-                LOGGER.warning(
-                    msg, f'will repeat last response: {last_response}')
+                logger.warning(f"{msg}, will repeat last response: {last_response}")
             return last_response
         return None
 
