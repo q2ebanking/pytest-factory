@@ -1,20 +1,11 @@
 # pytest-factory
-pytest-factory creates request-level unit tests and fixtures for server request
-handlers without the need for any server to be listening (yours or anyone
-  else's).
-currently supports tornado and http.
 
-what is a test factory? see https://docs.pytest.org/en/stable/fixture.html#factories-as-fixtures
-
-pytest-factory extends pytest with decorators that define test factories.
-pytest-factory decorators can be applied to both pytest classes and functions allowing
-hierarchical and modular factory-reuse.
-minimal configuration required to start but can be fully customized with
-inheritable plugin architecture for custom request/response types.
+pytest-factory creates a test environment for your tornado service using decorators on 
+test classes/methods to generate configurable and reusable doubles for requests to your 
+service and responses from external services.
 
 originally developed within Q2 to unit test complex microservices that make
 multiple asynchronous intranet and internet calls per request/response cycle.
-
 
 ## example
 given a tornado application app.py (see tests/app.py for a more complex
@@ -62,12 +53,12 @@ pytestmark = pytest.mark.asyncio
 @mock_request(handler_class=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
-        resp = store.handler.run_test()
+        resp = await store.handler.run_test()
         assert resp == 'blah blah'
 
     @mock_http_server(method='get', path='/hello', response='Hello, world!')
     async def test_b(self, store):
-        resp = store.handler.run_test()
+        resp = await store.handler.run_test()
         assert resp == 'Hello, world!'
 ```
 
