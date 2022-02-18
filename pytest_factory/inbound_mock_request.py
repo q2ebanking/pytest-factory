@@ -69,11 +69,6 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
 
     return handler
 
-def handler()
-    def generate_hq_request():
-        request
-
-    mock_request(req_obj=req_obj)
 
 def mock_request(handler_class: Optional[Callable] = None,
                  req_obj: Optional[MockHttpRequest] = None,

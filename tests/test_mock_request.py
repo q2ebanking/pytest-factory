@@ -24,18 +24,3 @@ class TestInheritance:
             """
             resp = await store.handler.run_test()
             assert resp == 'yay'
-
-# conftest.py
-        fixture_a = mock_request(path='something')
-
-
-# test.py
-        async def test_http_explicit_handler(self, fixture_a, fixture_b, fixture_c):
-            """
-            """
-            resp = await store.handler.run_test()
-            assert resp == 'yay'
-
-        async def test_http_explicit_handler0(self, fixture_c, fixture_b):
-            resp = await store.handler.run_test()
-            assert resp == 'yay'

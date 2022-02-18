@@ -24,7 +24,6 @@ pytest_plugins = "pytest_factory.framework.pytest"
 
 # logger = logger.get_logger(__name__)
 
-
 @pytest.fixture(scope="function")
 def update_env_vars(monkeypatch):
     """Sets test values for environment variable and then re-sets the values

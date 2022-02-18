@@ -65,29 +65,11 @@ class TestHttp:
             assert resp == 'yupyup'
             # TODO assert warning made it to LOGGER
 
-        async def test_http_call_same_endpoint_diff_test(self, store):
+        async def test_http_call_same_endpoint_diff_test(self, store, caplog):
             """
             """
             resp = await store.handler.run_test()
             assert resp == 'yup'
+            actual = [rec.message for rec in caplog.records]
+            # TODO expected log should NOT have any warnings related to extra or missed calls to endpoint
 
-        def teardown_method(self, method, caplog):
-            """
-            be aware that if AssertionError gets raised here the debugger will
-            likely jump context to a method called f"{test_func}_teardown" that
-            does not exist after the pytest.Session ends.
-
-            for PyCharm this means when attempting to debug just the method
-            from within the dedicated "Debug" tile, it will try to execute and
-            debug the "_teardown" method which no longer exists, and PyTest
-            will claim it could not find any tests to collect.
-
-            manually select the actual test method and execute debug instead.
-
-            :param method:
-            :return:
-            """
-            expected = EXPECTED_WARNINGS.get(method.__name__)
-            if expected:
-                actual = [rec.message for rec in caplog.records]
-                assert set(actual).intersection(set(expected.values()))
