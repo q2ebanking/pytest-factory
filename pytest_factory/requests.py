@@ -8,7 +8,7 @@ from typing import Union
 
 from tornado.httputil import HTTPHeaders
 
-from pytest_factory.mock_request_types import MockHttpRequest
+from pytest_factory.outbound_mock_request import MockHttpRequest
 
 
 # def parameterize_test(item: Item):

@@ -12,7 +12,7 @@ from typing import Callable, Optional
 
 from tornado.web import Application, RequestHandler
 
-from pytest_factory.mock_request_types import MockHttpRequest
+from pytest_factory.outbound_mock_request import MockHttpRequest
 from pytest_factory.framework.stores import STORES
 from pytest_factory.framework.fixture_factory import _apply_func_recursive
 
@@ -69,6 +69,11 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
 
     return handler
 
+def handler()
+    def generate_hq_request():
+        request
+
+    mock_request(req_obj=req_obj)
 
 def mock_request(handler_class: Optional[Callable] = None,
                  req_obj: Optional[MockHttpRequest] = None,

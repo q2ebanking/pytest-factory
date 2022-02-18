@@ -14,7 +14,7 @@ from typing import Optional, Callable, Any
 
 import requests
 
-from pytest_factory.mock_request_types import HTTP_METHODS
+from pytest_factory.outbound_mock_request import HTTP_METHODS
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
 
@@ -43,6 +43,7 @@ def monkey_patch_requests(monkeypatch, request) -> None:
                                         request_callable=_request_callable,
                                         response_callable=_response_callable)
         monkeypatch.setattr(requests, method.value, new_method)
+
 
 def get_generic_caller(method_name: str, test_func_name: str,
                        request_callable: Callable,

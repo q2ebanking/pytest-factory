@@ -1,6 +1,6 @@
 from typing import Optional, Callable
 from pytest_factory.framework.fixture_factory import make_fixture_factory
-from pytest_factory.mock_request_types import MockHttpRequest, \
+from pytest_factory.outbound_mock_request import MockHttpRequest, \
     MOCK_HTTP_RESPONSE, HTTP_METHODS
 
 

@@ -8,7 +8,7 @@ by mapping the service's url to an adapter module. see mock_plugin.py
 """
 from pytest_factory.framework.logger import Settings
 from pytest_factory.framework.stores import Store
-from pytest_factory.mock_request_types import MockHttpRequest
+from pytest_factory.outbound_mock_request import MockHttpRequest
 import mock_plugin as adapter
 
 MOCK_SERVICE_LAYER_URL = "https://www.fakeservicelayer.com"

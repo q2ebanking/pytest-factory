@@ -2,7 +2,7 @@ import inspect
 import sys
 from typing import Callable, Optional, List, Union
 
-import pytest_factory.mock_request_types as mrt
+import pytest_factory.outbound_mock_request as mrt
 from pytest_factory.framework.stores import STORES
 
 

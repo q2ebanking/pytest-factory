@@ -3,7 +3,7 @@ from types import ModuleType
 
 from tornado.web import RequestHandler
 
-import pytest_factory.mock_request_types as mrt
+import pytest_factory.outbound_mock_request as mrt
 from pytest_factory.framework.logger import LOGGER
 from pytest_factory.framework.exceptions import FixtureNotFoundException, FixtureNotCalledException
 

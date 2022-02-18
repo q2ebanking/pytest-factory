@@ -73,6 +73,7 @@ ROUTING_TYPE = Dict[
 
 
 def _urlparse_to_dict(uri: str) -> dict:
+    # TODO maybe support wildcarding names/values of query params as opposed to the whole query param string
     url_parts = urlparse(uri)
     url_component_dict = {key: getattr(url_parts, key) for key in ("scheme", "netloc", "params", "fragment")}
     url_component_dict["query"] = url_parts.query if url_parts.query == "*" else parse_qs(url_parts.query)

@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from pytest_factory.framework.logger import LOGGER
-from pytest_factory.mock_request_types import BaseMockRequest
+from pytest_factory.outbound_mock_request import BaseMockRequest
 
 
 class PytestFactoryException(Exception):

@@ -14,3 +14,5 @@ STORES.default_handler_class = MainHandler
 # immediately upon creation and prior to testing
 # the keys are the name of the property to monkey patch and the value is the new property
 STORES.handler_monkeypatches.update({})
+
+fixture_for_hq_esp_error_state_3

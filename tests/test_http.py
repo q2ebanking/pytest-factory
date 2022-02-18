@@ -50,6 +50,7 @@ class TestHttp:
             """
             resp = await store.handler.run_test()
             assert resp == ''
+            # TODO assert warning made it to LOGGER
 
         @mock_request(path='?num=2')
         async def test_http_extra_call_warning(self, store):
@@ -60,6 +61,7 @@ class TestHttp:
             """
             resp = await store.handler.run_test(assert_no_extra_calls=False)
             assert resp == 'yupyup'
+            # TODO assert warning made it to LOGGER
 
         async def test_http_call_same_endpoint_diff_test(self, store):
             """

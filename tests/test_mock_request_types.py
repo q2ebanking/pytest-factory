@@ -1,7 +1,7 @@
 """
 non async unit tests
 """
-from pytest_factory.mock_request_types import MockHttpRequest
+from pytest_factory.outbound_mock_request import MockHttpRequest
 
 
 def test_mock_http_request_compare():
