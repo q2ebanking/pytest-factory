@@ -4,8 +4,10 @@ from types import ModuleType
 from tornado.web import RequestHandler
 
 import pytest_factory.outbound_mock_request as mrt
-from pytest_factory.framework.logger import LOGGER
 from pytest_factory.framework.exceptions import FixtureNotFoundException, FixtureNotCalledException
+from pytest_factory import logger
+
+logger = logger.get_logger(__name__)
 
 STORES = None
 
@@ -64,8 +66,7 @@ class Store:
                 LOGGER.error(msg)
                 raise FixtureNotCalledException(uncalled_fixtures=uncalled_fixtures)
             else:
-                LOGGER.warning(msg, 'if this is not expected, consider '
-                               + 'this a test failure!')
+                logger.warning(f"{msg}, if this is not expected, consider this a test failure!")
 
 
 class Stores:
@@ -109,7 +110,7 @@ class Stores:
         """
         # this is how we keep track of which fixtures have been used
         response = (False, response)
-        assert 1 <= len(factory_names) <= 2, "" # TODO make something happen here
+        assert 1 <= len(factory_names) <= 2, ""  # TODO make something happen here
         responses = [response] if not isinstance(response, list) else response
         parent_factory = factory_names[0]
         child_factory = factory_names[1] if len(factory_names) == 2 else None
@@ -175,7 +176,8 @@ class Stores:
             if k.compare(req_obj):
                 if type(v) is dict and type(list(v.values)[0]) is ModuleType:
                     # then we need to go down a level into fixtures associated with module
-                    mock_responses = v.get(factory_names[1])  # TODO is this safe to assume only two levels of factory nesting?
+                    mock_responses = v.get(
+                        factory_names[1])  # TODO is this safe to assume only two levels of factory nesting?
                 else:
                     mock_responses = v
                 break
@@ -195,14 +197,12 @@ class Stores:
 
         if mock_responses:
             last_response = mock_responses[-1][1]
-            msg = 'UNEXPECTED CALL DETECTED. expected only ' + \
-                  f'{len(mock_responses)} calls to {req_obj}'
+            msg = f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}'
             if store.assert_no_extra_calls:
-                LOGGER.error(msg)  # TODO do we need these?
+                logger.error(msg)  # TODO do we need these?
                 raise AssertionError(msg)
             else:
-                LOGGER.warning(
-                    msg, f'will repeat last response: {last_response}')
+                logger.warning(f"{msg}, will repeat last response: {last_response}")
             return last_response
         return None
 

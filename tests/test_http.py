@@ -2,7 +2,9 @@ import pytest
 
 from pytest_factory.http import mock_http_server
 from pytest_factory import mock_request
-from pytest_factory.framework.logger import LOGGER
+from pytest_factory import logger
+
+logger = logger.get_logger(__name__)
 
 pytestmark = pytest.mark.asyncio
 
@@ -69,7 +71,7 @@ class TestHttp:
             resp = await store.handler.run_test()
             assert resp == 'yup'
 
-        def teardown_method(self, method):
+        def teardown_method(self, method, caplog):
             """
             be aware that if AssertionError gets raised here the debugger will
             likely jump context to a method called f"{test_func}_teardown" that
@@ -87,5 +89,5 @@ class TestHttp:
             """
             expected = EXPECTED_WARNINGS.get(method.__name__)
             if expected:
-                actual = LOGGER.buffer[-1]
-                assert actual == expected
+                actual = [rec.message for rec in caplog.records]
+                assert set(actual).intersection(set(expected.values()))

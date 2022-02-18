@@ -17,6 +17,9 @@ import requests
 from pytest_factory.outbound_mock_request import HTTP_METHODS
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
+from pytest_factory import logger
+
+logger = logger.get_logger(__name__)
 
 
 @pytest.fixture()
