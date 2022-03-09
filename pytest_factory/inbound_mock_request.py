@@ -35,7 +35,7 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
         a fixture more times than it has responses; will issue warnings instead via LOGGER
         :return:
         """
-
+        # TODO log errors out here!
         store = self._pytest_store
         if assert_no_extra_calls is False:
             store.assert_no_extra_calls = assert_no_extra_calls
@@ -53,6 +53,7 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
             parsed_resp = response_parser(raw_resp) if response_parser else raw_resp
             return parsed_resp
 
+    # TODO this could be done via pytest.fixture for monkeypatch - have it look up the handler in the store!
     handler_overrides = {**{'run_test': _run_test}, **STORES.handler_monkeypatches}
 
     for attribute, override in handler_overrides.items():
