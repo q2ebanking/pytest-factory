@@ -89,8 +89,8 @@ class Stores:
         :param init_store: the store to fall back on if no test-specific
             store is defined normally passed in from Settings
         """
-        if init_store:
-            self._by_test['*'] = init_store
+        # TODO iterate over self._from_config to populate self._by_test EXCEPT where keys collide!
+        pass
 
     def update(self, test_name: str, factory_names: Union[str, List[str]],
                req_obj: Union[mrt.BaseMockRequest, str],
