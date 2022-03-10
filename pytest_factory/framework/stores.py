@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional, List, Union
 from types import ModuleType
 
 from tornado.web import RequestHandler
+from configparser import ConfigParser
 
 import pytest_factory.outbound_mock_request as mrt
 from pytest_factory.framework.exceptions import FixtureNotFoundException, FixtureNotCalledException
@@ -77,10 +78,11 @@ class Stores:
 
     def __init__(self):
         self._by_test: Dict[str, Store] = {}
+        self._by_dir: Dict[str, Store] = {}
         self.default_handler_class = None
         self.handler_monkeypatches = {}
 
-    def load(self, init_store: Store):
+    def load(self, conf: ConfigParser, key: str):
         """
         # TODO rework so it gets applied to child Store
 
@@ -90,7 +92,20 @@ class Stores:
             store is defined normally passed in from Settings
         """
         # TODO iterate over self._from_config to populate self._by_test EXCEPT where keys collide!
-        pass
+        # NOTE Took this over for the directory-level update
+        # NOTE removed the init_store arg b/c I'm not sure what it was supposed to do
+        if self._by_dir.get(key):
+            # New values in conf will by combined with values in self._by_dir
+            # If the same key exists in both, the one in self._by_dir wins
+            conf.update(self._by_dir[key])
+            # Reset self._by_dir with the updated values
+            self._by_dir = conf
+        else:
+            # If self._by_dir doesn't have anything for the key yet,
+            # add the entire dict
+            self._by_dir[key] = conf
+
+        return self._by_dir
 
     def update(self, test_name: str, factory_names: Union[str, List[str]],
                req_obj: Union[mrt.BaseMockRequest, str],
