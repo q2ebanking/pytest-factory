@@ -82,7 +82,7 @@ class Stores:
         self.default_handler_class = None
         self.handler_monkeypatches = {}
 
-    def load(self, conf: ConfigParser, key: str):
+    def load(self, conf: dict, key: str) -> dict:
         """
         # TODO rework so it gets applied to child Store
 

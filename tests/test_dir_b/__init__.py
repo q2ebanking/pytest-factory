@@ -4,7 +4,7 @@ from pytest_factory.framework.parse_configs import prep_stores_update_local
 from pytest_factory.framework.stores import STORES
 
 # DIR_NAME must match config.ini section
-DIR_NAME = 'test_dir_a'
+DIR_NAME = 'test_dir_b'
 
 config = configparser.ConfigParser()
 config.read("tests/config.ini")
