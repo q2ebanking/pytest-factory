@@ -3,7 +3,6 @@ import configparser
 from pathlib import Path
 
 
-
 def clean_whitespace(input: list) -> list:
 
     return [x.strip() for x in input]
@@ -15,7 +14,7 @@ def parse_paths(section: str, conf: configparser.ConfigParser) -> list:
     paths = {k: Path(conf.get(section, k)) for k in clean_whitespace(paths)}
 
     return paths
-    
+
 
 def parse_tuples(section: str, conf: configparser.ConfigParser) -> list:
     tups_to_split = conf.get(section, "tuples", fallback=None)
@@ -24,9 +23,10 @@ def parse_tuples(section: str, conf: configparser.ConfigParser) -> list:
 
     return tups
 
+
 def prep_defaults(conf: configparser.ConfigParser):
-    
-    paths = parse_paths(section='default', conf=conf)
+
+    paths = parse_paths(section="default", conf=conf)
 
     tups = parse_tuples(section="default", conf=conf)
 
@@ -65,7 +65,7 @@ def prep_stores_update_local(
     # Check if any other string-only values need to be added
     keys = set(conf[dir_name].keys()).difference(set(conf_dict.keys()))
     # Keys we don't want to add
-    no_add = ['paths', 'tuples', 'request_handler_class']
+    no_add = ["paths", "tuples", "request_handler_class"]
     # If we try to remove a key that isn't in the set, it will error
     no_add_present = [x for x in no_add if x in keys]
     # Remove those from the set
