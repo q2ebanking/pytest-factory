@@ -91,9 +91,7 @@ class Stores:
         :param init_store: the store to fall back on if no test-specific
             store is defined normally passed in from Settings
         """
-        # TODO iterate over self._from_config to populate self._by_test EXCEPT where keys collide!
-        # NOTE Took this over for the directory-level update
-        # NOTE removed the init_store arg b/c I'm not sure what it was supposed to do
+
         if self._by_dir.get(key):
             # New values in conf will by combined with values in self._by_dir
             # If the same key exists in both, the one in self._by_dir wins

@@ -37,7 +37,7 @@ def prep_stores_update_local(
     dir_name: str,
     conf: configparser.ConfigParser,
     defaults: dict = None,
-):
+) -> tuple:
     """Prep config values"""
     defaults = prep_defaults(conf=conf) if defaults is None else defaults
     conf_dict = {}
