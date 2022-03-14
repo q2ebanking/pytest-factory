@@ -1,3 +1,5 @@
+import os
+import pytest
 from pytest_factory.framework.stores import STORES
 
 from tests.app import MainHandler
@@ -15,12 +17,6 @@ STORES.default_handler_class = MainHandler
 # the keys are the name of the property to monkey patch and the value is the new property
 STORES.handler_monkeypatches.update({})
 
-import os
-
-import pytest
-
-# must include this line
-pytest_plugins = "pytest_factory.framework.pytest"
 
 # logger = logger.get_logger(__name__)
 
