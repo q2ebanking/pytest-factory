@@ -1,6 +1,6 @@
 import pytest
 
-from pytest_factory.http import mock_http_server
+from pytest_factory.http import mock_http_server, MockHttpRequest as mhr
 from pytest_factory import mock_request
 from pytest_factory import logger
 
@@ -29,14 +29,20 @@ class TestHttp:
 
     @mock_http_server(path='http://www.test.com/*', response='wild')
     async def test_http_wildcard_path(self, store):
-        """
-        TODO this might just be stupid hard
-        :param handler:
-        :param store:
-        :return:
-        """
         resp = await store.handler.run_test()
         assert resp == 'wild'
+
+    @mock_request(req_obj=mhr(path="query_params_test"))
+    @mock_http_server(path='http://www.test.com/mock_endpoint', response='wild params')
+    async def test_http_wildcard_params(self, store):
+        resp = await store.handler.run_test()
+        assert resp == 'wild params'
+
+    @mock_request(req_obj=mhr(path="query_params_test"))
+    @mock_http_server(path='http://www.test.com/*', response='wild path and params')
+    async def test_http_wildcard_path_and_params(self, store):
+        resp = await store.handler.run_test()
+        assert resp == 'wild path and params'
 
     @mock_http_server(path='http://www.test.com/mock_endpoint',
                       response=lambda x: x.path)
@@ -47,9 +53,6 @@ class TestHttp:
     class TestResponseTracking:
         @mock_request(path='?num=0')
         async def test_http_no_calls_warning(self, store):
-            """
-            see self.teardown_method
-            """
             resp = await store.handler.run_test()
             assert resp == ''
             # TODO assert warning made it to LOGGER
@@ -59,7 +62,6 @@ class TestHttp:
             """
             please note that this test is expected to raise a non-fatal
             UserWarning
-            see self.teardown_method
             """
             resp = await store.handler.run_test(assert_no_extra_calls=False)
             assert resp == 'yupyup'

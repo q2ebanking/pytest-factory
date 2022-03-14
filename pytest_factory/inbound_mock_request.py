@@ -61,7 +61,6 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
             setattr(handler_class, attribute, override)
 
     # TODO note that this is the one place with a true dependency on tornado
-    # TODO genericize this when we make plugin for django!
     handler = handler_class(Application(), req_obj)
 
     for attribute, override in handler_overrides.items():
