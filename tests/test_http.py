@@ -1,6 +1,7 @@
 import pytest
 
 from pytest_factory.http import mock_http_server, MockHttpRequest as mhr
+from pytest_factory.framework.exceptions import FixtureNotFoundException
 from pytest_factory import mock_request
 from pytest_factory import logger
 
@@ -31,18 +32,6 @@ class TestHttp:
     async def test_http_wildcard_path(self, store):
         resp = await store.handler.run_test()
         assert resp == 'wild'
-
-    @mock_request(req_obj=mhr(path="query_params_test"))
-    @mock_http_server(path='http://www.test.com/mock_endpoint', response='wild params')
-    async def test_http_wildcard_params(self, store):
-        resp = await store.handler.run_test()
-        assert resp == 'wild params'
-
-    @mock_request(req_obj=mhr(path="query_params_test"))
-    @mock_http_server(path='http://www.test.com/*', response='wild path and params')
-    async def test_http_wildcard_path_and_params(self, store):
-        resp = await store.handler.run_test()
-        assert resp == 'wild path and params'
 
     @mock_http_server(path='http://www.test.com/mock_endpoint',
                       response=lambda x: x.path)
@@ -75,3 +64,32 @@ class TestHttp:
             actual = [rec.message for rec in caplog.records]
             # TODO expected log should NOT have any warnings related to extra or missed calls to endpoint
 
+
+@mock_request(req_obj=mhr(path="query_params_test?wild=card"))
+class TestQueryParams:
+    @mock_http_server(path='http://www.test.com/mock_endpoint', response='wild params')
+    async def test_http_wildcard_params(self, store):
+        resp = await store.handler.run_test()
+        assert resp == 'wild params'
+
+    @mock_http_server(path='http://www.test.com/*', response='wild path and params')
+    async def test_http_wildcard_path_and_params(self, store):
+        resp = await store.handler.run_test()
+        assert resp == 'wild path and params'
+
+    @mock_http_server(path='http://www.test.com/mock_endpoint?wild=card', response='exact match!')
+    async def test_http_query_params_routing(self, store):
+        resp = await store.handler.run_test()
+        assert resp == 'exact match!'
+
+    @mock_http_server(path='http://www.test.com/mock_endpoint?foo=bar', response='exact match!')
+    async def test_http_query_params_routing_fail(self, store):
+        with pytest.raises(expected_exception=FixtureNotFoundException,
+                           match=r'.*http://www.test.com/mock_endpoint\?wild=card.*'):
+            await store.handler.run_test()
+
+    @mock_request(req_obj=mhr(path="query_params_test?wild=card&foo=bar"))
+    @mock_http_server(path='http://www.test.com/mock_endpoint?foo=bar&wild=card', response='exact match!')
+    async def test_http_query_params_misordered_success(self, store):
+        resp = await store.handler.run_test()
+        assert resp == 'exact match!'

@@ -7,14 +7,15 @@ base_url = 'http://www.test.com/mock_endpoint'
 
 
 class MainHandler(RequestHandler):
+    # TODO restructure as a simple passthru so we can reuse the inbound params as the outbound params?
     async def get(self):
         if self.request.path == 'solo':
             self.write('Hello, world')
         elif self.request.path == 'something':
             self.write('yay')
         elif self.request.path == 'query_params_test':
-            query_str = '?wild=card'
-            resp = requests.get(url=base_url + query_str)
+            query_str = self.request.query
+            resp = requests.get(url=f'{base_url}?{query_str}')
             self.write(resp.content)
         else:
             num = int(self.get_query_argument(name='num', default='1'))

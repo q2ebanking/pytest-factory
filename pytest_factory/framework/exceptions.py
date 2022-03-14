@@ -19,8 +19,11 @@ class PytestFactoryException(Exception):
             log_msgs = [log_msgs]
         self.log_msgs = log_msgs
         for log_msg in log_msgs:
-            if isinstance(log_msgs, str):
+            if isinstance(log_msg, str):
                 LOGGER.error(msg=log_msg)
+
+    def __str__(self):
+        return str(self.log_msgs)
 
 
 class FixtureNotFoundException(PytestFactoryException):
@@ -32,6 +35,7 @@ class FixtureNotFoundException(PytestFactoryException):
     def __init__(self, req_obj: BaseMockRequest, desc: Optional[str] = None):
         log_msg = f"could not find fixture match for request signature: {req_obj}!"
         super().__init__(log_msgs=[log_msg, desc])
+        pass
 
 
 class FixtureNotCalledException(PytestFactoryException):

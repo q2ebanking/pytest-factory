@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional, List, Union
 from types import ModuleType
+from functools import cached_property
 
 from tornado.web import RequestHandler
-from configparser import ConfigParser
 
 import pytest_factory.outbound_mock_request as mrt
 from pytest_factory.framework.exceptions import FixtureNotFoundException, FixtureNotCalledException
@@ -25,7 +25,7 @@ class Store:
             if v is not None:
                 setattr(self, k, v)
 
-    @property
+    @cached_property
     def get_fixtures(self) -> Dict[str, mrt.ROUTING_TYPE]:
         fixtures = {}
         for fixture, response_dict in vars(self).items():
