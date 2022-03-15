@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from pytest_factory.framework.logger import LOGGER
-from pytest_factory.outbound_mock_request import BaseMockRequest
+from pytest_factory.outbound_response_double import BaseMockRequest
 
 
 class PytestFactoryException(Exception):
@@ -26,20 +26,20 @@ class PytestFactoryException(Exception):
         return str(self.log_msgs)
 
 
-class FixtureNotFoundException(PytestFactoryException):
+class MissingTestDoubleException(PytestFactoryException):
     """
-    exception for when Store cannot find the expected fixture; this can indicate either a test code error in
-    setting up the fixtures OR an error in component under test not forming the request correctly
+    exception for when Store cannot find the expected test double; this can indicate either a test code error in
+    setting up the factories OR an error in component under test not forming the request correctly
     """
 
     def __init__(self, req_obj: BaseMockRequest, desc: Optional[str] = None):
-        log_msg = f"could not find fixture match for request signature: {req_obj}!"
+        log_msg = f"could not find test double match for request signature: {req_obj}!"
         super().__init__(log_msgs=[log_msg, desc])
         pass
 
 
-class FixtureNotCalledException(PytestFactoryException):
-    def __init__(self, uncalled_fixtures: dict, desc: Optional[str] = None):
-        log_msg = f"the following fixtures were NOT used in this test! if that is not a test failure condition, " \
-                  f"you must set FAIL_UNCALLED_FIXTURES to False (the default setting): {uncalled_fixtures}"
+class UnCalledTestDoubleException(PytestFactoryException):
+    def __init__(self, uncalled_test_doubles: dict, desc: Optional[str] = None):
+        log_msg = f"the following test doubles were NOT used in this test! if that is not a test failure condition, " \
+                  f"you must set FAIL_UNCALLED_TEST_DOUBLES to False (the default setting): {uncalled_test_doubles}"
         super().__init__(log_msgs=[log_msg, desc])

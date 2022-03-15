@@ -1,12 +1,7 @@
 """
 pytest integration hooks
 
-the following functions are predefined pytest hooks or pytest fixture
-definitions to integrate with pytest-factory
-
-please keep most fixture-specific logic out of this file
-
-referenced in conftest.py defined in user's project
+import path to this file must be in pytest_plugins in conftest.py
 
 """
 import pytest
@@ -14,7 +9,7 @@ from typing import Optional, Callable, Any
 
 import requests
 
-from pytest_factory.outbound_mock_request import HTTP_METHODS
+from pytest_factory.http import HTTP_METHODS
 from pytest_factory.requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
 from pytest_factory import logger
@@ -25,7 +20,7 @@ logger = logger.get_logger(__name__)
 @pytest.fixture()
 def store(request):
     """
-    fixture store - this is where the test-specific store gets assigned to the
+    store fixture - this is where the test-specific store gets assigned to the
     test function
     :return:
     """
@@ -58,7 +53,8 @@ def get_generic_caller(method_name: str, test_func_name: str,
 
     :param method_name: the name of the method in the module being
         monkeypatched for this test
-    :param test_func_name: name of the test function that this fixture is for
+    :param test_func_name: name of the test function that will be in scope
+        for this monkeypatch
     :param request_callable: class of the request object or function that will
         return one; must always take method_name as kwarg
     :param response_callable: class of the response object or function that
@@ -73,9 +69,8 @@ def get_generic_caller(method_name: str, test_func_name: str,
         """
 
         req_obj = request_callable(method_name=method_name, *args, **kwargs)
-        factory_names = [req_obj.FACTORY_NAME]
         mock_response = STORES.get_next_response(test_name=test_func_name,
-                                                 factory_names=factory_names,
+                                                 factory_name=req_obj.FACTORY_NAME,
                                                  req_obj=req_obj)
         if isinstance(mock_response, Callable):
             mock_response = mock_response(req_obj)

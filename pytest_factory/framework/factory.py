@@ -1,14 +1,13 @@
 import inspect
 import sys
-from typing import Callable, Optional, List, Union
+from typing import Callable, Optional, List, Union, Any
 
-import pytest_factory.outbound_mock_request as mrt
+from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory.framework.stores import STORES
 
 
-def make_factory(req_obj: Union[mrt.BaseMockRequest, str],
-                 response: mrt.MOCK_HTTP_RESPONSE,
-                 failure_modes: Optional[List[mrt.FailureMode]] = None,
+def make_factory(req_obj: Union[BaseMockRequest, str],
+                 response: Any,
                  factory_names: Optional[Union[List[str], str]] = None) -> Callable:
     """
     Creates a factory. For use by contributors and plugin
@@ -18,11 +17,8 @@ def make_factory(req_obj: Union[mrt.BaseMockRequest, str],
     See http.py for an example of usage.
 
     :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
-    :param response: string or Response
-    :param failure_modes: defines the ways the service mocked by this factory
-        could fail independent of the functioning of the component under test;
-        used if your test is marked pytest.mark.cause_failures
-    :param factory_names: name of the fixture factory that will be applied to
+    :param response: test double - generally a string or Response
+    :param factory_names: name of the factory that will be applied to
         returned Callable; defaults to name of function that called this
         function
     :return: the test class or test function that is being decorated
@@ -30,8 +26,7 @@ def make_factory(req_obj: Union[mrt.BaseMockRequest, str],
 
     factory_names = factory_names if factory_names else sys._getframe(1).f_code.co_name
     factory_names = factory_names if isinstance(factory_names, list) else [factory_names]
-    failure_modes = failure_modes or {}
-    if not isinstance(req_obj, mrt.BaseMockRequest) and not isinstance(req_obj, str):
+    if not isinstance(req_obj, BaseMockRequest) and not isinstance(req_obj, str):
         try:
             req_obj = str(req_obj)
         except Exception as _:
@@ -40,8 +35,7 @@ def make_factory(req_obj: Union[mrt.BaseMockRequest, str],
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
         STORES.update(test_name=test_name, factory_names=factory_names,
-                      req_obj=req_obj, response=response,
-                      failure_modes=failure_modes)
+                      req_obj=req_obj, response=response)
 
         return pytest_func
 

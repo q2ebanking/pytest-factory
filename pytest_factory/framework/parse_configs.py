@@ -1,22 +1,21 @@
-# IMPORTANT do not put whitespace around commas in the config.ini
 import configparser
-from pathlib import Path
+from typing import Tuple, Dict, Callable
+from importlib import import_module
 
 
 def clean_whitespace(input: list) -> list:
-
     return [x.strip() for x in input]
 
 
-def parse_paths(section: str, conf: configparser.ConfigParser) -> list:
+def parse_paths(section: str, conf: configparser.ConfigParser) -> dict:
     paths_to_parse = conf.get(section, "paths", fallback=None)
     paths = paths_to_parse.split(",") if paths_to_parse else []
-    paths = {k: Path(conf.get(section, k)) for k in clean_whitespace(paths)}
+    paths = {k: conf.get(section, k) for k in clean_whitespace(paths)}
 
     return paths
 
 
-def parse_tuples(section: str, conf: configparser.ConfigParser) -> list:
+def parse_tuples(section: str, conf: configparser.ConfigParser) -> dict:
     tups_to_split = conf.get(section, "tuples", fallback=None)
     tups = tups_to_split.split(",") if tups_to_split else []
     tups = {k: conf.get(section, k).split(",") for k in clean_whitespace(tups)}
@@ -25,7 +24,6 @@ def parse_tuples(section: str, conf: configparser.ConfigParser) -> list:
 
 
 def prep_defaults(conf: configparser.ConfigParser):
-
     paths = parse_paths(section="default", conf=conf)
 
     tups = parse_tuples(section="default", conf=conf)
@@ -34,10 +32,10 @@ def prep_defaults(conf: configparser.ConfigParser):
 
 
 def prep_stores_update_local(
-    dir_name: str,
-    conf: configparser.ConfigParser,
-    defaults: dict = None,
-) -> tuple:
+        dir_name: str,
+        conf: configparser.ConfigParser,
+        defaults: dict = None,
+) -> Tuple[Callable, Dict]:
     """Prep config values"""
     defaults = prep_defaults(conf=conf) if defaults is None else defaults
     conf_dict = {}
@@ -59,7 +57,9 @@ def prep_stores_update_local(
     # The request_handler is a path, so we know it will be
     # in the conf_dict, but we don't actually want it to
     # be there. It gets added to STORES separately.
-    request_handler = conf_dict.get("request_handler_class")
+    request_handler_path_parts = conf_dict.get("request_handler_class").split('.')
+    request_handler_class_name = request_handler_path_parts[-1]
+    request_handler_path = ".".join(request_handler_path_parts[:-1])
     conf_dict.pop("request_handler_class")
 
     # Check if any other string-only values need to be added
@@ -73,4 +73,6 @@ def prep_stores_update_local(
 
     additions = {k: conf.get(dir_name, k) for k in keys}
     conf_dict.update(additions)
-    return request_handler, conf_dict
+    request_handler_module = import_module(request_handler_path)
+    request_handler_class = getattr(request_handler_module, request_handler_class_name)
+    return request_handler_class, conf_dict

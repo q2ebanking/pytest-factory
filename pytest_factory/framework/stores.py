@@ -1,19 +1,25 @@
-from typing import Dict, Any, Optional, List, Union
-from types import ModuleType
+from typing import Dict, Any, Optional, List, Union, Callable
 from functools import cached_property
 
 from tornado.web import RequestHandler
 
-import pytest_factory.outbound_mock_request as mrt
-from pytest_factory.framework.exceptions import FixtureNotFoundException, FixtureNotCalledException
+from pytest_factory.outbound_response_double import BaseMockRequest
+from pytest_factory.framework.exceptions import MissingTestDoubleException, UnCalledTestDoubleException
 from pytest_factory import logger
 
 logger = logger.get_logger(__name__)
 
+ROUTING_TYPE = Dict[
+    Union[
+        Dict[str, Any],
+        BaseMockRequest],
+    Any
+]
+
 
 class Store:
     """
-    stores fixtures for a given async test method
+    stores test doubles for a given test method
     """
 
     def __init__(self, **kwargs):
@@ -24,46 +30,46 @@ class Store:
                 setattr(self, k, v)
 
     @cached_property
-    def get_fixtures(self) -> Dict[str, mrt.ROUTING_TYPE]:
-        fixtures = {}
-        for fixture, response_dict in vars(self).items():
-            if fixture not in ['handler', 'assert_no_extra_calls'] \
+    def get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
+        test_doubles = {}
+        for key, response_dict in vars(self).items():
+            if key not in ['handler', 'assert_no_extra_calls'] \
                     and isinstance(response_dict, dict):
-                fixtures[fixture] = response_dict
-        return fixtures
+                test_doubles[key] = response_dict
+        return test_doubles
 
-    def load_defaults(self, default_routes: Dict[str, mrt.ROUTING_TYPE]):
-        for fixture_name, route in default_routes.items():
-            if hasattr(self, fixture_name):
-                getattr(self, fixture_name).update(route)
+    def load_defaults(self, default_routes: Dict[str, ROUTING_TYPE]):
+        for key, route in default_routes.items():
+            if hasattr(self, key):
+                getattr(self, key).update(route)
             else:
-                setattr(self, fixture_name, route)
+                setattr(self, key, route)
 
-    def check_no_uncalled_fixtures(self, raise_assertion_error: bool = False):
+    def check_no_uncalled_test_doubles(self, raise_assertion_error: bool = False):
         """
-        checks if this Store has any fixtures that have not been called the
+        checks if this Store has any test_doubles that have not been called the
         number of times expected by default, it will log warnings to LOGGER
         :param raise_assertion_error: if True, will raise AssertionError if any
-            uncalled fixtures remain
+            uncalled test_doubles remain
         :return:
         """
-        uncalled_fixtures = {}
+        uncalled_test_doubles = {}
 
-        for fixture, response_dict in self.get_fixtures.items():
-            uncalled_fixture_endpoints = {}
+        for test_double, response_dict in self.get_test_doubles.items():
+            uncalled_test_double_endpoints = {}
             for key, responses in response_dict.items():
                 uncalled_responses = [resp[1]
                                       for resp in responses if not resp[0]]
                 if uncalled_responses:
-                    uncalled_fixture_endpoints[key] = uncalled_responses
-            if uncalled_fixture_endpoints:
-                uncalled_fixtures[fixture] = uncalled_fixture_endpoints
-        if uncalled_fixtures:
-            msg = 'the following fixtures have not been called: ' + \
-                  f'{uncalled_fixtures}!'
+                    uncalled_test_double_endpoints[key] = uncalled_responses
+            if uncalled_test_double_endpoints:
+                uncalled_test_doubles[test_double] = uncalled_test_double_endpoints
+        if uncalled_test_doubles:
+            msg = 'the following test_doubles have not been called: ' + \
+                  f'{uncalled_test_doubles}!'
             if raise_assertion_error:
-                LOGGER.error(msg)
-                raise FixtureNotCalledException(uncalled_fixtures=uncalled_fixtures)
+                logger.error(msg)
+                raise UnCalledTestDoubleException(uncalled_test_doubles=uncalled_test_doubles)
             else:
                 logger.warning(f"{msg}, if this is not expected, consider this a test failure!")
 
@@ -71,7 +77,7 @@ class Store:
 class Stores:
     """
     this class contains all of the stores for all collected tests and defines
-    convenience methods for looking up fixtures
+    convenience methods for looking up test doubles
     """
 
     def __init__(self):
@@ -86,8 +92,9 @@ class Stores:
 
         always use this method to modify STORES BEFORE configuration stage ends
 
-        :param init_store: the store to fall back on if no test-specific
+        :param conf: the store config to fall back on if no test-specific
             store is defined normally passed in from Settings
+        :param key:
         """
 
         if self._by_dir.get(key):
@@ -104,22 +111,20 @@ class Stores:
         return self._by_dir
 
     def update(self, test_name: str, factory_names: Union[str, List[str]],
-               req_obj: Union[mrt.BaseMockRequest, str],
-               response: mrt.MOCK_HTTP_RESPONSE = None,
-               failure_modes: Optional[List[mrt.FailureMode]] = None):
+               req_obj: Union[BaseMockRequest, str],
+               response: Optional[Any] = None):
         """
         always use this method to modify STORES AFTER configuration stage ends
 
         :param test_name: name of the pytest test function not including
             modules or classes
-        :param factory_names: names of the fixture factories used for the fixture being updated in the store e.g. mock_http_server
+        :param factory_names: names of the factories used for the test double being updated in the store e.g. mock_http_server
 
         :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
-        :param response: MOCK_HTTP_RESPONSE
-        :param failure_modes: failure modes associated with the given factory
+        :param response: test double
         :return:
         """
-        # this is how we keep track of which fixtures have been used
+        # this is how we keep track of which test doubles have been used
         response = (False, response)
         assert 1 <= len(factory_names) <= 2, ""  # TODO make something happen here
         responses = [response] if not isinstance(response, list) else response
@@ -130,19 +135,18 @@ class Stores:
         if not store:
             self._by_test[test_name] = Store(**{
                 parent_factory: {
-                    req_obj: responses,
-                    '_failure_modes': failure_modes or []
+                    req_obj: responses
                 }
             })
         else:
             if not hasattr(store, parent_factory):
                 setattr(store, parent_factory, {req_obj: responses})
             else:
-                fixture_dict = getattr(store, parent_factory)
-                for k, v in fixture_dict.items():
+                test_double_dict = getattr(store, parent_factory)
+                for k, v in test_double_dict.items():
                     if k == req_obj:
                         # TODO handle child_factory!!!
-                        fixture_dict[k] = responses
+                        test_double_dict[k] = responses
                         break
 
     def get_store(self, test_name: str) -> Store:
@@ -158,8 +162,8 @@ class Stores:
             self._by_test[test_name] = store
         return store
 
-    def get_next_response(self, test_name: str, factory_names: List[str],
-                          req_obj: mrt.BaseMockRequest) -> Any:
+    def get_next_response(self, test_name: str, factory_name: str,
+                          req_obj: BaseMockRequest) -> Any:
         """
         will look up responses corresponding to the given parameters, then find
         the next response that has not yet been called, and marks it as called.
@@ -169,32 +173,31 @@ class Stores:
         warnings to LOGGER.
 
         if not response can be found, this indicates a user error in setting up factories such that the expected
-        fixture was not generated. this will log errors to LOGGER and raise an
+        test double was not generated. this will log errors to LOGGER and raise an
 
         :param test_name: name of the pytest test function we are currently
             executing
-        :param factory_names: names of the factories used to create the response fixture
+        :param factory_name: name of the first factory used to create the response test double
         :param req_obj: the request made by the RequestHandler represented as a
             BaseMockRequest
         :return: the next available mock response corresponding to the given
             req_obj
         """
         store = self.get_store(test_name=test_name)
-        assert hasattr(store, factory_names[0])
-        factory = getattr(store, factory_names[0])
+        assert hasattr(store, factory_name)
+        factory = getattr(store, factory_name)
         mock_responses = None
         for k, v in factory.items():
             if k.compare(req_obj):
-                if type(v) is dict and type(list(v.values)[0]) is ModuleType:
-                    # then we need to go down a level into fixtures associated with module
-                    mock_responses = v.get(
-                        factory_names[1])  # TODO is this safe to assume only two levels of factory nesting?
+                if isinstance(v, Callable):
+                    mock_responses = v(req_obj)
+
                 else:
                     mock_responses = v
                 break
 
         if mock_responses is None:
-            raise FixtureNotFoundException(req_obj=req_obj)
+            raise MissingTestDoubleException(req_obj=req_obj)
 
         for index, (called, response) in enumerate(mock_responses):
             if called:

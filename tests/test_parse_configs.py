@@ -1,9 +1,9 @@
 import configparser
-from pathlib import PosixPath
-
 import pytest
 
 from pytest_factory.framework.parse_configs import prep_stores_update_local
+
+from tests.app import MainHandler
 
 
 @pytest.fixture(scope="function")
@@ -22,11 +22,9 @@ def test_prep_local_config(setup_config_test):
         dir_name=dir_name, conf=config
     )
 
-    assert request_handler == PosixPath(
-        "tests/mock_plugin/another_plugin/AnotherHandler"
-    )
+    assert request_handler == MainHandler
     assert conf_dict == {
-        "demo_key_path": PosixPath("tests/mock_plugin/another_plugin.py"),
+        "demo_key_path": "tests/mock_plugin/another_plugin.py",
         "http_req_wildcard_fields": ["query", " otherfield"],
-        "hq_url": "http://someotherdomain.com",
+        "plugin_url": "http://someotherdomain.com",
     }

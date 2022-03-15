@@ -1,5 +1,5 @@
 """
-contains fixture factory @mock_request used to create the request to be passed to RequestHandler
+contains @mock_request factory used to create the request to be passed to RequestHandler
 before test execution.
 
 also definitions for methods to be bound to RequestHandler that can be used to wrap execution of RequestHandler methods
@@ -12,7 +12,7 @@ from typing import Callable, Optional
 
 from tornado.web import Application, RequestHandler
 
-from pytest_factory.outbound_mock_request import MockHttpRequest
+from pytest_factory.http import MockHttpRequest
 from pytest_factory.framework.stores import STORES
 from pytest_factory.framework.factory import _apply_func_recursive
 
@@ -29,10 +29,10 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
         test method for assertions
 
         :param assert_no_missing_calls: if set to True, will raise AssertionError if handler calls
-        a fixture less times than it has responses; will no longer issue warning via LOGGER
+        a test double less times than it has responses; will no longer issue warning via LOGGER
         this can also be set in conftest by setting ASSERT_NO_MISSING_CALLS to True
         :param assert_no_extra_calls: if set to False, will no longer raise AssertionError if handler calls
-        a fixture more times than it has responses; will issue warnings instead via LOGGER
+        a test double more times than it has responses; will issue warnings instead via LOGGER
         :return:
         """
         # TODO log errors out here!
@@ -46,7 +46,7 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
         if inspect.isawaitable(result):
             await result
 
-        store.check_no_uncalled_fixtures(raise_assertion_error=assert_no_missing_calls)
+        store.check_no_uncalled_test_doubles(raise_assertion_error=assert_no_missing_calls)
 
         if self._write_buffer:
             raw_resp = self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
@@ -75,7 +75,7 @@ def mock_request(handler_class: Optional[Callable] = None,
                  response_parser: Optional[Callable] = None,
                  **kwargs) -> Callable:
     """
-    generic tornado request fixture factory; can be invoked within a wrapper to customize
+    generic tornado request double factory; can be invoked within a wrapper to customize
 
     :param handler_class: class of RequestHandler being tested
     :param req_obj: MockHttpRequest object; required if not passing kwargs

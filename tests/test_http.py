@@ -1,7 +1,7 @@
 import pytest
 
 from pytest_factory.http import mock_http_server, MockHttpRequest as mhr
-from pytest_factory.framework.exceptions import FixtureNotFoundException
+from pytest_factory.framework.exceptions import MissingTestDoubleException
 from pytest_factory import mock_request
 from pytest_factory import logger
 
@@ -84,7 +84,7 @@ class TestQueryParams:
 
     @mock_http_server(path='http://www.test.com/mock_endpoint?foo=bar', response='exact match!')
     async def test_http_query_params_routing_fail(self, store):
-        with pytest.raises(expected_exception=FixtureNotFoundException,
+        with pytest.raises(expected_exception=MissingTestDoubleException,
                            match=r'.*http://www.test.com/mock_endpoint\?wild=card.*'):
             await store.handler.run_test()
 
