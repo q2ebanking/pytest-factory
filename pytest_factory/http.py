@@ -81,6 +81,10 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
 
         return True
 
+    @property
+    def content(self):
+        return str(self.body)
+
     def __hash__(self) -> int:
         # TODO this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
         #  not ideal but necessary
@@ -118,3 +122,13 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     expected_request = req_obj or MockHttpRequest(method=method, path=path, **kwargs)
     assert expected_request, 'failed to load MockHttpRequest object!'  # todo make test for this
     return make_factory(req_obj=expected_request, response=response)
+
+
+class BasePlugin:
+    PLUGIN_URL = None
+
+    def __init__(self):
+        assert self.PLUGIN_URL is not None
+
+    def map_request_to_factory(self, req_obj: MockHttpRequest) -> str:
+        raise NotImplementedError

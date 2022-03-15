@@ -18,14 +18,16 @@ from pytest_factory.framework.factory import _apply_func_recursive
 import pytest_factory.framework.default_configs as defaults
 
 
-def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
+def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Callable] = None,
                           response_parser: Optional[Callable] = None) -> RequestHandler:
-    handler_class = handler_class or STORES.default_handler_class
+    if not handler_class:
+        handler_class = STORES.default_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
     async def _run_test(self, assert_no_missing_calls: bool = defaults.assert_no_missing_calls,
                         assert_no_extra_calls: bool = defaults.assert_no_extra_calls):
         """
+        TODO the two bool params need to pull defaults from the USER'S configs, via Stores
         this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
         and provides a way to advance the state of the RequestHandler while returning the response to the
         test method for assertions

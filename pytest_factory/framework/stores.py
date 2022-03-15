@@ -30,7 +30,7 @@ class Store:
                 setattr(self, k, v)
 
     @cached_property
-    def get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
+    def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
         test_doubles = {}
         for key, response_dict in vars(self).items():
             if key not in ['handler', 'assert_no_extra_calls'] \
@@ -55,7 +55,7 @@ class Store:
         """
         uncalled_test_doubles = {}
 
-        for test_double, response_dict in self.get_test_doubles.items():
+        for test_double, response_dict in self._get_test_doubles.items():
             uncalled_test_double_endpoints = {}
             for key, responses in response_dict.items():
                 uncalled_responses = [resp[1]
@@ -84,12 +84,12 @@ class Stores:
         self._by_test: Dict[str, Store] = {}
         self._by_dir: Dict[str, Store] = {}
         self.default_handler_class = None
+        self.default_assert_no_missing_calls = None
+        self.default_assert_no_extra_calls = None
         self.handler_monkeypatches = {}
 
     def load(self, conf: dict, key: str) -> dict:
         """
-        # TODO rework so it gets applied to child Store
-
         always use this method to modify STORES BEFORE configuration stage ends
 
         :param conf: the store config to fall back on if no test-specific
@@ -108,6 +108,7 @@ class Stores:
             # add the entire dict
             self._by_dir[key] = conf
 
+        # TODO we made it this far! got our imports in a dict - would be nice to setattr onto Stores
         return self._by_dir
 
     def update(self, test_name: str, factory_names: Union[str, List[str]],
@@ -133,6 +134,7 @@ class Stores:
 
         store = self.get_store(test_name)
         if not store:
+            # TODO set default configs on Store from Stores
             self._by_test[test_name] = Store(**{
                 parent_factory: {
                     req_obj: responses

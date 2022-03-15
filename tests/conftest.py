@@ -6,7 +6,7 @@ from pytest_factory.logger import get_logger
 from tests.app import MainHandler
 
 # must include this line
-pytest_plugins = ["pytest_factory.framework.pytest", "tests.mock_plugin.pytest"]
+pytest_plugins = ["pytest_factory.framework.pytest"]
 
 
 logger = get_logger(__name__)
