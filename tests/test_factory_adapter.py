@@ -2,13 +2,13 @@
 #
 # from pytest_factory.http import mock_http_server
 # from pytest_factory import mock_request
-# from pytest_factory.framework.pytest import LOGGER
+# from pytest_factory.framework.pytest import logger
 #
 # pytestmark = pytest.mark.asyncio
 #
 # EXPECTED_WARNINGS = {
 #     'test_http_no_calls_warning': '''
-# pytest-factory WARNING: the following fixtures have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
+# pytest-factory WARNING: the following test doubles have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None): ['yup']}}!
 # pytest-factory WARNING: if this is not expected, consider this a test failure!''',
 #     'test_http_extra_call_warning': '''
 # pytest-factory WARNING: UNEXPECTED CALL DETECTED. expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None)
@@ -85,5 +85,5 @@
 #             """
 #             expected = EXPECTED_WARNINGS.get(method.__name__)
 #             if expected:
-#                 actual = LOGGER.buffer[-1]
+#                 actual = logger.buffer[-1]
 #                 assert actual == expected

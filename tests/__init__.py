@@ -1,12 +1,11 @@
-import configparser
+from configparser import ConfigParser
 from pytest_factory.framework.parse_configs import prep_stores_update_local
 
 from pytest_factory.framework.stores import STORES
 
 # DIR_NAME must match config.ini section
 DIR_NAME = __name__
-
-config = configparser.ConfigParser()
+config = ConfigParser()
 config.read("tests/config.ini")
 
 # Add to STORES for this test dir

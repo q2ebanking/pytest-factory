@@ -15,6 +15,7 @@ from tornado.web import Application, RequestHandler
 from pytest_factory.http import MockHttpRequest
 from pytest_factory.framework.stores import STORES
 from pytest_factory.framework.factory import _apply_func_recursive
+import pytest_factory.framework.default_configs as defaults
 
 
 def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
@@ -22,17 +23,18 @@ def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
     handler_class = handler_class or STORES.default_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
-    async def _run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_calls: bool = True):
+    async def _run_test(self, assert_no_missing_calls: bool = defaults.assert_no_missing_calls,
+                        assert_no_extra_calls: bool = defaults.assert_no_extra_calls):
         """
         this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
         and provides a way to advance the state of the RequestHandler while returning the response to the
         test method for assertions
 
         :param assert_no_missing_calls: if set to True, will raise AssertionError if handler calls
-        a test double less times than it has responses; will no longer issue warning via LOGGER
+        a test double less times than it has responses; will no longer issue warning via logger
         this can also be set in conftest by setting ASSERT_NO_MISSING_CALLS to True
         :param assert_no_extra_calls: if set to False, will no longer raise AssertionError if handler calls
-        a test double more times than it has responses; will issue warnings instead via LOGGER
+        a test double more times than it has responses; will issue warnings instead via logger
         :return:
         """
         # TODO log errors out here!

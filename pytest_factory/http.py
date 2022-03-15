@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Optional, Callable, List, Union, Dict, Any
+from typing import Optional, Callable, List, Union
 from urllib.parse import urlparse, parse_qs
 from enum import Enum
 
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 from pytest_factory.framework.factory import make_factory
-from pytest_factory.framework.config_stub import HTTP_REQ_WILDCARD_FIELDS
+from pytest_factory.framework.parse_configs import CONFIGS
 from pytest_factory.outbound_response_double import BaseMockRequest
 from requests import Response
 
@@ -22,8 +22,6 @@ MOCK_HTTP_RESPONSE = Optional[
                 Exception,
                 str,
                 Response]]]]
-
-
 
 
 def _urlparse_to_dict(uri: str) -> dict:
@@ -76,7 +74,7 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         that_dict = _urlparse_to_dict(other.uri)
 
         for key, this_val in this_dict.items():
-            if this_val == "*" or (not this_val and key in HTTP_REQ_WILDCARD_FIELDS):
+            if this_val == "*" or (not this_val and key in CONFIGS.get('http_req_wildcard_fields', {})):
                 continue
             elif this_val != that_dict[key]:
                 return False

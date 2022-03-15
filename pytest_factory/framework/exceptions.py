@@ -1,7 +1,9 @@
 from typing import List, Optional
 
-from pytest_factory.framework.logger import LOGGER
+from pytest_factory.logger import get_logger
 from pytest_factory.outbound_response_double import BaseMockRequest
+
+logger = get_logger(__name__)
 
 
 class PytestFactoryException(Exception):
@@ -12,7 +14,7 @@ class PytestFactoryException(Exception):
 
     def __init__(self, log_msgs: List[str]):
         """
-        :param log_msgs: str or list of strings for messages to send to LOGGER;
+        :param log_msgs: str or list of strings for messages to send to logger;
         """
 
         if isinstance(log_msgs, str):
@@ -20,7 +22,7 @@ class PytestFactoryException(Exception):
         self.log_msgs = log_msgs
         for log_msg in log_msgs:
             if isinstance(log_msg, str):
-                LOGGER.error(msg=log_msg)
+                logger.error(msg=log_msg)
 
     def __str__(self):
         return str(self.log_msgs)

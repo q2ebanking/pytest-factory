@@ -48,7 +48,7 @@ class Store:
     def check_no_uncalled_test_doubles(self, raise_assertion_error: bool = False):
         """
         checks if this Store has any test_doubles that have not been called the
-        number of times expected by default, it will log warnings to LOGGER
+        number of times expected by default, it will log warnings to logger
         :param raise_assertion_error: if True, will raise AssertionError if any
             uncalled test_doubles remain
         :return:
@@ -170,10 +170,10 @@ class Stores:
 
         if it runs out of uncalled responses, it will raise AssertionError
         unless Store.assert_no_extra_calls is False. otherwise it will log
-        warnings to LOGGER.
+        warnings to logger.
 
         if not response can be found, this indicates a user error in setting up factories such that the expected
-        test double was not generated. this will log errors to LOGGER and raise an
+        test double was not generated. this will log errors to logger and raise an
 
         :param test_name: name of the pytest test function we are currently
             executing

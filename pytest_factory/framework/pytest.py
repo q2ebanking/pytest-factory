@@ -10,7 +10,7 @@ from typing import Optional, Callable, Any
 import requests
 
 from pytest_factory.http import HTTP_METHODS
-from pytest_factory.requests import _request_callable, _response_callable
+from pytest_factory.monkeypatch_requests import _request_callable, _response_callable
 from pytest_factory.framework.stores import STORES
 from pytest_factory import logger
 
