@@ -14,7 +14,7 @@ from tornado.web import Application, RequestHandler
 
 from pytest_factory.outbound_mock_request import MockHttpRequest
 from pytest_factory.framework.stores import STORES
-from pytest_factory.framework.fixture_factory import _apply_func_recursive
+from pytest_factory.framework.factory import _apply_func_recursive
 
 
 def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
@@ -116,6 +116,6 @@ def mock_request(handler_class: Optional[Callable] = None,
         return modified_pytest_func
 
     def callable_wrapper(callable_obj: Callable) -> Callable:
-        return _apply_func_recursive(callable=callable_obj, func=register_test_func)
+        return _apply_func_recursive(kallable=callable_obj, func=register_test_func)
 
     return callable_wrapper

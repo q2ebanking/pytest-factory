@@ -10,8 +10,6 @@ from pytest_factory import logger
 
 logger = logger.get_logger(__name__)
 
-STORES = None
-
 
 class Store:
     """
@@ -196,7 +194,7 @@ class Stores:
                 break
 
         if mock_responses is None:
-            raise FixtureNotFoundException(req_obj=req_obj)  # TODO do we need to pass more here?
+            raise FixtureNotFoundException(req_obj=req_obj)
 
         for index, (called, response) in enumerate(mock_responses):
             if called:

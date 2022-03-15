@@ -1,5 +1,5 @@
 from typing import Optional, Callable
-from pytest_factory.framework.fixture_factory import make_fixture_factory
+from pytest_factory.framework.factory import make_factory
 from pytest_factory.outbound_mock_request import MockHttpRequest, \
     MOCK_HTTP_RESPONSE, HTTP_METHODS
 
@@ -34,4 +34,4 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     """
     expected_request = req_obj or MockHttpRequest(method=method, path=path, **kwargs)
     assert expected_request, 'failed to load MockHttpRequest object!'  # todo make test for this
-    return make_fixture_factory(req_obj=expected_request, response=response)
+    return make_factory(req_obj=expected_request, response=response)

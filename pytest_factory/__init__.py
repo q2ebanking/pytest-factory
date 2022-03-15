@@ -1,3 +1,3 @@
 from pytest_factory.inbound_mock_request import mock_request
 from pytest_factory.http import mock_http_server
-from pytest_factory.framework.fixture_factory import make_fixture_factory
+from pytest_factory.framework.factory import make_factory
