@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, Any, Optional, List, Union, Callable
 from functools import cached_property
 
@@ -17,7 +18,7 @@ class Mall:
 
     def __init__(self):
         self._by_test: Dict[str, Store] = {}
-        self._by_dir: Dict[str, Store] = {}
+        self._by_dir: Dict[str, Dict] = {}
 
     @property
     def http_req_wildcard_fields(self) -> List[str]:
@@ -58,10 +59,14 @@ class Mall:
         return self._by_dir
 
     @cached_property
-    def plugins(self):
-        pass
+    def plugins(self) -> Dict[str, Callable]:
+        return_dict = {}
+        for _, v in self._by_dir.get('tests').items():
+            if hasattr(v, 'PLUGIN_URL') and hasattr(v, 'map_request_to_factory'):
+                return_dict[v.PLUGIN_URL] = v.map_request_to_factory
+        return return_dict
 
-    def register_test_doubles(self, test_name: str, factory_names: Union[str, List[str]],
+    def register_test_doubles(self, test_name: str, factory_name: str,
                               req_obj: Union[BaseMockRequest, str],
                               response: Optional[Any] = None):
         """
@@ -69,7 +74,7 @@ class Mall:
 
         :param test_name: name of the pytest test function not including
             modules or classes
-        :param factory_names: names of the factories used for the test double being updated in the store e.g. mock_http_server
+        :param factory_name: name of the factory that created the test double being updated in the store e.g. mock_http_server
 
         :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
         :param response: test double
@@ -77,20 +82,17 @@ class Mall:
         """
         # this is how we keep track of which test doubles have been used TODO refactor to record all of the inputs!
         response = (False, response)
-        assert 1 <= len(factory_names) <= 2, ""  # TODO make something happen here; do we need a list of factory names?
         responses = [response] if not isinstance(response, list) else response
-        parent_factory = factory_names[0]
 
         store = self.get_store(test_name)
         if not store:
-            # TODO set default configs on Store from Mall
             self._by_test[test_name] = Store(**{
-                parent_factory: {
+                factory_name: {
                     req_obj: responses
                 }
             }, plugins=self.plugins)
         else:
-            store.update(req_obj=req_obj, parent_factory=parent_factory, responses=responses)
+            store.update(req_obj=req_obj, factory_name=factory_name, responses=responses)
 
     def get_store(self, test_name: str) -> Store:
         """

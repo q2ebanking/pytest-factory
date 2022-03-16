@@ -8,7 +8,7 @@ from pytest_factory.framework.mall import MALL
 
 def make_factory(req_obj: Union[BaseMockRequest, str],
                  response: Any,
-                 factory_names: Optional[Union[List[str], str]] = None) -> Callable:
+                 factory_name: Optional[str] = None) -> Callable:
     """
     Creates a factory. For use by contributors and plugin
     developers to create new factories. A factory is a decorator that modifies a TestClass or test_method_or_function
@@ -18,14 +18,14 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
 
     :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
     :param response: test double - generally a string or Response
-    :param factory_names: name of the factory that will be applied to
-        returned Callable; defaults to name of function that called this
+    :param factory_name: name of the factory that create test doubles for the
+        returned Callable (TestClass or test_method_or_function; defaults to name of function that called this
         function
     :return: the test class or test function that is being decorated
     """
 
-    factory_names = factory_names if factory_names else sys._getframe(1).f_code.co_name
-    factory_names = factory_names if isinstance(factory_names, list) else [factory_names]
+    factory_name = factory_name if factory_name else sys._getframe(1).f_code.co_name
+
     if not isinstance(req_obj, BaseMockRequest) and not isinstance(req_obj, str):
         try:
             req_obj = str(req_obj)
@@ -34,8 +34,8 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
 
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
-        MALL.register_test_doubles(test_name=test_name, factory_names=factory_names,
-                                     req_obj=req_obj, response=response)
+        MALL.register_test_doubles(test_name=test_name, factory_name=factory_name,
+                                   req_obj=req_obj, response=response)
 
         return pytest_func
 

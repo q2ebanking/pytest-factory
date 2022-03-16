@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any, Union
+from typing import Dict, Optional, Any, Union, List, Callable
 from functools import cached_property
 
 from tornado.web import RequestHandler
@@ -22,18 +22,23 @@ class Store:
     stores test doubles for a given test method
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, plugins: Optional[Dict[str, Callable]] = None, **kwargs):
         self.handler: Optional[RequestHandler] = None
         self.assert_no_extra_calls: bool = True
         for k, v in kwargs.items():
             if v is not None:
                 setattr(self, k, v)
+        if plugins:
+            if hasattr(self, 'mock_http_server'):
+                self.mock_http_server.update(plugins)
+            else:
+                self.mock_http_server = plugins
 
-    def update(self, req_obj, parent_factory, responses):
-        if not hasattr(self, parent_factory):  # store does not already have a test double from factory
-            setattr(self, parent_factory, {req_obj: responses})
+    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, responses: List[Any]):
+        if not hasattr(self, factory_name):  # store does not already have a test double from factory
+            setattr(self, factory_name, {req_obj: responses})
         else:  # store already has test doubles from this factory
-            test_double_dict = getattr(self, parent_factory)
+            test_double_dict = getattr(self, factory_name)
             for k, v in test_double_dict.items():
                 # store has test double that matches new test double's request object
                 if k == req_obj:
