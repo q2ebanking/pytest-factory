@@ -2,7 +2,7 @@ from pathlib import Path
 from configparser import ConfigParser
 from pytest_factory.framework.parse_configs import prep_stores_update_local
 
-from pytest_factory.framework.stores import STORES
+from pytest_factory.framework.mall import STORES
 
 # DIR_NAME must match config.ini section
 DIR_NAME = __name__

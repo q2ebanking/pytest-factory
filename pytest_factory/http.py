@@ -131,4 +131,4 @@ class BasePlugin:
         assert self.PLUGIN_URL is not None
 
     def map_request_to_factory(self, req_obj: MockHttpRequest) -> str:
-        raise NotImplementedError
+        return 'hq_esp'

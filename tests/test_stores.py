@@ -1,3 +1,3 @@
 """
-TODO add tests for the logic behind Stores
+TODO add tests for the logic behind Mall
 """

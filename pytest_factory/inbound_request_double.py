@@ -13,7 +13,7 @@ from typing import Callable, Optional
 from tornado.web import Application, RequestHandler
 
 from pytest_factory.http import MockHttpRequest
-from pytest_factory.framework.stores import STORES
+from pytest_factory.framework.mall import STORES
 from pytest_factory.framework.factory import _apply_func_recursive
 import pytest_factory.framework.default_configs as defaults
 
@@ -21,13 +21,13 @@ import pytest_factory.framework.default_configs as defaults
 def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Callable] = None,
                           response_parser: Optional[Callable] = None) -> RequestHandler:
     if not handler_class:
-        handler_class = STORES.default_handler_class
+        handler_class = STORES.request_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
     async def _run_test(self, assert_no_missing_calls: bool = defaults.assert_no_missing_calls,
                         assert_no_extra_calls: bool = defaults.assert_no_extra_calls):
         """
-        TODO the two bool params need to pull defaults from the USER'S configs, via Stores
+        TODO the two bool params need to pull defaults from the USER'S configs, via Mall
         this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
         and provides a way to advance the state of the RequestHandler while returning the response to the
         test method for assertions
@@ -58,7 +58,8 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
             return parsed_resp
 
     # TODO this could be done via pytest.fixture for monkeypatch - have it look up the handler in the store!
-    handler_overrides = {**{'run_test': _run_test}, **STORES.handler_monkeypatches}
+    # handler_overrides = {**{'run_test': _run_test}, **STORES.handler_monkeypatches}
+    handler_overrides = {'run_test': _run_test}
 
     for attribute, override in handler_overrides.items():
         if isinstance(override, Callable):  # setting methods on the handler class
