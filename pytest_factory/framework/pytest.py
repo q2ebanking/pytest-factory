@@ -11,7 +11,7 @@ import requests
 
 from pytest_factory.http import HTTP_METHODS
 from pytest_factory.monkeypatch_requests import _request_callable, _response_callable
-from pytest_factory.framework.mall import STORES
+from pytest_factory.framework.mall import MALL
 from pytest_factory import logger
 
 logger = logger.get_logger(__name__)
@@ -25,7 +25,7 @@ def store(request):
     :return:
     """
     test_name = request.node.name
-    store = STORES.get_store(test_name=test_name)
+    store = MALL.get_store(test_name=test_name)
     assert store, 'pytest-factory ERROR: you broke something. probably in ' + \
                   'helpers.py or in this module'
     return store
@@ -69,7 +69,7 @@ def get_generic_caller(method_name: str, test_func_name: str,
         """
 
         req_obj = request_callable(method_name=method_name, *args, **kwargs)
-        mock_response = STORES.get_next_response(test_name=test_func_name,
+        mock_response = MALL.get_next_response(test_name=test_func_name,
                                                  factory_name=req_obj.FACTORY_NAME,
                                                  req_obj=req_obj)
         if isinstance(mock_response, Callable):

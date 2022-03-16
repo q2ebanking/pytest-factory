@@ -6,7 +6,7 @@ from enum import Enum
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 from pytest_factory.framework.factory import make_factory
-from pytest_factory.framework.parse_configs import CONFIGS
+from pytest_factory.framework.mall import MALL
 from pytest_factory.outbound_response_double import BaseMockRequest
 from requests import Response
 
@@ -74,7 +74,7 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         that_dict = _urlparse_to_dict(other.uri)
 
         for key, this_val in this_dict.items():
-            if this_val == "*" or (not this_val and key in CONFIGS.get('http_req_wildcard_fields', {})):
+            if this_val == "*" or (not this_val and key in MALL.http_req_wildcard_fields):
                 continue
             elif this_val != that_dict[key]:
                 return False

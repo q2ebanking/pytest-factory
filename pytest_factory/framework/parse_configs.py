@@ -1,9 +1,18 @@
-import configparser
-from typing import Tuple, Dict, Callable
+from configparser import ConfigParser
+from pathlib import Path
+from typing import Dict, Callable
 from importlib import import_module
 import pytest_factory.framework.default_configs as defaults
 
-conf_dict = {}
+
+def get_config_parser(filename: str = 'config.ini') -> ConfigParser:
+    config = ConfigParser()
+    p = Path()
+    p_list = list(p.glob(f"**/{filename}"))
+    if len(p_list) != 1:
+        raise Exception(f'{filename} is missing from project!')
+    config.read(p_list[0])
+    return config
 
 
 def import_from_str_path(path: str) -> Callable:
@@ -26,7 +35,7 @@ def clean_whitespace(input: list) -> list:
     return [x.strip() for x in input]
 
 
-def parse_type(section: str, _type: str, parse_func: Callable, conf: configparser.ConfigParser) -> dict:
+def parse_type(section: str, _type: str, parse_func: Callable, conf: ConfigParser) -> dict:
     str_to_split = conf.get(section, _type, fallback=None)
     if not str_to_split:
         return {}
@@ -39,7 +48,7 @@ def parse_type(section: str, _type: str, parse_func: Callable, conf: configparse
     return sub_dict
 
 
-def prep_defaults(conf: configparser.ConfigParser) -> Dict:
+def prep_defaults(conf: ConfigParser) -> Dict:
     conf_dict = {}
     for _type, parse_func in CONFIG_MAP.items():
         conf_dict.update(parse_type(section="default", _type=_type, parse_func=parse_func, conf=conf))
@@ -49,12 +58,11 @@ def prep_defaults(conf: configparser.ConfigParser) -> Dict:
 
 def prep_stores_update_local(
         dir_name: str,
-        conf: configparser.ConfigParser,
+        conf: ConfigParser,
         defaults: dict = None,
 ) -> Dict:
     """Prep config values"""
-    defaults = prep_defaults(conf=conf) if defaults is None else defaults
-    conf_dict.update(defaults)
+    conf_dict = prep_defaults(conf=conf) if defaults is None else defaults
 
     # In each config.ini block, there are keys: paths, tuples
     # these are to note what handling the values in the matching keys need
@@ -63,7 +71,7 @@ def prep_stores_update_local(
     # Because the paths values from config.ini is a tuple, it needs to be split
 
     for _type, parse_func in CONFIG_MAP.items():
-        sub_dict = parse_type(section="default", _type=_type, parse_func=parse_func, conf=conf)
+        sub_dict = parse_type(section=dir_name, _type=_type, parse_func=parse_func, conf=conf)
         conf_dict.update(sub_dict)
 
     # Check if any other string-only values need to be added
@@ -78,6 +86,3 @@ def prep_stores_update_local(
     conf_dict.update(additions)
 
     return conf_dict
-
-
-CONFIGS = conf_dict

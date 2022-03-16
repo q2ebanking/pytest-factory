@@ -1,16 +1,14 @@
 from configparser import ConfigParser
-from pytest_factory.framework.parse_configs import prep_stores_update_local
+from pytest_factory.framework.parse_configs import prep_stores_update_local, get_config_parser
 
-from pytest_factory.framework.mall import STORES
-from pytest_factory.framework.default_configs import default_config_parser as config
+from pytest_factory.framework.mall import MALL
 
 # DIR_NAME must match config.ini section
 DIR_NAME = __name__.split('.')[1]
 
-# TODO could use pathlib to find the config.ini for the user
-config.read("tests/config.ini")
+config = get_config_parser()
 
-# Add to STORES for this test dir
+# Add to MALL for this test dir
 request_handler, conf_dict = prep_stores_update_local(dir_name=DIR_NAME, conf=config)
-STORES.default_handler_class = request_handler
-STORES.load(conf=conf_dict, key=DIR_NAME)
+MALL.default_handler_class = request_handler
+MALL.load(conf=conf_dict, key=DIR_NAME)

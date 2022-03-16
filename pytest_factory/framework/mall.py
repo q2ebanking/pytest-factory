@@ -1,7 +1,6 @@
 from typing import Dict, Any, Optional, List, Union, Callable
 from functools import cached_property
 
-
 from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory.framework.exceptions import MissingTestDoubleException
 from pytest_factory.framework.store import Store
@@ -10,16 +9,19 @@ from pytest_factory import logger
 logger = logger.get_logger(__name__)
 
 
-
 class Mall:
     """
-    this class contains all of the stores for all collected tests and defines
+    this class contains all the stores for all collected tests and defines
     convenience methods for looking up test doubles
     """
 
     def __init__(self):
         self._by_test: Dict[str, Store] = {}
         self._by_dir: Dict[str, Store] = {}
+
+    @property
+    def http_req_wildcard_fields(self) -> List[str]:
+        return self._by_dir.get('tests', {}).get('http_req_wildcard_fields')
 
     @property
     def request_handler_class(self) -> Callable:
@@ -35,7 +37,7 @@ class Mall:
 
     def load(self, conf: dict, key: str) -> dict:
         """
-        always use this method to modify STORES BEFORE configuration stage ends
+        always use this method to modify MALL BEFORE configuration stage ends
 
         :param conf: the store config to fall back on if no test-specific
             store is defined normally passed in from Settings
@@ -60,10 +62,10 @@ class Mall:
         pass
 
     def register_test_doubles(self, test_name: str, factory_names: Union[str, List[str]],
-               req_obj: Union[BaseMockRequest, str],
-               response: Optional[Any] = None):
+                              req_obj: Union[BaseMockRequest, str],
+                              response: Optional[Any] = None):
         """
-        always use this method to modify STORES AFTER configuration stage ends
+        always use this method to modify MALL AFTER configuration stage ends
 
         :param test_name: name of the pytest test function not including
             modules or classes
@@ -163,4 +165,4 @@ class Mall:
         return None
 
 
-STORES = Mall()
+MALL = Mall()

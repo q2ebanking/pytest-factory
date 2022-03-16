@@ -3,7 +3,7 @@ import sys
 from typing import Callable, Optional, List, Union, Any
 
 from pytest_factory.outbound_response_double import BaseMockRequest
-from pytest_factory.framework.mall import STORES
+from pytest_factory.framework.mall import MALL
 
 
 def make_factory(req_obj: Union[BaseMockRequest, str],
@@ -34,7 +34,7 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
 
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
-        STORES.register_test_doubles(test_name=test_name, factory_names=factory_names,
+        MALL.register_test_doubles(test_name=test_name, factory_names=factory_names,
                                      req_obj=req_obj, response=response)
 
         return pytest_func

@@ -13,7 +13,7 @@ from typing import Callable, Optional
 from tornado.web import Application, RequestHandler
 
 from pytest_factory.http import MockHttpRequest
-from pytest_factory.framework.mall import STORES
+from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.factory import _apply_func_recursive
 import pytest_factory.framework.default_configs as defaults
 
@@ -21,7 +21,7 @@ import pytest_factory.framework.default_configs as defaults
 def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Callable] = None,
                           response_parser: Optional[Callable] = None) -> RequestHandler:
     if not handler_class:
-        handler_class = STORES.request_handler_class
+        handler_class = MALL.request_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
     async def _run_test(self, assert_no_missing_calls: bool = defaults.assert_no_missing_calls,
@@ -58,7 +58,7 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
             return parsed_resp
 
     # TODO this could be done via pytest.fixture for monkeypatch - have it look up the handler in the store!
-    # handler_overrides = {**{'run_test': _run_test}, **STORES.handler_monkeypatches}
+    # handler_overrides = {**{'run_test': _run_test}, **MALL.handler_monkeypatches}
     handler_overrides = {'run_test': _run_test}
 
     for attribute, override in handler_overrides.items():
@@ -100,7 +100,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     def register_test_func(pytest_func: Callable) -> Callable:
         if not req_obj and inspect.isclass(pytest_func):
             inspect.getmembers(pytest_func)
-        store = STORES.get_store(test_name=pytest_func.__name__)
+        store = MALL.get_store(test_name=pytest_func.__name__)
         store.handler = handler
         handler._pytest_store = store
 

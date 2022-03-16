@@ -19,8 +19,8 @@ class TestFactoryPlugin:
         resp = await store.handler.run_test()
         assert resp == 'nope'
 
-    @mock_service1(key='', response='wild')
     @mock_request(path="factory_plugin?mock_service0=foo&mock_service1=bar")
+    @mock_service1(key='', response='wild')
     async def test_plugin_complex_routing(self, store):
         resp = await store.handler.run_test()
         assert resp == 'wild'
