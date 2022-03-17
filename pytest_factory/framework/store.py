@@ -3,7 +3,7 @@ from functools import cached_property
 
 from tornado.web import RequestHandler
 
-from pytest_factory.framework.exceptions import UnCalledTestDoubleException
+from pytest_factory.framework.exceptions import UnCalledTestDoubleException, MissingTestDoubleException
 from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory import logger
 
@@ -45,6 +45,64 @@ class Store:
                     # overwriting with new test double
                     test_double_dict[k] = responses
                     return
+
+    def get_next_response(self, factory_name: str,
+                          req_obj: BaseMockRequest) -> Any:
+        """
+        will look up responses corresponding to the given parameters, then find
+        the next response that has not yet been called, and marks it as called.
+
+        if it runs out of uncalled responses, it will raise AssertionError
+        unless Store.assert_no_extra_calls is False. otherwise it will log
+        warnings to logger.
+
+        if not response can be found, this indicates a user error in setting up factories such that the expected
+        test double was not generated. this will log errors to logger and raise an
+
+        :param factory_name: name of the first factory used to create the response test double
+        :param req_obj: the request made by the RequestHandler represented as a
+            BaseMockRequest
+        :return: the next available mock response corresponding to the given
+            req_obj
+        """
+        assert hasattr(self, factory_name)
+        factory = getattr(self, factory_name)
+        mock_responses = None
+        for k, v in factory.items():
+            if k.compare(req_obj):
+                if isinstance(v, Callable):
+                    mock_responses = v(req_obj)
+
+                else:
+                    mock_responses = v
+                break
+
+        if mock_responses is None:
+            raise MissingTestDoubleException(req_obj=req_obj)
+
+        for index, (called, response) in enumerate(mock_responses):
+            if called:
+                continue
+            else:
+                # this is where we mark the response as having been called so
+                # we don't call it again
+                # unless we are allowed by the user
+                mock_responses[index] = (True, response)
+                return response
+
+        if mock_responses:
+            last_response = mock_responses[-1][1]
+            msg = f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}'
+            if self.assert_no_extra_calls:
+                logger.error(msg)  # TODO do we need these?
+                raise AssertionError(msg)
+            else:
+                logger.warning(f"{msg}, will repeat last response: {last_response}")
+            return last_response
+        return None
+
+    def register_plugins(self, plugins: Dict[str, Callable]):
+        pass
 
     @cached_property
     def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:

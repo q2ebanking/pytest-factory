@@ -26,6 +26,9 @@ def store(request):
     """
     test_name = request.node.name
     store = MALL.get_store(test_name=test_name)
+    # TODO check store at this point!
+    store.register_plugins(plugins=MALL.plugins)
+    # TODO check store at this point!
     assert store, 'pytest-factory ERROR: you broke something. probably in ' + \
                   'helpers.py or in this module'
     return store
@@ -69,9 +72,8 @@ def get_generic_caller(method_name: str, test_func_name: str,
         """
 
         req_obj = request_callable(method_name=method_name, *args, **kwargs)
-        mock_response = MALL.get_next_response(test_name=test_func_name,
-                                                 factory_name=req_obj.FACTORY_NAME,
-                                                 req_obj=req_obj)
+        store = MALL.get_store(test_name=test_func_name)
+        mock_response = store.get_next_response(factory_name=req_obj.FACTORY_NAME, req_obj=req_obj)
         if isinstance(mock_response, Callable):
             mock_response = mock_response(req_obj)
 
@@ -79,8 +81,7 @@ def get_generic_caller(method_name: str, test_func_name: str,
             raise mock_response
 
         if response_callable:
-            mock_response = response_callable(
-                mock_response=mock_response, *args, **kwargs)
+            mock_response = response_callable(mock_response=mock_response, *args, **kwargs)
         return mock_response
 
     return generic_caller
