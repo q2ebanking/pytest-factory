@@ -26,11 +26,7 @@ def store(request):
     """
     test_name = request.node.name
     store = MALL.get_store(test_name=test_name)
-    # TODO check store at this point!
     store.register_plugins(plugins=MALL.plugins)
-    # TODO check store at this point!
-    assert store, 'pytest-factory ERROR: you broke something. probably in ' + \
-                  'helpers.py or in this module'
     return store
 
 

@@ -28,6 +28,12 @@ class PytestFactoryException(Exception):
         return str(self.log_msgs)
 
 
+class MissingHandlerException(PytestFactoryException):
+    def __init__(self):
+        log_msg = 'this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'
+        super().__init__(log_msgs=[log_msg])
+
+
 class MissingTestDoubleException(PytestFactoryException):
     """
     exception for when Store cannot find the expected test double; this can indicate either a test code error in
@@ -37,7 +43,6 @@ class MissingTestDoubleException(PytestFactoryException):
     def __init__(self, req_obj: BaseMockRequest, desc: Optional[str] = None):
         log_msg = f"could not find test double match for request signature: {req_obj}!"
         super().__init__(log_msgs=[log_msg, desc])
-        pass
 
 
 class UnCalledTestDoubleException(PytestFactoryException):

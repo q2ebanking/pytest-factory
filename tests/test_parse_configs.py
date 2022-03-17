@@ -2,7 +2,7 @@ import pytest
 
 from pytest_factory.framework.parse_configs import prep_stores_update_local, get_config_parser
 
-from tests.app import MainHandler
+from tests.passthru_app import PassthruTestHandler
 
 
 @pytest.fixture(scope="function")
@@ -21,5 +21,5 @@ def test_prep_local_config(setup_config_test):
 
     assert conf_dict == {
         'http_req_wildcard_fields': ['otherfield'],
-        'request_handler_class': MainHandler
+        'request_handler_class': PassthruTestHandler
     }

@@ -19,25 +19,24 @@ pytest-factory WARNING: will repeat last response: yup'''
 }
 
 
-@mock_http_server(path='http://www.test.com/mock_endpoint', response='yup')
-@mock_request()
+@mock_http_server(path='http://www.test.com/endpoint0', response='TestHttp')
 class TestHttp:
-    @mock_http_server(path='http://www.test.com/mock_endpoint',
-                      response='nope')
+    @mock_request(path='endpoint0/wildcard')
+    @mock_http_server(path='http://www.test.com/endpoint0', response='test_http_func_override')
     async def test_http_func_override(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'nope'
+        assert resp == 'test_http_func_override'
 
-    @mock_http_server(path='http://www.test.com/*', response='wild')
+    @mock_request(path='endpoint0/wildcard')
+    @mock_http_server(path='http://www.test.com/endpoint0/*', response='test_http_wildcard_path')
     async def test_http_wildcard_path(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'wild'
+        assert resp == 'test_http_wildcard_path'
 
-    @mock_http_server(path='http://www.test.com/mock_endpoint',
-                      response=lambda x: x.path)
+    @mock_http_server(path='http://www.test.com/endpoint0', response=lambda x: x.path)
     async def test_http_response_function(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'http://www.test.com/mock_endpoint'
+        assert resp == 'http://www.test.com/endpoint0'
 
     class TestResponseTracking:
         @mock_request(path='?num=0')

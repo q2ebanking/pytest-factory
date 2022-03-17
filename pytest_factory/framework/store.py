@@ -3,7 +3,8 @@ from functools import cached_property
 
 from tornado.web import RequestHandler
 
-from pytest_factory.framework.exceptions import UnCalledTestDoubleException, MissingTestDoubleException
+from pytest_factory.framework.exceptions import UnCalledTestDoubleException, MissingTestDoubleException, \
+    MissingHandlerException
 from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory import logger
 
@@ -17,22 +18,39 @@ ROUTING_TYPE = Dict[
 ]
 
 
+def is_plugin(kallable: Callable) -> bool:
+    return hasattr(kallable, 'map_request_to_factory') and hasattr(kallable, 'parse_test_double_key')
+
+
+def compare_unknown_types(a, b) -> bool:
+    if hasattr(a, 'compare'):
+        compare_result = a.compare(b)
+    elif hasattr(b, 'compare'):
+        compare_result = b.compare(a)
+    else:
+        compare_result = a == b
+    return compare_result
+
+
+class MissingHandler(RequestHandler):
+    def __init__(self):
+        pass
+
+    async def run_test(self):
+        raise MissingHandlerException
+
+
 class Store:
     """
     stores test doubles for a given test method
     """
 
-    def __init__(self, plugins: Optional[Dict[str, Callable]] = None, **kwargs):
-        self.handler: Optional[RequestHandler] = None
+    def __init__(self, **kwargs):
+        self.handler: Optional[RequestHandler] = MissingHandler()
         self.assert_no_extra_calls: bool = True
         for k, v in kwargs.items():
             if v is not None:
                 setattr(self, k, v)
-        if plugins:
-            if hasattr(self, 'mock_http_server'):
-                self.mock_http_server.update(plugins)
-            else:
-                self.mock_http_server = plugins
 
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, responses: List[Any]):
         if not hasattr(self, factory_name):  # store does not already have a test double from factory
@@ -102,7 +120,10 @@ class Store:
         return None
 
     def register_plugins(self, plugins: Dict[str, Callable]):
-        pass
+        if hasattr(self, 'mock_http_server'):
+            self.mock_http_server.update(plugins)
+        else:
+            setattr(self, 'mock_http_server', plugins)
 
     @cached_property
     def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:

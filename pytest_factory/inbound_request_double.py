@@ -41,11 +41,11 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
         """
         # TODO log errors out here!
         store = self._pytest_store
-        if assert_no_extra_calls is False:
+        if assert_no_extra_calls is False:  # TODO is this necessary now that we can load this setting from configs?
             store.assert_no_extra_calls = assert_no_extra_calls
 
         method_name = self.request.method.lower()
-        assert hasattr(self, method_name)
+        assert hasattr(self, method_name), ''  # TODO do seomthing here?
         result = getattr(self, method_name)()
         if inspect.isawaitable(result):
             await result

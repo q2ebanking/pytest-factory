@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional, List, Union, Callable
 from functools import cached_property
 
 from pytest_factory.outbound_response_double import BaseMockRequest
-from pytest_factory.framework.store import Store
+from pytest_factory.framework.store import Store, is_plugin
 from pytest_factory import logger
 
 logger = logger.get_logger(__name__)
@@ -64,8 +64,8 @@ class Mall:
     def plugins(self) -> Dict[str, Callable]:
         return_dict = {}
         for _, v in self._by_dir.get('tests').items():
-            if hasattr(v, 'PLUGIN_URL') and hasattr(v, 'map_request_to_factory'):
-                return_dict[v.PLUGIN_URL] = v.map_request_to_factory
+            if is_plugin(v):
+                return_dict[v.PLUGIN_URL] = v
         return return_dict
 
     def register_test_doubles(self, test_name: str, factory_name: str,

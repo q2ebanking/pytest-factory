@@ -38,13 +38,15 @@ pytest_plugins = "pytest_factory.framework.pytest"
 ```
 
 your test.py:
+
 ```python
 import pytest
 from pytest_factory import mock_request, mock_http_server
 
-from tests.app import MainHandler
+from tests.other_app import MainHandler
 
 pytestmark = pytest.mark.asyncio
+
 
 @mock_http_server(method='get', path='/hello', response='blah blah')
 @mock_request(handler_class=MainHandler, method='get')

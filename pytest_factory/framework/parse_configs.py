@@ -8,7 +8,7 @@ import pytest_factory.framework.default_configs as defaults
 def get_config_parser(filename: str = 'config.ini') -> ConfigParser:
     config = ConfigParser()
     p = Path()
-    p_list = list(p.glob(f"**/{filename}"))
+    p_list = list(p.glob(f"../**/{filename}"))
     if len(p_list) != 1:
         raise Exception(f'{filename} is missing from project!')
     config.read(p_list[0])
