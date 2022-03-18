@@ -1,5 +1,6 @@
 import json
 import requests
+from urllib.parse import urlparse
 
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application
@@ -11,20 +12,26 @@ test_url_map = {
 
 
 class PassthruTestHandler(RequestHandler):
-    async def get(self):
-        service_name = self.request.uri.split('/')[0]
+    def _handle_passthru(self, http_method: str = 'get'):
+        service_name = self.request.uri.split('/')[0].split('?')[0]
         url = test_url_map.get(service_name)
         final_url = f"{url}/{self.request.path}"
-        resp = requests.get(url=final_url)
-        return resp.content
+        num_calls = int(self.get_query_argument(name='num', default='1'))
+        resp_str = ''
+        for _ in range(0, num_calls):
+            if http_method == 'post':
+                body = json.loads(self.request.body)
+                resp = requests.post(url=final_url, json=body)
+            else:
+                resp = requests.get(url=final_url)
+            resp_str += resp.content
+        self.write(resp_str)
+
+    async def get(self):
+        self._handle_passthru()
 
     async def post(self):
-        service_name = self.request.uri.split('/')[0]
-        body = json.loads(self.request.body)
-        url = test_url_map.get(service_name)
-        final_url = f"{url}/{self.request.path}"
-        resp = requests.post(url=final_url, json=body)
-        return resp.content
+        self._handle_passthru(http_method='post')
 
 
 def make_app():

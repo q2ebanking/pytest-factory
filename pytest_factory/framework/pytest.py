@@ -71,6 +71,7 @@ def get_generic_caller(method_name: str, test_func_name: str,
         store = MALL.get_store(test_name=test_func_name)
         mock_response = store.get_next_response(factory_name=req_obj.FACTORY_NAME, req_obj=req_obj)
         if isinstance(mock_response, Callable):
+            # TODO isn't this redundant? we're already invoking callable responses inside store.get_next_response
             mock_response = mock_response(req_obj)
 
         if isinstance(mock_response, Exception):
