@@ -1,6 +1,6 @@
 import json
 import requests
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlencode
 
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application
@@ -15,7 +15,10 @@ class PassthruTestHandler(RequestHandler):
     def _handle_passthru(self, http_method: str = 'get'):
         service_name = self.request.uri.split('/')[0].split('?')[0]
         url = test_url_map.get(service_name)
-        final_url = f"{url}/{self.request.path}"
+        query_args = {k: v[0].decode() for k, v in self.request.query_arguments.items() if k != 'num'}
+
+        query_str = '?' + urlencode(query=query_args) if query_args else ""
+        final_url = f"{url}/{self.request.path}{query_str}"
         num_calls = int(self.get_query_argument(name='num', default='1'))
         resp_str = ''
         for _ in range(0, num_calls):

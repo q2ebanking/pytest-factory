@@ -92,8 +92,8 @@ class TestQueryParams:
                            match=r'.*http://www.test.com/endpoint0\?wild=card.*'):
             await store.handler.run_test()
 
-    @mock_request(path="query_params_test?wild=card&foo=bar")
-    @mock_http_server(path='http://www.test.com/mock_endpoint?foo=bar&wild=card', response='exact match!')
+    @mock_request(path="endpoint0?wild=card&foo=bar")
+    @mock_http_server(path='http://www.test.com/endpoint0?foo=bar&wild=card', response='exact match!')
     async def test_http_query_params_misordered_success(self, store):
         resp = await store.handler.run_test()
         assert resp == 'exact match!'
