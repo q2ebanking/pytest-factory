@@ -96,9 +96,7 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
                      method: Optional[str] = HTTP_METHODS.GET.value,
                      path: Optional[str] = None, **kwargs) -> Callable:
     """
-    TODO implement full wildcarding!
     TODO load from swagger, WSDL, etc.
-
     TODO document method fully
 
     :param response: defaults to empty string; can be single response or list of responses (for changing

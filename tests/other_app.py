@@ -3,7 +3,6 @@ from tornado.web import RequestHandler, Application
 
 
 class MockRequestTestHandler(RequestHandler):
-    # TODO restructure as a simple passthru so we can reuse the inbound params as the outbound params?
     async def get(self):
         if self.request.path == 'solo':
             self.write('Hello, world')

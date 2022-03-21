@@ -20,6 +20,8 @@ def test_prep_local_config(setup_config_test):
     )
 
     assert conf_dict == {
+        'assert_no_extra_calls': False,
+        'assert_no_missing_calls': True,
         'http_req_wildcard_fields': ['otherfield'],
         'request_handler_class': PassthruTestHandler
     }

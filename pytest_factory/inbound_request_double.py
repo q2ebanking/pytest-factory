@@ -15,7 +15,6 @@ from tornado.web import Application, RequestHandler
 from pytest_factory.http import MockHttpRequest
 from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.factory import _apply_func_recursive
-import pytest_factory.framework.default_configs as defaults
 
 
 def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Callable] = None,
@@ -24,8 +23,8 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
         handler_class = MALL.request_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
-    async def _run_test(self, assert_no_missing_calls: bool = defaults.assert_no_missing_calls,
-                        assert_no_extra_calls: bool = defaults.assert_no_extra_calls):
+    async def _run_test(self, assert_no_missing_calls: bool = None,
+                        assert_no_extra_calls: bool = None):
         """
         TODO the two bool params need to pull defaults from the USER'S configs, via Mall
         this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
@@ -41,8 +40,15 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
         """
         # TODO log errors out here!
         store = self._pytest_store
-        if assert_no_extra_calls is False:  # TODO is this necessary now that we can load this setting from configs?
+        if assert_no_extra_calls is not None:
             store.assert_no_extra_calls = assert_no_extra_calls
+        else:
+            store.assert_no_extra_calls = MALL.assert_no_extra_calls
+
+        if assert_no_missing_calls is not None:
+            store.assert_no_missing_calls = assert_no_missing_calls
+        else:
+            store.assert_no_missing_calls = MALL.assert_no_missing_calls
 
         method_name = self.request.method.lower()
         assert hasattr(self, method_name), ''  # TODO do seomthing here?
@@ -50,7 +56,7 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
         if inspect.isawaitable(result):
             await result
 
-        store.check_no_uncalled_test_doubles(raise_assertion_error=assert_no_missing_calls)
+        store.check_no_uncalled_test_doubles()
 
         if self._write_buffer:
             raw_resp = self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')

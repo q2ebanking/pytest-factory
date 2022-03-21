@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any
 
 from pytest_factory.logger import get_logger
 from pytest_factory.outbound_response_double import BaseMockRequest
@@ -9,29 +9,37 @@ logger = get_logger(__name__)
 class PytestFactoryException(Exception):
     """
     generic exception for exceptions that occur within the framework. please use only if none
-    of the other exceptions apply to your error
+    of the other exceptions apply to your error.
+    can either be raised to halt the test or
     """
 
-    def __init__(self, log_msgs: List[str]):
+    def __init__(self, log_error: bool = True, *args, **kwargs):
         """
-        :param log_msgs: str or list of strings for messages to send to logger;
+        :param log_msg: str message to send to logger;
+        :param log_error: bool, if True (default) sends log_msg to logger.error, else logger.warning;
+        note this does NOT determine if exception is raised or not! that must be decided by the user
         """
 
-        if isinstance(log_msgs, str):
-            log_msgs = [log_msgs]
-        self.log_msgs = log_msgs
-        for log_msg in log_msgs:
-            if isinstance(log_msg, str):
-                logger.error(msg=log_msg)
+        if log_error:
+            self.log_msg = self.get_error_msg(*args, **kwargs)
+            logger.error(msg=self.log_msg)
+        else:
+            self.log_msg = self.get_warning_msg(*args, **kwargs)
+            logger.warning(msg=self.log_msg)
+
+    def get_warning_msg(self, *args, **kwargs) -> str:
+        raise NotImplementedError
+
+    def get_error_msg(self, *args, **kwargs) -> str:
+        raise NotImplementedError
 
     def __str__(self):
-        return str(self.log_msgs)
+        return self.log_msg
 
 
 class MissingHandlerException(PytestFactoryException):
-    def __init__(self):
-        log_msg = 'this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'
-        super().__init__(log_msgs=[log_msg])
+    def get_error_msg(self) -> str:
+        return 'this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'
 
 
 class MissingTestDoubleException(PytestFactoryException):
@@ -40,13 +48,23 @@ class MissingTestDoubleException(PytestFactoryException):
     setting up the factories OR an error in component under test not forming the request correctly
     """
 
-    def __init__(self, req_obj: BaseMockRequest, desc: Optional[str] = None):
-        log_msg = f"could not find test double match for request signature: {req_obj}!"
-        super().__init__(log_msgs=[log_msg, desc])
+    def get_error_msg(self, req_obj: BaseMockRequest) -> str:
+        return f"could not find test double match for request signature: {req_obj}!"
 
 
 class UnCalledTestDoubleException(PytestFactoryException):
-    def __init__(self, uncalled_test_doubles: dict, desc: Optional[str] = None):
-        log_msg = f"the following test doubles were NOT used in this test! if that is not a test failure condition, " \
-                  f"you must set FAIL_UNCALLED_TEST_DOUBLES to False (the default setting): {uncalled_test_doubles}"
-        super().__init__(log_msgs=[log_msg, desc])
+    def get_error_msg(self, uncalled_test_doubles: dict) -> str:
+        return f"the following test doubles were NOT used in this test: {uncalled_test_doubles}"
+
+    def get_warning_msg(self, uncalled_test_doubles: dict):
+        warning_msg = " if this is not expected, set assert_no_missing_calls to True"
+        return self.get_error_msg(uncalled_test_doubles=uncalled_test_doubles) + warning_msg
+
+
+class OverCalledTestDoubleException(PytestFactoryException):
+    def get_error_msg(self, mock_responses: list, req_obj: Any) -> str:
+        return f'expected only {len(mock_responses)} calls to {req_obj}!'
+
+    def get_warning_msg(self, mock_responses: list, req_obj: Any) -> str:
+        warning_msg = f" will repeat last response: {mock_responses[-1][1]}"
+        return self.get_error_msg(mock_responses=mock_responses, req_obj=req_obj) + warning_msg

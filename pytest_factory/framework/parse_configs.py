@@ -27,7 +27,7 @@ def import_from_str_path(path: str) -> Callable:
 CONFIG_MAP = {
     'tuples': lambda x: x.split(","),
     'imports': import_from_str_path,
-    'bools': lambda x: bool(x)
+    'bools': lambda x: x.lower() == 'true'
 }
 
 

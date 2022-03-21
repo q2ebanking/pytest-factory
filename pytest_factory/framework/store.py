@@ -3,8 +3,7 @@ from functools import cached_property
 
 from tornado.web import RequestHandler
 
-from pytest_factory.framework.exceptions import UnCalledTestDoubleException, MissingTestDoubleException, \
-    MissingHandlerException
+import pytest_factory.framework.exceptions as exceptions
 from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory import logger
 
@@ -37,7 +36,7 @@ class MissingHandler(RequestHandler):
         pass
 
     async def run_test(self):
-        raise MissingHandlerException
+        raise exceptions.MissingHandlerException
 
 
 class Store:
@@ -47,7 +46,8 @@ class Store:
 
     def __init__(self, **kwargs):
         self.handler: Optional[RequestHandler] = MissingHandler()
-        self.assert_no_extra_calls: bool = True
+        self.assert_no_extra_calls: Optional[bool] = None
+        self.assert_no_missing_calls: Optional[bool] = None
         for k, v in kwargs.items():
             if v is not None:
                 setattr(self, k, v)
@@ -96,7 +96,7 @@ class Store:
                 break
 
         if mock_responses is None:
-            raise MissingTestDoubleException(req_obj=req_obj)
+            raise exceptions.MissingTestDoubleException(req_obj=req_obj)
 
         for index, (called, response) in enumerate(mock_responses):
             if called:
@@ -110,12 +110,11 @@ class Store:
 
         if mock_responses:
             last_response = mock_responses[-1][1]
-            msg = f'UNEXPECTED CALL DETECTED. expected only {len(mock_responses)} calls to {req_obj}'
+            exception = exceptions.OverCalledTestDoubleException(mock_responses=mock_responses,
+                                                                 req_obj=req_obj,
+                                                                 log_error=self.assert_no_extra_calls)
             if self.assert_no_extra_calls:
-                logger.error(msg)  # TODO do we need these?
-                raise AssertionError(msg)
-            else:
-                logger.warning(f"{msg}, will repeat last response: {last_response}")
+                raise exception
             return last_response
         return None
 
@@ -129,6 +128,7 @@ class Store:
     def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
         test_doubles = {}
         for key, response_dict in vars(self).items():
+            # TODO is there a better way to filter this?
             if key not in ['handler', 'assert_no_extra_calls'] \
                     and isinstance(response_dict, dict):
                 test_doubles[key] = response_dict
@@ -141,11 +141,11 @@ class Store:
             else:
                 setattr(self, key, route)
 
-    def check_no_uncalled_test_doubles(self, raise_assertion_error: bool = False):
+    def check_no_uncalled_test_doubles(self):
         """
         checks if this Store has any test_doubles that have not been called the
         number of times expected by default, it will log warnings to logger
-        :param raise_assertion_error: if True, will raise AssertionError if any
+        :param assert_no_missing_calls: if True, will raise AssertionError if any
             uncalled test_doubles remain
         :return:
         """
@@ -161,10 +161,7 @@ class Store:
             if uncalled_test_double_endpoints:
                 uncalled_test_doubles[test_double] = uncalled_test_double_endpoints
         if uncalled_test_doubles:
-            msg = 'the following test_doubles have not been called: ' + \
-                  f'{uncalled_test_doubles}!'
-            if raise_assertion_error:
-                logger.error(msg)
-                raise UnCalledTestDoubleException(uncalled_test_doubles=uncalled_test_doubles)
-            else:
-                logger.warning(f"{msg}, if this is not expected, consider this a test failure!")
+            exception = exceptions.UnCalledTestDoubleException(uncalled_test_doubles=uncalled_test_doubles,
+                                                               log_error=self.assert_no_missing_calls)
+            if self.assert_no_missing_calls:
+                raise exception

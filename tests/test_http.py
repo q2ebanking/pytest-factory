@@ -45,18 +45,16 @@ class TestHttp:
             resp = await store.handler.run_test()
             assert resp == ''
             actual = [rec.message for rec in caplog.records]
-            assert actual == ["the following test_doubles have not been called: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): ['TestHttp']}}!, if this is not expected, consider this a test failure!"]
-            # TODO assert warning made it to logger
+            assert actual == ["the following test doubles were NOT used in this test: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): ['TestHttp']}} if this is not expected, set assert_no_missing_calls to True"]
 
         @mock_request(path='endpoint0?num=2')
         async def test_http_extra_call_warning(self, store, caplog):
             """
             """
-            resp = await store.handler.run_test(assert_no_extra_calls=False)
+            resp = await store.handler.run_test()
             assert resp == 'TestHttpTestHttp'
             actual = [rec.message for rec in caplog.records]
-            assert actual == ['UNEXPECTED CALL DETECTED. expected only 1 calls to MockHttpRequest(protocol=\'http\', host=\'127.0.0.1\', method=\'get\', uri=\'http://www.test.com/endpoint0\', version=\'HTTP/1.0\', remote_ip=None), will repeat last response: TestHttp']
-            # TODO assert warning made it to logger
+            assert actual == ["expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)! will repeat last response: TestHttp"]
 
         @mock_request(path='endpoint0')
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
@@ -66,7 +64,6 @@ class TestHttp:
             assert resp == 'TestHttp'
             actual = [rec.message for rec in caplog.records]
             assert actual == []
-            # TODO expected log should NOT have any warnings related to extra or missed calls to endpoint
 
 
 @mock_request(path="endpoint0?wild=card")
