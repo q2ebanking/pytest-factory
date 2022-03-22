@@ -17,6 +17,7 @@ class MockPlugin(BasePlugin):
         factory_name = body_dict.get('service_name')
         return factory_name
 
+    # TODO this isn't right. need one of these for EACH factory. how will Store find each sub module?
     @staticmethod
     def parse_test_double_key(req_obj: MockHttpRequest) -> str:
         body_dict = json.loads(req_obj.content)
@@ -24,6 +25,7 @@ class MockPlugin(BasePlugin):
         return routing_param
 
 
+# TODO same for each of these - they should live in separate modules for EACH factory
 def mock_service0(key: str, response: str):
     return make_factory(req_obj=key, response=response)
 

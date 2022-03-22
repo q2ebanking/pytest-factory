@@ -34,8 +34,9 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
 
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
-        MALL.register_test_doubles(test_name=test_name, factory_name=factory_name,
-                                   req_obj=req_obj, response=response)
+        store = MALL.get_store(test_name=test_name)
+        store.update(factory_name=factory_name,
+                     req_obj=req_obj, response=response)
 
         return pytest_func
 

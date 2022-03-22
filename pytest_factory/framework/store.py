@@ -53,10 +53,20 @@ class Store:
             if v is not None:
                 setattr(self, k, v)
 
-    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, responses: List[Any]):
+    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]],
+               mapping_func: Optional[Callable] = None):
         """
+        always use this method to modify store AFTER configuration stage ends
         note that this will get invoked depth-first
+        :param req_obj:
+        :param factory_name:
+        :param response:
+        :param mapping_func: function that for a given outbound request returns the appropriate mapping key
         """
+        responses = [response] if not isinstance(response, list) else response
+        responses = [(False, _response) for _response in responses]
+
+        # TODO change the format for plugins to have somehwere to put the mapping function?
         if not hasattr(self, factory_name):  # store does not already have a test double from factory
             setattr(self, factory_name, {req_obj: responses})
         else:  # store already has test doubles from this factory
@@ -83,7 +93,8 @@ class Store:
         :return: the next available mock response corresponding to the given
             req_obj
         """
-        assert hasattr(self, factory_name)
+        # TODO break up this method!!!
+        assert hasattr(self, factory_name)  # TODO raise exception here instead!
         factory = getattr(self, factory_name)
         mock_responses = None
         for k, v in factory.items():
@@ -91,10 +102,11 @@ class Store:
             if compare_result:
                 if is_plugin(v):
                     plugin_factory_name = v.map_request_to_factory(req_obj=req_obj)
+                    # TODO find module given factory
                     if hasattr(self, plugin_factory_name):
-                        response_dict = getattr(self, plugin_factory_name)
+                        plugin_test_doubles = getattr(self, plugin_factory_name)
                         plugin_routing_key = v.parse_test_double_key(req_obj=req_obj)
-                        mock_responses = response_dict.get(plugin_routing_key)
+                        mock_responses = plugin_test_doubles.get(plugin_routing_key)
                 elif isinstance(v, Callable):
                     mock_responses = v(req_obj)
                 else:

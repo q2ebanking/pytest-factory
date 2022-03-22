@@ -21,6 +21,7 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
                           response_parser: Optional[Callable] = None) -> RequestHandler:
     if not handler_class:
         handler_class = MALL.request_handler_class
+    # TODO raise exception here instead! or are we already doing that earlier?
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
     async def _run_test(self, assert_no_missing_calls: bool = None,

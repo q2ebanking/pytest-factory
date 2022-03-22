@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pytest-factory",
-    version="0.1.0",
+    version="0.1.0",  # TODO pull from changelog
     author="Q2 Software",
     author_email="bansuki@gmail.com",
     description="pytest factories for web services",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/ludocracy/pytest_factory",
+    url="https://github.com/pytest-factory/pytest-factory",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

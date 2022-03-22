@@ -68,27 +68,6 @@ class Mall:
                 return_dict[v.PLUGIN_URL] = v
         return return_dict
 
-    def register_test_doubles(self, test_name: str, factory_name: str,
-                              req_obj: Union[BaseMockRequest, str],
-                              response: Optional[Any] = None):
-        """
-        always use this method to modify MALL AFTER configuration stage ends
-
-        :param test_name: name of the pytest test function not including
-            modules or classes
-        :param factory_name: name of the factory that created the test double being updated in the store e.g. mock_http_server
-
-        :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
-        :param response: test double
-        :return:
-        """
-        # this is how we keep track of which test doubles have been used TODO refactor to record all of the inputs!
-        response = (False, response)
-        responses = [response] if not isinstance(response, list) else response
-
-        store = self.get_store(test_name)
-        store.update(req_obj=req_obj, factory_name=factory_name, responses=responses)
-
     def get_store(self, test_name: str) -> Store:
         """
         :param test_name: name of the pytest test function associated with the

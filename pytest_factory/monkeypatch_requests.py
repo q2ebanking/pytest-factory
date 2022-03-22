@@ -9,6 +9,7 @@ from typing import Union
 from tornado.httputil import HTTPHeaders
 
 from pytest_factory.http import MockHttpRequest
+from pytest_factory.framework.exceptions import PytestFactoryException
 
 
 def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
@@ -68,7 +69,7 @@ def _response_callable(mock_response: MOCK_RESP_TYPE,
     elif isinstance(mock_response, Response):
         response = mock_response
     else:
-        assert False, 'should not happen'
+        raise PytestFactoryException
 
     # TODO need to replicate redirect behavior unless allow_redirects==False.
     #  how though? could return an array instead and then it's up to

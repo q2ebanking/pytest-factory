@@ -10,7 +10,9 @@ class PytestFactoryException(Exception):
     """
     generic exception for exceptions that occur within the framework. please use only if none
     of the other exceptions apply to your error.
-    can either be raised to halt the test or
+    must be raised to halt the test
+    NOTE __init__() will ALSO log out the exception description (i.e. self.log_msg) so you don't need to do it as a
+    separate action!
     """
 
     def __init__(self, log_error: bool = True, *args, **kwargs):
