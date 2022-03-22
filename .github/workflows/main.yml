@@ -7,7 +7,6 @@ on: [push, pull_request]
 
 jobs:
   build_and_test:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -48,6 +47,6 @@ jobs:
       with:
         name: test-coverage-report
         path: test_reports/summary.txt 
-     - name: Run Bandit for security checks
+    - name: Run Bandit for security checks
       run: |
         bandit -r pytest_factory
