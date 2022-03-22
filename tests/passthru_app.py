@@ -1,6 +1,6 @@
 import json
 import requests
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlencode
 
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application

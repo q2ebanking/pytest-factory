@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from typing import Optional, Callable, List, Union
 from urllib.parse import urlparse, parse_qs
 from enum import Enum
@@ -63,6 +64,10 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         if kwargs.get('headers'):
             kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
 
+        if kwargs.get('json'):
+            json_dict = kwargs.pop('json')
+            kwargs['body'] = json.dumps(json_dict).encode()
+
         super().__init__(method=method, uri=path, **kwargs)
 
         # TODO make this more fake later but this trick will work if a user doesn't look too closely in the debugger
@@ -70,6 +75,9 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         setattr(self.connection, 'set_close_callback', lambda _: None)
 
     def compare(self, other: MockHttpRequest) -> bool:
+        if isinstance(other, str):
+            substr_index = self.full_url().find(other)
+            return substr_index > -1
         this_dict = _urlparse_to_dict(self.uri)
         that_dict = _urlparse_to_dict(other.uri)
 
@@ -82,8 +90,8 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         return True
 
     @property
-    def content(self):
-        return str(self.body)
+    def content(self) -> str:
+        return self.body.decode()
 
     def __hash__(self) -> int:
         # TODO this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
@@ -123,10 +131,16 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
 
 
 class BasePlugin:
+    # TODO seems unnecessary to make this a class - rework to replace with module
     PLUGIN_URL = None
 
     def __init__(self):
         assert self.PLUGIN_URL is not None
 
-    def map_request_to_factory(self, req_obj: MockHttpRequest) -> str:
-        return 'hq_esp'
+    @staticmethod
+    def map_request_to_factory(req_obj: MockHttpRequest) -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def parse_test_double_key(req_obj: MockHttpRequest) -> str:
+        raise NotImplementedError

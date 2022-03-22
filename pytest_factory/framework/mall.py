@@ -98,7 +98,7 @@ class Mall:
         """
         store = self._by_test.get(test_name)
         if not store:
-            store = Store()
+            store = Store(_test_name=test_name)
 
             self._by_test[test_name] = store
         return store
