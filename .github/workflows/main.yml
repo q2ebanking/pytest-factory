@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9"]
 
     steps:
     - name: Checkout
@@ -35,9 +35,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-    - name: Run Bandit for security checks
-      run: |
-        bandit -r pytest_factory
     - name: Archive test results
       uses: actions/upload-artifact@v3
       with:
@@ -51,3 +48,6 @@ jobs:
       with:
         name: test-coverage-report
         path: test_reports/summary.txt 
+     - name: Run Bandit for security checks
+      run: |
+        bandit -r pytest_factory
