@@ -1,6 +1,6 @@
 """
 monkeypatches requests module to intercept http calls and lookup mock response
-in fixtures store
+in store
 """
 from requests import Response
 import json
@@ -8,19 +8,8 @@ from typing import Union
 
 from tornado.httputil import HTTPHeaders
 
-from pytest_factory.mock_request_types import MockHttpRequest
+from pytest_factory.http import MockHttpRequest
 
-
-# def parameterize_test(item: Item):
-#     """
-#     if user chooses, this method will generate tests for standard HTTP failure modes (404, 500, timeout) for
-#     every fixture in the Store for this test item.
-#     TODO maybe put a flag on the fixture factory whether to generate extra tests in the store, then when
-#      pytest_generate_tests gets called those tests can be collected for real
-#
-#     :param item:
-#     :return:
-#     """
 
 def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
     """
@@ -30,7 +19,8 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
 
     :param method_name: the name of the method in the module being
         monkeypatched for this test
-    :param test_func_name: name of the test function that this fixture is for
+    :param test_func_name: name of the test function that will be in scope for
+        this monkeypatch
     :param request_callable: class of the request object or function that will
         return one
     :param response_callable: class of the response object or function that
@@ -56,6 +46,9 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
         # TODO check if str and convert to bytes?
         mock_http_request_kwargs['body'] = kwargs.get('body')
 
+    elif kwargs.get('json'):
+        mock_http_request_kwargs['body'] = json.dumps(kwargs.get('json')).encode()
+
     req_obj = MockHttpRequest(**mock_http_request_kwargs)
     return req_obj
 
@@ -80,5 +73,5 @@ def _response_callable(mock_response: MOCK_RESP_TYPE,
     # TODO need to replicate redirect behavior unless allow_redirects==False.
     #  how though? could return an array instead and then it's up to
     # if response.status_code == 302 and kwargs.get('allow_redirects') is not False:
-        # wut do
+    # wut do
     return response

@@ -1,13 +1,10 @@
 """
-contains fixture factory @mock_request used to create the request to be passed to RequestHandler
+contains @mock_request factory used to create the request to be passed to RequestHandler
 before test execution.
 
 also definitions for methods to be bound to RequestHandler that can be used to wrap execution of RequestHandler methods
 for testing purposes. this module comes with run_test() but plugins can define many more with the handler_overrides
 parameter.
-
-finally, this contains the pytest fixture definition. make sure this file is imported by pytest.py so the framework
-can pick this up, or you will not have the fixture available in tests!
 """
 import inspect
 import functools
@@ -15,56 +12,66 @@ from typing import Callable, Optional
 
 from tornado.web import Application, RequestHandler
 
-from pytest_factory.mock_request_types import MockHttpRequest
-from pytest_factory.framework.settings import SETTINGS
-from pytest_factory.framework.stores import STORES
-from pytest_factory.framework.helpers import _apply_func_recursive
+from pytest_factory.http import MockHttpRequest
+from pytest_factory.framework.mall import MALL
+from pytest_factory.framework.factory import _apply_func_recursive
 
 
-def _get_handler_instance(handler_class: Callable, req_obj: MockHttpRequest,
+def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Callable] = None,
                           response_parser: Optional[Callable] = None) -> RequestHandler:
-    handler_class = handler_class or SETTINGS.default_request_handler_class
+    if not handler_class:
+        handler_class = MALL.request_handler_class
     assert handler_class, 'could not load class of RequestHandler being tested!'
 
-    async def _run_test(self, assert_no_missing_calls: bool = False, assert_no_extra_calls: bool = True):
+    async def _run_test(self, assert_no_missing_calls: bool = None,
+                        assert_no_extra_calls: bool = None):
         """
+        TODO the two bool params need to pull defaults from the USER'S configs, via Mall
         this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
         and provides a way to advance the state of the RequestHandler while returning the response to the
         test method for assertions
 
         :param assert_no_missing_calls: if set to True, will raise AssertionError if handler calls
-        a fixture less times than it has responses; will no longer issue warning via LOGGER
+        a test double less times than it has responses; will no longer issue warning via logger
+        this can also be set in conftest by setting ASSERT_NO_MISSING_CALLS to True
         :param assert_no_extra_calls: if set to False, will no longer raise AssertionError if handler calls
-        a fixture more times than it has responses; will issue warnings instead via LOGGER
+        a test double more times than it has responses; will issue warnings instead via logger
         :return:
         """
-
+        # TODO log errors out here!
         store = self._pytest_store
-        if assert_no_extra_calls is False:
+        if assert_no_extra_calls is not None:
             store.assert_no_extra_calls = assert_no_extra_calls
+        else:
+            store.assert_no_extra_calls = MALL.assert_no_extra_calls
+
+        if assert_no_missing_calls is not None:
+            store.assert_no_missing_calls = assert_no_missing_calls
+        else:
+            store.assert_no_missing_calls = MALL.assert_no_missing_calls
 
         method_name = self.request.method.lower()
-        assert hasattr(self, method_name)
+        assert hasattr(self, method_name), ''  # TODO do seomthing here?
         result = getattr(self, method_name)()
         if inspect.isawaitable(result):
             await result
 
-        store.check_no_uncalled_fixtures(raise_assertion_error=assert_no_missing_calls)
+        store.check_no_uncalled_test_doubles()
 
         if self._write_buffer:
             raw_resp = self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
             parsed_resp = response_parser(raw_resp) if response_parser else raw_resp
             return parsed_resp
 
-    handler_overrides = {**{'run_test': _run_test},  # this is here instead of settings.py to avoid circular imports
-                         **SETTINGS.handler_overrides}  # but this will guarantee that plugins can still override it
+    # TODO this could be done via pytest.fixture for monkeypatch - have it look up the handler in the store!
+    # handler_overrides = {**{'run_test': _run_test}, **MALL.handler_monkeypatches}
+    handler_overrides = {'run_test': _run_test}
 
     for attribute, override in handler_overrides.items():
         if isinstance(override, Callable):  # setting methods on the handler class
             setattr(handler_class, attribute, override)
 
     # TODO note that this is the one place with a true dependency on tornado
-    # TODO genericize this when we make plugin for django!
     handler = handler_class(Application(), req_obj)
 
     for attribute, override in handler_overrides.items():
@@ -79,7 +86,7 @@ def mock_request(handler_class: Optional[Callable] = None,
                  response_parser: Optional[Callable] = None,
                  **kwargs) -> Callable:
     """
-    generic tornado request fixture factory; can be invoked within a wrapper to customize
+    generic tornado request double factory; can be invoked within a wrapper to customize
 
     :param handler_class: class of RequestHandler being tested
     :param req_obj: MockHttpRequest object; required if not passing kwargs
@@ -99,7 +106,7 @@ def mock_request(handler_class: Optional[Callable] = None,
     def register_test_func(pytest_func: Callable) -> Callable:
         if not req_obj and inspect.isclass(pytest_func):
             inspect.getmembers(pytest_func)
-        store = STORES.get_store(test_name=pytest_func.__name__)
+        store = MALL.get_store(test_name=pytest_func.__name__)
         store.handler = handler
         handler._pytest_store = store
 
@@ -120,6 +127,6 @@ def mock_request(handler_class: Optional[Callable] = None,
         return modified_pytest_func
 
     def callable_wrapper(callable_obj: Callable) -> Callable:
-        return _apply_func_recursive(callable=callable_obj, func=register_test_func)
+        return _apply_func_recursive(kallable=callable_obj, func=register_test_func)
 
     return callable_wrapper

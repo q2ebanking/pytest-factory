@@ -1,12 +1,12 @@
 """
 non async unit tests
 """
-from pytest_factory.mock_request_types import MockHttpRequest
+from pytest_factory.http import MockHttpRequest
 
-def test_mock_http_request_hash():
+
+def test_mock_http_request_compare():
     mhr0 = MockHttpRequest(path='abcd/fdsa?a=0&b=true')
     mhr1 = MockHttpRequest(path='abcd/fdsa?a=0&b=true', headers={'a': 'b'})
     mhr2 = MockHttpRequest(path='abcd/fdsa?b=true&a=0')
-    assert hash(mhr0) == hash(mhr2)
-    print('assert hash(mhr0) != hash(mhr1)')
-    assert hash(mhr0) != hash(mhr1)
+    assert mhr0.compare(mhr2)
+    assert mhr0.compare(mhr1)
