@@ -8,7 +8,7 @@ parameter.
 """
 import inspect
 import functools
-from typing import Callable, Optional
+from typing import Callable, Optional, List, Dict, Any
 
 from tornado.web import Application, RequestHandler
 
@@ -18,7 +18,9 @@ from pytest_factory.framework.factory import _apply_func_recursive
 
 
 def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Callable] = None,
-                          response_parser: Optional[Callable] = None) -> RequestHandler:
+                          response_parser: Optional[Callable] = None,
+                          handler_class_args: Optional[List[Any]] = None,
+                          handler_class_kwargs: Optional[Dict[str, Any]] = None) -> RequestHandler:
     if not handler_class:
         handler_class = MALL.request_handler_class
     # TODO raise exception here instead! or are we already doing that earlier?
@@ -73,7 +75,9 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
             setattr(handler_class, attribute, override)
 
     # TODO note that this is the one place with a true dependency on tornado
-    handler = handler_class(Application(), req_obj)
+    args = handler_class_args or []
+    kwargs = handler_class_kwargs or {}
+    handler = handler_class(Application(), req_obj, *args, **kwargs)
 
     for attribute, override in handler_overrides.items():
         if not isinstance(override, Callable):  # setting other properties on the handler object
@@ -85,6 +89,8 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
 def mock_request(handler_class: Optional[Callable] = None,
                  req_obj: Optional[MockHttpRequest] = None,
                  response_parser: Optional[Callable] = None,
+                 handler_class_args: Optional[List[Any]] = None,
+                 handler_class_kwargs: Optional[Dict[str, Any]] = None,
                  **kwargs) -> Callable:
     """
     generic tornado request double factory; can be invoked within a wrapper to customize
@@ -98,16 +104,16 @@ def mock_request(handler_class: Optional[Callable] = None,
     req_obj = req_obj or MockHttpRequest(**kwargs)
     req_obj.FACTORY_NAME = 'mock_request'
 
-    # TODO if req_obj is missing (because this request is on a class)
-    if req_obj:
-        handler = _get_handler_instance(handler_class=handler_class, req_obj=req_obj, response_parser=response_parser)
-    else:
-        handler = None
-
     def register_test_func(pytest_func: Callable) -> Callable:
         if not req_obj and inspect.isclass(pytest_func):
             inspect.getmembers(pytest_func)
         store = MALL.get_store(test_name=pytest_func.__name__)
+
+        final_handler_class = handler_class if handler_class else store.request_handler_class \
+                                                                  or MALL.request_handler_class
+        handler = _get_handler_instance(handler_class=final_handler_class, req_obj=req_obj,
+                                        response_parser=response_parser, handler_class_kwargs=handler_class_kwargs,
+                                        handler_class_args=handler_class_args)
         store.handler = handler
         handler._pytest_store = store
 

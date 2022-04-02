@@ -1,6 +1,6 @@
 import inspect
 import sys
-from typing import Callable, Optional, List, Union, Any
+from typing import Callable, Optional, Union, Any
 
 from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory.framework.mall import MALL
@@ -8,6 +8,7 @@ from pytest_factory.framework.mall import MALL
 
 def make_factory(req_obj: Union[BaseMockRequest, str],
                  response: Any,
+                 get_route: Optional[Callable] = None,
                  factory_name: Optional[str] = None) -> Callable:
     """
     Creates a factory. For use by contributors and plugin
@@ -18,6 +19,8 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
 
     :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
     :param response: test double - generally a string or Response
+    :param get_route: a function that parses an incoming request and returns a string that identifies which test double
+    within the given factory is the correct test double
     :param factory_name: name of the factory that create test doubles for the
         returned Callable (TestClass or test_method_or_function; defaults to name of function that called this
         function
@@ -36,6 +39,7 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
         test_name = pytest_func.__name__
         store = MALL.get_store(test_name=test_name)
         store.update(factory_name=factory_name,
+                     get_route=get_route,
                      req_obj=req_obj, response=response)
 
         return pytest_func
