@@ -106,7 +106,7 @@ def mock_request(handler_class: Optional[Callable] = None,
 
     def register_test_func(pytest_func: Callable) -> Callable:
         if not req_obj and inspect.isclass(pytest_func):
-            inspect.getmembers(pytest_func)
+            inspect.getmembers(pytest_func)   # TODO is this doing anything?
         store = MALL.get_store(test_name=pytest_func.__name__)
 
         final_handler_class = handler_class if handler_class else store.request_handler_class \

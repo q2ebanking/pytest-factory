@@ -18,7 +18,8 @@ class Mall:
     def __init__(self):
         self._by_test: Dict[str, Store] = {}
         self._by_dir: Dict[str, Dict] = {}
-        self.test_being_collected: Optional[str] = None
+        self.current_test: Optional[str] = None
+        self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}  # TODO load from config.ini?
 
     def _get_prop(self, key: str) -> Any:
         return self._by_dir.get('tests', {}).get(key)
@@ -68,18 +69,21 @@ class Mall:
                 return_dict[v.PLUGIN_URL] = v
         return return_dict
 
-    def get_store(self, test_name: str) -> Store:
+    def get_store(self, test_name: Optional[str] = None) -> Store:
         """
         :param test_name: name of the pytest test function associated with the
             requested store
         :return: the Store associated with the given test_name; a new Store if
             a Store has not already been created for this test
         """
-        store = self._by_test.get(test_name)
-        if not store:
-            store = Store(_test_name=test_name)
+        if test_name:
+            self.current_test = test_name
 
-            self._by_test[test_name] = store
+        store = self._by_test.get(self.current_test)
+        if not store:
+            store = Store(_test_name=self.current_test)
+
+            self._by_test[self.current_test] = store
         return store
 
 

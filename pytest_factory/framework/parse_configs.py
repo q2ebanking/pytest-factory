@@ -20,14 +20,17 @@ def import_from_str_path(path: str) -> Callable:
     import_path = '.'.join(path_parts[:-1])
     import_callable = path_parts[-1]
     module = import_module(import_path)
-    kallable = getattr(module, import_callable)
+    try:
+        kallable = getattr(module, import_callable)
+    except AttributeError as _:
+        kallable = import_module(path)
     return kallable
 
 
 CONFIG_MAP = {
     'tuples': lambda x: x.split(","),
     'imports': import_from_str_path,
-    'bools': lambda x: x.lower() == 'true'
+    'bools': lambda x: x.lower() == 'true',
 }
 
 

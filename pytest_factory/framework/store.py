@@ -110,8 +110,6 @@ class Store:
                         plugin_test_doubles = getattr(self, plugin_factory_name)
                         plugin_routing_key = v.parse_test_double_key(req_obj=req_obj)
                         mock_responses = plugin_test_doubles.get(plugin_routing_key)
-                elif isinstance(v, Callable):
-                    mock_responses = v(req_obj)
                 else:
                     mock_responses = v
                 break
@@ -123,6 +121,10 @@ class Store:
             if called:
                 continue
             else:
+                # if response requires mapping values from original request:
+                if isinstance(response, Callable):
+                    response = response(req_obj)
+
                 # this is where we mark the response as having been called so
                 # we don't call it again
                 # unless we are allowed by the user
