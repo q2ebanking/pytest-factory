@@ -20,6 +20,7 @@ class Mall:
         self._by_dir: Dict[str, Dict] = {}
         self.current_test: Optional[str] = None
         self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}  # TODO load from config.ini?
+        self.routers: Dict[str, str]
 
     def _get_prop(self, key: str) -> Any:
         return self._by_dir.get('tests', {}).get(key)

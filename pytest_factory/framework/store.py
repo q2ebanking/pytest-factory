@@ -18,7 +18,7 @@ ROUTING_TYPE = Dict[
 
 
 def is_plugin(kallable: Callable) -> bool:
-    return hasattr(kallable, 'map_request_to_factory') and hasattr(kallable, 'parse_test_double_key')
+    return hasattr(kallable, 'get_plugin_responses')
 
 
 def compare_unknown_types(a, b) -> bool:
@@ -104,12 +104,7 @@ class Store:
             compare_result = compare_unknown_types(k, req_obj)
             if compare_result:
                 if is_plugin(v):
-                    plugin_factory_name = v.map_request_to_factory(req_obj=req_obj)
-                    # TODO find module given factory
-                    if hasattr(self, plugin_factory_name):
-                        plugin_test_doubles = getattr(self, plugin_factory_name)
-                        plugin_routing_key = v.parse_test_double_key(req_obj=req_obj)
-                        mock_responses = plugin_test_doubles.get(plugin_routing_key)
+                    mock_responses = v.get_plugin_responses(req_obj=req_obj)
                 else:
                     mock_responses = v
                 break

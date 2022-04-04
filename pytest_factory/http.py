@@ -126,7 +126,7 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     :return: the test class or function being decorated
     """
     expected_request = req_obj or MockHttpRequest(method=method, path=path, **kwargs)
-    assert expected_request, 'failed to load MockHttpRequest object!'    # TODO raise exception here instead! add test case!
+    assert expected_request, 'failed to load MockHttpRequest object!'  # TODO raise exception here instead! add test case!
     return make_factory(req_obj=expected_request, response=response)
 
 
@@ -139,9 +139,8 @@ class BasePlugin:
             raise NotImplementedError()
 
     @staticmethod
-    def map_request_to_factory(req_obj: MockHttpRequest) -> str:
-        raise NotImplementedError
-
-    @staticmethod
-    def parse_test_double_key(req_obj: MockHttpRequest) -> str:
+    def get_plugin_responses(req_obj: MockHttpRequest) -> str:
+        """
+        TODO
+        """
         raise NotImplementedError
