@@ -18,6 +18,7 @@ class Mall:
     def __init__(self):
         self._by_test: Dict[str, Store] = {}
         self._by_dir: Dict[str, Dict] = {}
+        self.test_being_collected: Optional[str] = None
 
     def _get_prop(self, key: str) -> Any:
         return self._by_dir.get('tests', {}).get(key)
@@ -41,7 +42,6 @@ class Mall:
     def load(self, conf: dict, key: str) -> dict:
         """
         always use this method to modify MALL BEFORE configuration stage ends
-
         :param conf: the store config to fall back on if no test-specific
             store is defined normally passed in from Settings
         :param key:

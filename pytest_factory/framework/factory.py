@@ -71,4 +71,5 @@ def _apply_func_recursive(func: Callable, kallable: Callable) -> Callable:
 
         return kallable
     elif inspect.isfunction(kallable):
+        MALL.test_being_collected = kallable.__name__
         return func(pytest_func=kallable)
