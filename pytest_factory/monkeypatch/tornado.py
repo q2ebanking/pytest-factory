@@ -1,25 +1,25 @@
 import inspect
-from typing import Callable, Optional, List, Dict, Any
+from typing import Callable, Any
 
 from tornado.web import Application, RequestHandler
 
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
 from pytest_factory.framework.mall import MALL
 from pytest_factory.http import MockHttpRequest
+from pytest_factory.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def response_parser(body: str) -> Any:
     """
     this can be overridden but by default just returns the body unparsed
     """
+    logger.info('HELLO')
     return body
 
 
-def get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Callable] = None) -> RequestHandler:
-    if not handler_class:
-        handler_class = MALL.request_handler_class
-    # TODO raise exception here instead! or are we already doing that earlier?
-    assert handler_class, 'could not load class of RequestHandler being tested!'
+def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
     handler = handler_class(Application(), req_obj)
     return handler
 
@@ -65,10 +65,9 @@ async def _run_test(self, assert_no_missing_calls: bool = None,
         return parsed_resp
 
 
-# TODO note that this is the one place with a true dependency on tornado
-def finish(self, *_, **__) -> None:  # pylint: disable=unused-argument
+def _finish(self, *_, **__) -> None:  # pylint: disable=unused-argument
     return self._write_buffer
 
 
-patch_members = {'run_test': _run_test, '_transforms': [], 'finish': finish}
+patch_members = {'run_test': _run_test, '_transforms': [], 'finish': _finish}
 update_monkey_patch_configs(factory_name='mock_request', callable_obj=RequestHandler, patch_members=patch_members)

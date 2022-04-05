@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 from typing import Dict, Any, Optional, List, Union, Callable
 from functools import cached_property
 
@@ -19,11 +20,12 @@ class Mall:
         self._by_test: Dict[str, Store] = {}
         self._by_dir: Dict[str, Dict] = {}
         self.current_test: Optional[str] = None
-        self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}  # TODO load from config.ini?
+        self.current_test_dir: Optional[str] = None
+        self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}
         self.routers: Dict[str, str]
 
     def _get_prop(self, key: str) -> Any:
-        return self._by_dir.get('tests', {}).get(key)
+        return self._by_dir.get(self.current_test_dir, {}).get(key)
 
     @property
     def http_req_wildcard_fields(self) -> List[str]:
@@ -59,6 +61,7 @@ class Mall:
             # If self._by_dir doesn't have anything for the key yet,
             # add the entire dict
             self._by_dir[key] = conf
+        self.current_test_dir = key
 
         return self._by_dir
 

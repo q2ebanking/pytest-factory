@@ -4,12 +4,10 @@ pytest integration hooks
 import path to this file must be in pytest_plugins in conftest.py
 
 """
+import os
 import pytest
 
 from pytest_factory.framework.mall import MALL
-from pytest_factory import logger
-
-logger = logger.get_logger(__name__)  # TODO user logger in here!
 
 
 @pytest.fixture()
@@ -25,7 +23,7 @@ def store(request):
     return store
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(autouse=True)
 def monkey_patch_all(monkeypatch) -> None:
     """
     this method MUST be imported into conftest.py in order for non HQ mocks to work!

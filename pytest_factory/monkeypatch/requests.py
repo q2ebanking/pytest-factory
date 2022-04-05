@@ -9,7 +9,7 @@ from typing import Union
 from tornado.httputil import HTTPHeaders
 
 from pytest_factory.http import MockHttpRequest, HTTP_METHODS
-from pytest_factory.framework.exceptions import PytestFactoryException
+from pytest_factory.framework.exceptions import TestDoubleTypeException
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, get_generic_caller
 
 
@@ -59,7 +59,10 @@ MOCK_RESP_TYPE = Union[None, requests.Response, str, dict, Exception]
 
 
 def _response_callable(mock_response: MOCK_RESP_TYPE,
-                       *_, **kwargs) -> requests.Response:
+                       *_, **__) -> requests.Response:
+    """
+    takes the user-defined test double for the DOC response and casts it as a Response object
+    """
     response = requests.Response()
     if not mock_response:
         response.status_code = 404
@@ -70,7 +73,7 @@ def _response_callable(mock_response: MOCK_RESP_TYPE,
     elif isinstance(mock_response, requests.Response):
         response = mock_response
     else:
-        raise PytestFactoryException  # TODO too generic
+        raise TestDoubleTypeException(request_module_name='requests', response=mock_response)
 
     # TODO need to replicate redirect behavior unless allow_redirects==False.
     #  how though? could return an array instead and then it's up to

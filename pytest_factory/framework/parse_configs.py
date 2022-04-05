@@ -3,14 +3,15 @@ from pathlib import Path
 from typing import Dict, Callable
 from importlib import import_module
 import pytest_factory.framework.default_configs as defaults
+from pytest_factory.framework.exceptions import ConfigException
 
 
-def get_config_parser(filename: str = 'config.ini') -> ConfigParser:
+def get_config_parser(path: str = '../**/config.ini') -> ConfigParser:
     config = ConfigParser()
     p = Path()
-    p_list = list(p.glob(f"**/{filename}"))
+    p_list = list(p.glob(path))
     if len(p_list) != 1:
-        raise Exception(f'{filename} is missing from project!')
+        raise ConfigException(log_msg=f'{path} is missing from project!')
     config.read(p_list[0])
     return config
 
