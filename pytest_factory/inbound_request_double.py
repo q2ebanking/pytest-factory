@@ -68,16 +68,22 @@ def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Optional[Call
 
     # TODO this could be done via pytest.fixture for monkeypatch - have it look up the handler in the store!
     # handler_overrides = {**{'run_test': _run_test}, **MALL.handler_monkeypatches}
-    handler_overrides = {'run_test': _run_test}
+
+    # TODO note that this is the one place with a true dependency on tornado
+    def finish(self: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+        return self._write_buffer
+
+    handler_overrides = {'run_test': _run_test, '_transforms': [], 'finish': finish}
 
     for attribute, override in handler_overrides.items():
         if isinstance(override, Callable):  # setting methods on the handler class
             setattr(handler_class, attribute, override)
 
-    # TODO note that this is the one place with a true dependency on tornado
     args = handler_class_args or []
     kwargs = handler_class_kwargs or {}
     handler = handler_class(Application(), req_obj, *args, **kwargs)
+
+    # TODO end tornado dependency
 
     for attribute, override in handler_overrides.items():
         if not isinstance(override, Callable):  # setting other properties on the handler object
