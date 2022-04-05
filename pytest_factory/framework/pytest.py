@@ -34,5 +34,5 @@ def monkey_patch_all(monkeypatch) -> None:
     """
     for _, configs in MALL.monkey_patch_configs.items():
         callable_obj = configs.get('callable')
-        for method in configs.get('patch_methods'):
-            monkeypatch.setattr(callable_obj, method.__qualname__, method)
+        for member_name, member_patch in configs.get('patch_methods').items():
+            monkeypatch.setattr(callable_obj, member_name, member_patch, raising=False)

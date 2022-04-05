@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Any
+from typing import Callable, Dict, Optional, Any
 
 from pytest_factory.framework.mall import MALL
 
@@ -48,15 +48,16 @@ def get_generic_caller(method_name: str, request_callable: Callable,
         return generic_caller
 
 
-def update_monkey_patch_configs(factory_name: str, callable_obj: Any, patch_methods: List[Callable]):
+def update_monkey_patch_configs(factory_name: str, callable_obj: Any, patch_members: Dict[str, Any]):
     """
     Call this method at the bottom of your non HQ mock module to set up the fixtures.
     :param factory_name: name of the mock module and decorator
     :param callable_obj: class or module that will have its method monkeypatched
-    :param patch_methods: list of methods that will monkeypatch the above callable_obj
+    :param patch_members: dictionary of members where keys are the name of the member of callable_obj to be patched,
+        and the values are the replacement member
     :return:
     """
     MALL.monkey_patch_configs[factory_name] = {
         'callable': callable_obj,
-        'patch_methods': patch_methods
+        'patch_methods': patch_members
     }

@@ -79,12 +79,12 @@ def _response_callable(mock_response: MOCK_RESP_TYPE,
     return response
 
 
-new_methods = []
+new_methods = {}
 for method in HTTP_METHODS:
     new_method = get_generic_caller(method_name=method.value,
                                     request_callable=_request_callable,
                                     response_callable=_response_callable)
-    new_method.__qualname__ = method.value
-    new_methods.append(new_method)
 
-    update_monkey_patch_configs(factory_name='mock_http_server', callable_obj=requests, patch_methods=new_methods)
+    new_methods[method.value] = new_method
+
+    update_monkey_patch_configs(factory_name='mock_http_server', callable_obj=requests, patch_members=new_methods)
