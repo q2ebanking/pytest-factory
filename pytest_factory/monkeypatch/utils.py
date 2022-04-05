@@ -4,7 +4,7 @@ from pytest_factory.framework.mall import MALL
 
 
 def get_generic_caller(method_name: str, request_callable: Callable,
-                       response_callable: Optional[Callable] = None) -> Callable:
+                       response_callable: Optional[Callable] = None, is_async=False) -> Callable:
     """
     this method will redefine the method with method_name in the module being
     monkeypatched while including in the new method the name of test function
@@ -16,6 +16,7 @@ def get_generic_caller(method_name: str, request_callable: Callable,
         return one; must always take method_name as kwarg
     :param response_callable: class of the response object or function that
         will return one
+    :param is_async: must set to True if the monkeypatched method is async
     :return: the method that will replace the old one in the module being
         monkeypatched
     """
@@ -37,7 +38,14 @@ def get_generic_caller(method_name: str, request_callable: Callable,
             mock_response = response_callable(mock_response=mock_response, *args, **kwargs)
         return mock_response
 
-    return generic_caller
+    if is_async:
+        async def async_generic_caller(*args, **kwargs) -> Any:
+            return generic_caller(*args, **kwargs)
+
+        return async_generic_caller
+    else:
+
+        return generic_caller
 
 
 def update_monkey_patch_configs(factory_name: str, callable_obj: Any, patch_methods: List[Callable]):

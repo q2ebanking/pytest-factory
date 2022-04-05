@@ -123,7 +123,7 @@ class Store:
                 # this is where we mark the response as having been called so
                 # we don't call it again
                 # unless we are allowed by the user
-                mock_responses[index] = (True, response)
+                mock_responses[index] = (True, response)  # TODO this mechanism is too brittle! what if the plugin handles routing?
                 return response
 
         if mock_responses:
