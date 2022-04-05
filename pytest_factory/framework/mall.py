@@ -22,7 +22,7 @@ class Mall:
         self.current_test: Optional[str] = None
         self.current_test_dir: Optional[str] = None
         self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}
-        self.routers: Dict[str, str]
+        self.get_handler_instance: Optional[Callable] = None
 
     def _get_prop(self, key: str) -> Any:
         return self._by_dir.get(self.current_test_dir, {}).get(key)

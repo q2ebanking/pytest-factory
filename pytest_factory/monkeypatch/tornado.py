@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable, Any
+from typing import Callable
 
 from tornado.web import Application, RequestHandler
 
@@ -11,23 +11,18 @@ from pytest_factory.logger import get_logger
 logger = get_logger(__name__)
 
 
-def response_parser(body: str) -> Any:
-    """
-    this can be overridden but by default just returns the body unparsed
-    """
-    logger.info('HELLO')
-    return body
-
-
 def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
+    """
+    this is a tornado-specific adapter for converting a req_obj into an instance of the handler under test and should
+    be generic across all handlers within a test suite
+    """
     handler = handler_class(Application(), req_obj)
     return handler
 
 
-async def _run_test(self, assert_no_missing_calls: bool = None,
+async def run_test(self, assert_no_missing_calls: bool = None,
                     assert_no_extra_calls: bool = None):
     """
-    TODO the two bool params need to pull defaults from the USER'S configs, via Mall
     this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
     and provides a way to advance the state of the RequestHandler while returning the response to the
     test method for assertions
@@ -61,13 +56,13 @@ async def _run_test(self, assert_no_missing_calls: bool = None,
 
     if self._write_buffer:
         raw_resp = self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
-        parsed_resp = response_parser(raw_resp) if response_parser else raw_resp
-        return parsed_resp
+        return raw_resp
 
 
-def _finish(self, *_, **__) -> None:  # pylint: disable=unused-argument
+def finish(self, *_, **__) -> None:  # pylint: disable=unused-argument
     return self._write_buffer
 
 
-patch_members = {'run_test': _run_test, '_transforms': [], 'finish': _finish}
+patch_members = {'run_test': run_test, '_transforms': [], 'finish': finish}
+MALL.get_handler_instance = get_handler_instance
 update_monkey_patch_configs(factory_name='mock_request', callable_obj=RequestHandler, patch_members=patch_members)

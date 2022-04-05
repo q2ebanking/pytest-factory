@@ -50,26 +50,20 @@ class Store:
         self.handler: Optional[RequestHandler] = MissingHandler()
         self.assert_no_extra_calls: Optional[bool] = None
         self.assert_no_missing_calls: Optional[bool] = None
-        self.routers: Dict[str, Callable] = {}
         for k, v in kwargs.items():
             if v is not None:
                 setattr(self, k, v)
 
-    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]],
-               get_route: Optional[Callable] = None):
+    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
         """
         always use this method to modify store AFTER configuration stage ends
         note that this will get invoked depth-first
         :param req_obj:
         :param factory_name:
         :param response:
-        :param get_route: function that for a given outbound request returns the appropriate routing key
         """
         responses = [response] if not isinstance(response, list) else response
         responses = [(False, _response) for _response in responses]
-        if get_route and not self.routers.get(factory_name):
-            self.routers[factory_name] = get_route
-        # TODO change the format for plugins to have somehwere to put the mapping function?
         if not hasattr(self, factory_name):  # store does not already have a test double from factory
             setattr(self, factory_name, {req_obj: responses})
         else:  # store already has test doubles from this factory

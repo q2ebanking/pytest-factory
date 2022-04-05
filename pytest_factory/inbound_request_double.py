@@ -36,7 +36,7 @@ def mock_request(handler_class: Optional[Callable] = None,
                                                                   or MALL.request_handler_class
         if not final_handler_class:
             raise MissingHandlerException
-        handler = get_handler_instance(handler_class=final_handler_class, req_obj=req_obj)
+        handler = MALL.get_handler_instance(handler_class=final_handler_class, req_obj=req_obj)
         store.handler = handler
         handler._pytest_store = store
 

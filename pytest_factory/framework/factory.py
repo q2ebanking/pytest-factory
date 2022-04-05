@@ -8,7 +8,6 @@ from pytest_factory.framework.mall import MALL
 
 def make_factory(req_obj: Union[BaseMockRequest, str],
                  response: Any,
-                 get_route: Optional[Callable] = None,
                  factory_name: Optional[str] = None) -> Callable:
     """
     Creates a factory. For use by contributors and plugin
@@ -39,7 +38,6 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
         test_name = pytest_func.__name__
         store = MALL.get_store(test_name=test_name)
         store.update(factory_name=factory_name,
-                     get_route=get_route,
                      req_obj=req_obj, response=response)
 
         return pytest_func
@@ -70,5 +68,4 @@ def apply_func_recursive(test_func_wrapper: Callable, target: Callable) -> Calla
 
         return target
     elif inspect.isfunction(target):
-        MALL.test_being_collected = target.__name__
         return test_func_wrapper(pytest_func=target)

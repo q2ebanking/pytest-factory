@@ -3,15 +3,12 @@ import pytest
 from pytest_factory import mock_request
 from pytest_factory.framework.exceptions import MissingHandlerException
 
-# TODO this is temporary - need to fix the config parsing so it loads this before it gets here
-# from tests.other_app import MockRequestTestHandler
-
 pytestmark = pytest.mark.asyncio
 
 
 async def test_function_missing_handler(store):
-    with pytest.raises(expected_exception=MissingHandlerException,
-                       match='this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'):
+    expected_msg = 'this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'
+    with pytest.raises(expected_exception=MissingHandlerException, match=expected_msg):
         await store.handler.run_test()
 
 
