@@ -1,0 +1,5 @@
+pytest
+tornado
+requests
+pytest-asyncio
+python-json-logger

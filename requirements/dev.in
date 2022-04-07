@@ -1,0 +1,8 @@
+-r main.in
+
+wheel
+pip-tools
+pytest-cov
+pytest-html
+pytest
+pytest-random-order

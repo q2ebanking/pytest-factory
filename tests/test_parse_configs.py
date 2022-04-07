@@ -8,7 +8,7 @@ from tests.passthru_app import PassthruTestHandler
 @pytest.fixture(scope="function")
 def setup_config_test():
     dir_name = "config_test"
-    config = get_config_parser(filename='test_config.ini')
+    config = get_config_parser(path='**/test_config.ini')
 
     return dir_name, config
 

@@ -2,13 +2,15 @@
 monkeypatches requests module to intercept http calls and lookup mock response
 in store
 """
-from requests import Response
+import requests
 import json
 from typing import Union
 
 from tornado.httputil import HTTPHeaders
 
-from pytest_factory.http import MockHttpRequest
+from pytest_factory.http import MockHttpRequest, HTTP_METHODS
+from pytest_factory.framework.exceptions import TestDoubleTypeException
+from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, get_generic_caller
 
 
 def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
@@ -53,25 +55,39 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
     return req_obj
 
 
-MOCK_RESP_TYPE = Union[None, Response, str, dict, Exception]
+MOCK_RESP_TYPE = Union[None, requests.Response, str, dict, Exception]
 
 
 def _response_callable(mock_response: MOCK_RESP_TYPE,
-                       *_, **kwargs) -> Response:
-    response = Response()
+                       *_, **__) -> requests.Response:
+    """
+    takes the user-defined test double for the DOC response and casts it as a Response object
+    """
+    response = requests.Response()
     if not mock_response:
         response.status_code = 404
     elif isinstance(mock_response, str):  # string body 200
         response._content = mock_response
     elif isinstance(mock_response, dict):  # json body 200
         response._content = json.dumps(mock_response)
-    elif isinstance(mock_response, Response):
+    elif isinstance(mock_response, requests.Response):
         response = mock_response
     else:
-        assert False, 'should not happen'
+        raise TestDoubleTypeException(request_module_name='requests', response=mock_response)
 
     # TODO need to replicate redirect behavior unless allow_redirects==False.
     #  how though? could return an array instead and then it's up to
     # if response.status_code == 302 and kwargs.get('allow_redirects') is not False:
     # wut do
     return response
+
+
+new_methods = {}
+for method in HTTP_METHODS:
+    new_method = get_generic_caller(method_name=method.value,
+                                    request_callable=_request_callable,
+                                    response_callable=_response_callable)
+
+    new_methods[method.value] = new_method
+
+    update_monkey_patch_configs(factory_name='mock_http_server', callable_obj=requests, patch_members=new_methods)

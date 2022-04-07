@@ -1,3 +1,4 @@
+from typing import List
 import pytest
 
 from pytest_factory.http import mock_http_server
@@ -17,6 +18,11 @@ pytest-factory WARNING: if this is not expected, consider this a test failure!''
 pytest-factory WARNING: UNEXPECTED CALL DETECTED. expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/mock_endpoint', version='HTTP/1.0', remote_ip=None)
 pytest-factory WARNING: will repeat last response: yup'''
 }
+
+
+def get_logs(caplog, levelname: str = 'WARNING') -> List[str]:
+    actual = [rec.message for rec in caplog.records if rec.levelname == levelname]
+    return actual
 
 
 @mock_http_server(path='http://www.test.com/endpoint0', response='TestHttp')
@@ -44,8 +50,9 @@ class TestHttp:
         async def test_http_no_calls_warning(self, store, caplog):
             resp = await store.handler.run_test()
             assert resp == ''
-            actual = [rec.message for rec in caplog.records]
-            assert actual == ["the following test doubles were NOT used in this test: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): ['TestHttp']}} if this is not expected, set assert_no_missing_calls to True"]
+            actual = get_logs(caplog)
+            assert actual == [
+                "the following test doubles were NOT used in this test: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): ['TestHttp']}} if this is not expected, set assert_no_missing_calls to True"]
 
         @mock_request(path='endpoint0?num=2')
         async def test_http_extra_call_warning(self, store, caplog):
@@ -53,8 +60,9 @@ class TestHttp:
             """
             resp = await store.handler.run_test()
             assert resp == 'TestHttpTestHttp'
-            actual = [rec.message for rec in caplog.records]
-            assert actual == ["expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)! will repeat last response: TestHttp"]
+            actual = get_logs(caplog)
+            assert actual == [
+                "expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)! will repeat last response: TestHttp"]
 
         @mock_request(path='endpoint0')
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
@@ -62,7 +70,7 @@ class TestHttp:
             """
             resp = await store.handler.run_test()
             assert resp == 'TestHttp'
-            actual = [rec.message for rec in caplog.records]
+            actual = get_logs(caplog)
             assert actual == []
 
 

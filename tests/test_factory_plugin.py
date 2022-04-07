@@ -2,7 +2,7 @@ import pytest
 import json
 
 from pytest_factory import mock_request
-from tests.mock_plugin.factories import mock_service0, mock_service1
+from tests.mock_plugin.plugin import mock_service0, mock_service1
 
 pytestmark = pytest.mark.asyncio
 
