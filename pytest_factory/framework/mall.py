@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 from typing import Dict, Any, Optional, List, Union, Callable
 from functools import cached_property
 
@@ -18,9 +19,13 @@ class Mall:
     def __init__(self):
         self._by_test: Dict[str, Store] = {}
         self._by_dir: Dict[str, Dict] = {}
+        self.current_test: Optional[str] = None
+        self.current_test_dir: Optional[str] = None
+        self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}
+        self.get_handler_instance: Optional[Callable] = None
 
     def _get_prop(self, key: str) -> Any:
-        return self._by_dir.get('tests', {}).get(key)
+        return self._by_dir.get(self.current_test_dir, {}).get(key)
 
     @property
     def http_req_wildcard_fields(self) -> List[str]:
@@ -41,7 +46,6 @@ class Mall:
     def load(self, conf: dict, key: str) -> dict:
         """
         always use this method to modify MALL BEFORE configuration stage ends
-
         :param conf: the store config to fall back on if no test-specific
             store is defined normally passed in from Settings
         :param key:
@@ -57,6 +61,7 @@ class Mall:
             # If self._by_dir doesn't have anything for the key yet,
             # add the entire dict
             self._by_dir[key] = conf
+        self.current_test_dir = key
 
         return self._by_dir
 
@@ -68,39 +73,21 @@ class Mall:
                 return_dict[v.PLUGIN_URL] = v
         return return_dict
 
-    def register_test_doubles(self, test_name: str, factory_name: str,
-                              req_obj: Union[BaseMockRequest, str],
-                              response: Optional[Any] = None):
-        """
-        always use this method to modify MALL AFTER configuration stage ends
-
-        :param test_name: name of the pytest test function not including
-            modules or classes
-        :param factory_name: name of the factory that created the test double being updated in the store e.g. mock_http_server
-
-        :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
-        :param response: test double
-        :return:
-        """
-        # this is how we keep track of which test doubles have been used TODO refactor to record all of the inputs!
-        response = (False, response)
-        responses = [response] if not isinstance(response, list) else response
-
-        store = self.get_store(test_name)
-        store.update(req_obj=req_obj, factory_name=factory_name, responses=responses)
-
-    def get_store(self, test_name: str) -> Store:
+    def get_store(self, test_name: Optional[str] = None) -> Store:
         """
         :param test_name: name of the pytest test function associated with the
             requested store
         :return: the Store associated with the given test_name; a new Store if
             a Store has not already been created for this test
         """
-        store = self._by_test.get(test_name)
-        if not store:
-            store = Store(_test_name=test_name)
+        if test_name:
+            self.current_test = test_name
 
-            self._by_test[test_name] = store
+        store = self._by_test.get(self.current_test)
+        if not store:
+            store = Store(_test_name=self.current_test)
+
+            self._by_test[self.current_test] = store
         return store
 
 
