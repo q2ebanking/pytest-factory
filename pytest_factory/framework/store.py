@@ -18,7 +18,7 @@ ROUTING_TYPE = Dict[
 
 
 def is_plugin(kallable: Callable) -> bool:
-    return hasattr(kallable, 'map_request_to_factory') and hasattr(kallable, 'parse_test_double_key')
+    return hasattr(kallable, 'get_plugin_responses')
 
 
 def compare_unknown_types(a, b) -> bool:
@@ -46,6 +46,7 @@ class Store:
 
     def __init__(self, _test_name: str, **kwargs):
         self._test_name = _test_name
+        self.request_handler_class: Optional[Callable] = None
         self.handler: Optional[RequestHandler] = MissingHandler()
         self.assert_no_extra_calls: Optional[bool] = None
         self.assert_no_missing_calls: Optional[bool] = None
@@ -53,10 +54,16 @@ class Store:
             if v is not None:
                 setattr(self, k, v)
 
-    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, responses: List[Any]):
+    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
         """
+        always use this method to modify store AFTER configuration stage ends
         note that this will get invoked depth-first
+        :param req_obj:
+        :param factory_name:
+        :param response:
         """
+        responses = [response] if not isinstance(response, list) else response
+        responses = [(False, _response) for _response in responses]
         if not hasattr(self, factory_name):  # store does not already have a test double from factory
             setattr(self, factory_name, {req_obj: responses})
         else:  # store already has test doubles from this factory
@@ -83,20 +90,15 @@ class Store:
         :return: the next available mock response corresponding to the given
             req_obj
         """
-        assert hasattr(self, factory_name)
+        # TODO break up this method!!!
+        assert hasattr(self, factory_name)  # TODO raise exception here instead!
         factory = getattr(self, factory_name)
         mock_responses = None
         for k, v in factory.items():
             compare_result = compare_unknown_types(k, req_obj)
             if compare_result:
                 if is_plugin(v):
-                    plugin_factory_name = v.map_request_to_factory(req_obj=req_obj)
-                    if hasattr(self, plugin_factory_name):
-                        response_dict = getattr(self, plugin_factory_name)
-                        plugin_routing_key = v.parse_test_double_key(req_obj=req_obj)
-                        mock_responses = response_dict.get(plugin_routing_key)
-                elif isinstance(v, Callable):
-                    mock_responses = v(req_obj)
+                    mock_responses = v.get_plugin_responses(req_obj=req_obj)
                 else:
                     mock_responses = v
                 break
@@ -108,10 +110,14 @@ class Store:
             if called:
                 continue
             else:
+                # if response requires mapping values from original request:
+                if isinstance(response, Callable):
+                    response = response(req_obj)
+
                 # this is where we mark the response as having been called so
                 # we don't call it again
                 # unless we are allowed by the user
-                mock_responses[index] = (True, response)
+                mock_responses[index] = (True, response)  # TODO this mechanism is too brittle! what if the plugin handles routing?
                 return response
 
         if mock_responses:
