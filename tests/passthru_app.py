@@ -22,12 +22,16 @@ class PassthruTestHandler(RequestHandler):
         num_calls = int(self.get_query_argument(name='num', default='1'))
         resp_str = ''
         for _ in range(0, num_calls):
+            call, args = getattr(requests, http_method), {'url': final_url}
             if http_method == 'post':
                 body = json.loads(self.request.body)
-                resp = requests.post(url=final_url, json=body)
+                args['json'] = body
+            try:
+                resp = call(**args)
+            except requests.RequestException as rex:
+                resp_str += f'caught RequestException: {rex}'
             else:
-                resp = requests.get(url=final_url)
-            resp_str += resp.content
+                resp_str += resp.content
         self.write(resp_str)
 
     async def get(self):

@@ -49,6 +49,11 @@ class HTTP_METHODS(Enum):
 
 class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
     """
+    abstract HTTP request class representing simulated and actual inbound and outbound requests.
+    normalizing all requests within pytest-factory allows for direct comparison of requests, which has
+    different purposes for each request type:
+     - inbound: enables redefinition of inputs to system-under-test at method level over class-level
+     - outbound: enables routing of inputs to depended-on-component to corresponding test double response
     if creating your own request type for a factory, and it is for a transfer protocol,
     you must set FACTORY_NAME on the class
     """
@@ -57,10 +62,9 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
 
     def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
         """
-        TODO
-        :param method:
-        :param path:
-        :param kwargs:
+        :param method: HTTP method, e.g. GET or POST
+        :param path: HTTP url
+        :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """
         if kwargs.get('headers'):
             kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
@@ -71,11 +75,13 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
 
         super().__init__(method=method, uri=path, **kwargs)
 
-        # TODO make this more fake later but this trick will work if a user doesn't look too closely in the debugger
         self.connection = lambda: None
         setattr(self.connection, 'set_close_callback', lambda _: None)
 
     def compare(self, other: MockHttpRequest) -> bool:
+        """
+        compares this HTTP request to another
+        """
         if isinstance(other, str):
             substr_index = self.full_url().find(other)
             return substr_index > -1
@@ -95,8 +101,9 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         return self.body.decode()
 
     def __hash__(self) -> int:
-        # TODO this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
-        #  not ideal but necessary
+        """
+        this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
+        """
         return id(self)
 
 
@@ -105,8 +112,8 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
                      method: Optional[str] = HTTP_METHODS.GET.value,
                      path: Optional[str] = None, **kwargs) -> Callable:
     """
-    TODO load from swagger, WSDL, etc.
-    TODO document method fully
+    decorate your test method or class with this factory to generate test doubles for an HTTP depended-on
+    component
 
     :param response: defaults to empty string; can be single response or list of responses (for changing
     responses to consecutive calls to same endpoint) where response is of type:
@@ -134,6 +141,13 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
 
 
 class BasePlugin:
+    """
+    to create a pytest-factory plugin, inherit from this base class and define the following:
+    - self.PLUGIN_URL
+    - self.get_plugin_responses
+
+    PLUGIN_URL is the url that corresponds to the depended-on-component that this plugin simulates
+    """
     # TODO seems unnecessary to make this a class - rework to replace with module
     PLUGIN_URL = None
 
@@ -142,8 +156,10 @@ class BasePlugin:
             raise NotImplementedError()
 
     @staticmethod
-    def get_plugin_responses(req_obj: MockHttpRequest) -> str:
+    def get_plugin_responses(req_obj: MockHttpRequest) -> MOCK_HTTP_RESPONSE:
         """
-        TODO
+        this method will be called by Store.get_next_response when the system-under-test calls a url matching
+        self.PLUGIN_URL. the user-defined plugin should override this method to implement a router that returns
+        the plugin-defined test double response
         """
         raise NotImplementedError
