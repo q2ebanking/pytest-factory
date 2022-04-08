@@ -9,6 +9,7 @@ from tornado.httputil import HTTPServerRequest, HTTPHeaders
 from pytest_factory.framework.factory import make_factory
 from pytest_factory.framework.mall import MALL
 from pytest_factory.outbound_response_double import BaseMockRequest
+from pytest_factory.framework.exceptions import RequestNormalizationException
 from requests import Response
 
 MOCK_HTTP_RESPONSE = Optional[
@@ -125,8 +126,10 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     :param kwargs: see help(MockHttpRequest.__init__) if not passing req_obj
     :return: the test class or function being decorated
     """
-    expected_request = req_obj or MockHttpRequest(method=method, path=path, **kwargs)
-    assert expected_request, 'failed to load MockHttpRequest object!'  # TODO raise exception here instead! add test case!
+    try:
+        expected_request = req_obj or MockHttpRequest(method=method, path=path, **kwargs)
+    except Exception as ex:
+        raise RequestNormalizationException(req_obj_cls=MockHttpRequest, method=method, path=path, ex=ex, **kwargs)
     return make_factory(req_obj=expected_request, response=response)
 
 
