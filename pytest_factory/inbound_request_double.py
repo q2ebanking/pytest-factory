@@ -13,7 +13,6 @@ from pytest_factory.http import MockHttpRequest
 from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.factory import apply_func_recursive
 from pytest_factory.framework.exceptions import MissingHandlerException
-from pytest_factory.monkeypatch.tornado import get_handler_instance  # TODO load from config.ini!
 
 
 def mock_request(handler_class: Optional[Callable] = None,
