@@ -53,9 +53,15 @@ class TestDoubleTypeException(PytestFactoryBaseException):
         return log_msg
 
 
+class UnhandledPluginException(PytestFactoryBaseException):
+    def get_error_msg(self, plugin_name: str, exception: Exception, *args, **kwargs) -> str:
+        log_msg = f'unhandled exception in plugin {plugin_name}: {exception}'
+        return log_msg
+
+
 class MissingFactoryException(PytestFactoryBaseException):
     def get_error_msg(self, factory_name: str, *_, **__) -> str:
-        log_msg = f'this test case is missing the requested factory! '
+        log_msg = f'this test case is missing the requested factory: {factory_name}! '
         return log_msg
 
 

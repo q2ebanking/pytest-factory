@@ -5,10 +5,16 @@ from tornado.web import Application, RequestHandler
 
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
 from pytest_factory.framework.mall import MALL
+from pytest_factory.framework.exceptions import PytestFactoryBaseException
 from pytest_factory.http import MockHttpRequest
 from pytest_factory.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class TornadoMonkeyPatchException(PytestFactoryBaseException):
+    def get_error_msg(self, log_msg: str, *args, **kwargs) -> str:
+        return log_msg
 
 
 def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
@@ -21,7 +27,7 @@ def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> R
 
 
 async def run_test(self, assert_no_missing_calls: bool = None,
-                    assert_no_extra_calls: bool = None):
+                   assert_no_extra_calls: bool = None):
     """
     this method will be bound to the RequestHandler, which is why it must receive the parameter 'self',
     and provides a way to advance the state of the RequestHandler while returning the response to the
@@ -34,7 +40,6 @@ async def run_test(self, assert_no_missing_calls: bool = None,
     a test double more times than it has responses; will issue warnings instead via logger
     :return:
     """
-    # TODO log errors out here!
     store = self._pytest_store
     if assert_no_extra_calls is not None:
         store.assert_no_extra_calls = assert_no_extra_calls
@@ -47,11 +52,13 @@ async def run_test(self, assert_no_missing_calls: bool = None,
         store.assert_no_missing_calls = MALL.assert_no_missing_calls
 
     method_name = self.request.method.lower()
-    assert hasattr(self, method_name), ''  # TODO do seomthing here?
+    if not hasattr(self, method_name):
+        msg = f'self does not have attr: {method_name}. should be subclass of tornado.web.RequestHandler!'
+        raise TornadoMonkeyPatchException(log_msg=msg)
+
     result = getattr(self, method_name)()
     if inspect.isawaitable(result):
         await result
-
     store.check_no_uncalled_test_doubles()
 
     if self._write_buffer:
