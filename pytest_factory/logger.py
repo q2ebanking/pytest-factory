@@ -20,7 +20,10 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
 def get_python_version():
     """Returns the Python version in use."""
     major, minor, micro, level, serial = sys.version_info
-    return float(".".join([str(major), str(minor)]))
+    if major == 3:
+        return minor
+    else:
+        raise Exception('Python 3 only')
 
 
 def get_logger(name, level=logging.DEBUG, version=get_python_version()):

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any, Union, List, Callable, Set
+from typing import Dict, Optional, Any, Union, List, Callable, Set, Tuple
 from functools import cached_property
 
 from tornado.web import RequestHandler
@@ -15,6 +15,8 @@ ROUTING_TYPE = Dict[
         BaseMockRequest],
     Any
 ]
+
+MOCK_RESPONSES_TYPE = List[Tuple[bool, Any]]
 
 
 def is_plugin(kallable: Callable) -> bool:
@@ -79,12 +81,13 @@ class Store:
         will look up responses corresponding to the given parameters, then find
         the next response that has not yet been called, and marks it as called.
 
-        if it runs out of uncalled responses, it will raise AssertionError
+        if it runs out of uncalled responses, it will raise OverCalledTestDoubleException
         unless Store.assert_no_extra_calls is False. otherwise it will log
         warnings to logger.
 
         if not response can be found, this indicates a user error in setting up factories such that the expected
-        test double was not generated. this will log errors to logger and raise an
+        test double was not generated. this will log errors to logger and raise an MissingTestDoubleException if
+        the factory exists but test double does not, or MissingFactoryException if the factory also does not exist
 
         :param factory_name: name of the first factory used to create the response test double
         :param req_obj: the request made by the RequestHandler represented as a
@@ -92,7 +95,6 @@ class Store:
         :return: the next available mock response corresponding to the given
             req_obj
         """
-        # TODO break up this method!!!
         if not hasattr(self, factory_name):
             raise exceptions.MissingFactoryException(factory_name=factory_name)
         factory = getattr(self, factory_name)
@@ -113,29 +115,40 @@ class Store:
 
         if mock_responses is None:
             raise exceptions.MissingTestDoubleException(req_obj=req_obj)
+        final_response, mock_responses = self._mark_and_retrieve_test_double(req_obj=req_obj,
+                                                                             mock_responses=mock_responses)
 
+        if mock_responses and not final_response:
+            final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
+        return final_response
+
+    def _mark_and_retrieve_test_double(self, req_obj: BaseMockRequest,
+                                       mock_responses: MOCK_RESPONSES_TYPE) -> Tuple[
+        Optional[Any], MOCK_RESPONSES_TYPE]:
+        final_response = None
         for index, (called, response) in enumerate(mock_responses):
             if called:
                 continue
             else:
                 # if response requires mapping values from original request:
                 if isinstance(response, Callable):
-                    response = response(req_obj)
+                    final_response = response(req_obj)
+                else:
+                    final_response = response
 
                 # this is where we mark the response as having been called so
                 # we don't call it again unless we are allowed by the user
-                mock_responses[index] = (True, response)  # TODO this mechanism is too brittle! what if the plugin handles routing?
-                return response
+                mock_responses[index] = (True, response)
+        return final_response, mock_responses
 
-        if mock_responses:
-            last_response = mock_responses[-1][1]
-            exception = exceptions.OverCalledTestDoubleException(mock_responses=mock_responses,
-                                                                 req_obj=req_obj,
-                                                                 log_error=self.assert_no_extra_calls)
-            if self.assert_no_extra_calls:
-                raise exception
-            return last_response
-        return None
+    def _check_overcalled_test_doubles(self, req_obj: BaseMockRequest, mock_responses: MOCK_RESPONSES_TYPE) -> Any:
+        final_response = mock_responses[-1][1]
+        exception = exceptions.OverCalledTestDoubleException(mock_responses=mock_responses,
+                                                             req_obj=req_obj,
+                                                             log_error=self.assert_no_extra_calls)
+        if self.assert_no_extra_calls:
+            raise exception
+        return final_response
 
     def register_plugins(self, plugins: Dict[str, Callable]):
         if hasattr(self, 'mock_http_server'):
@@ -159,9 +172,6 @@ class Store:
         """
         checks if this Store has any test_doubles that have not been called the
         number of times expected by default, it will log warnings to logger
-        :param assert_no_missing_calls: if True, will raise AssertionError if any
-            uncalled test_doubles remain
-        :return:
         """
         uncalled_test_doubles = {}
 

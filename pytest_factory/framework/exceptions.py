@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 from pytest_factory.logger import get_logger
 from pytest_factory.outbound_response_double import BaseMockRequest
@@ -56,6 +56,17 @@ class TestDoubleTypeException(PytestFactoryBaseException):
 class UnhandledPluginException(PytestFactoryBaseException):
     def get_error_msg(self, plugin_name: str, exception: Exception, *args, **kwargs) -> str:
         log_msg = f'unhandled exception in plugin {plugin_name}: {exception}'
+        return log_msg
+
+
+class RequestNormalizationException(PytestFactoryBaseException):
+    def get_error_msg(self, req_obj_cls: Callable, method: str, path: str, ex: Exception, *args, **kwargs) -> str:
+        qwargs = {
+            "method": method,
+            "path": path,
+            **kwargs
+        }
+        log_msg = f'while creating {req_obj_cls} with kwargs: {qwargs}, encountered unhandled exception: {ex}'
         return log_msg
 
 

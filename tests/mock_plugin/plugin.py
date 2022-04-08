@@ -24,7 +24,6 @@ class MockPlugin(BasePlugin):
         return responses
 
 
-# TODO same for each of these - they should live in separate modules for EACH factory
 def mock_service0(key: str, response: str):
     return make_factory(req_obj=key, response=response)
 

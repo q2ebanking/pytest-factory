@@ -31,7 +31,6 @@ def get_generic_caller(method_name: str, request_callable: Callable,
         mock_response = store.get_next_response(factory_name=req_obj.FACTORY_NAME, req_obj=req_obj)
 
         if isinstance(mock_response, Exception):
-            # TODO are we testing this? maybe handle inside get_next_response?
             raise mock_response
 
         if response_callable:

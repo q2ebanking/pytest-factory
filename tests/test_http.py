@@ -1,6 +1,8 @@
 from typing import List
 import pytest
 
+from requests import Timeout
+
 from pytest_factory.http import mock_http_server
 from pytest_factory.framework.exceptions import MissingTestDoubleException
 from pytest_factory import mock_request
@@ -25,9 +27,9 @@ def get_logs(caplog, levelname: str = 'WARNING') -> List[str]:
     return actual
 
 
+@mock_request(path='endpoint0')
 @mock_http_server(path='http://www.test.com/endpoint0', response='TestHttp')
 class TestHttp:
-    @mock_request(path='endpoint0')
     @mock_http_server(path='http://www.test.com/endpoint0', response='test_http_func_override')
     async def test_http_func_override(self, store):
         resp = await store.handler.run_test()
@@ -39,11 +41,16 @@ class TestHttp:
         resp = await store.handler.run_test()
         assert resp == 'test_http_wildcard_path'
 
-    @mock_request(path='endpoint0')
     @mock_http_server(path='http://www.test.com/endpoint0', response=lambda x: x.path)
     async def test_http_response_function(self, store):
         resp = await store.handler.run_test()
         assert resp == 'http://www.test.com/endpoint0'
+
+    @mock_http_server(path='http://www.test.com/endpoint0', response=Timeout)
+    async def test_http_response_exception(self, store):
+        resp = await store.handler.run_test()
+        assert resp == 'caught RequestException: MockHttpRequest(protocol=\'http\', host=\'127.0.0.1\', ' \
+                       'method=\'get\', uri=\'http://www.test.com/endpoint0\', version=\'HTTP/1.0\', remote_ip=None)'
 
     class TestResponseTracking:
         @mock_request(path='endpoint0?num=0')
@@ -64,7 +71,6 @@ class TestHttp:
             assert actual == [
                 "expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)! will repeat last response: TestHttp"]
 
-        @mock_request(path='endpoint0')
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
             """
             """
