@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any, Union, List, Callable
+from typing import Dict, Optional, Any, Union, List, Callable, Set
 from functools import cached_property
 
 from tornado.web import RequestHandler
@@ -50,6 +50,7 @@ class Store:
         self.handler: Optional[RequestHandler] = MissingHandler()
         self.assert_no_extra_calls: Optional[bool] = None
         self.assert_no_missing_calls: Optional[bool] = None
+        self.factory_names: Set[str] = set()
         for k, v in kwargs.items():
             if v is not None:
                 setattr(self, k, v)
@@ -64,6 +65,7 @@ class Store:
         """
         responses = [response] if not isinstance(response, list) else response
         responses = [(False, _response) for _response in responses]
+        self.factory_names.add(factory_name)
         if not hasattr(self, factory_name):  # store does not already have a test double from factory
             setattr(self, factory_name, {req_obj: responses})
         else:  # store already has test doubles from this factory
@@ -91,14 +93,20 @@ class Store:
             req_obj
         """
         # TODO break up this method!!!
-        assert hasattr(self, factory_name)  # TODO raise exception here instead!
+        if not hasattr(self, factory_name):
+            raise exceptions.MissingFactoryException(factory_name=factory_name)
         factory = getattr(self, factory_name)
         mock_responses = None
         for k, v in factory.items():
             compare_result = compare_unknown_types(k, req_obj)
             if compare_result:
                 if is_plugin(v):
-                    mock_responses = v.get_plugin_responses(req_obj=req_obj)
+                    try:
+                        mock_responses = v.get_plugin_responses(req_obj=req_obj)
+                    except exceptions.PytestFactoryBaseException as ex:
+                        raise ex
+                    except Exception as ex:
+                        raise exceptions.UnhandledPluginException(plugin_name=v.__qualname__, exception=ex)
                 else:
                     mock_responses = v
                 break
@@ -115,8 +123,7 @@ class Store:
                     response = response(req_obj)
 
                 # this is where we mark the response as having been called so
-                # we don't call it again
-                # unless we are allowed by the user
+                # we don't call it again unless we are allowed by the user
                 mock_responses[index] = (True, response)  # TODO this mechanism is too brittle! what if the plugin handles routing?
                 return response
 
@@ -138,12 +145,7 @@ class Store:
 
     @cached_property
     def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
-        test_doubles = {}
-        for key, response_dict in vars(self).items():
-            # TODO is there a better way to filter this?
-            if key not in ['handler', 'assert_no_extra_calls'] \
-                    and isinstance(response_dict, dict):
-                test_doubles[key] = response_dict
+        test_doubles = {factory_name: getattr(self, factory_name) for factory_name in self.factory_names}
         return test_doubles
 
     def load_defaults(self, default_routes: Dict[str, ROUTING_TYPE]):
