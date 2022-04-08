@@ -2,11 +2,11 @@ import re
 from typing import List
 
 
-def assert_fuzzy_str_compare(patterns: List[str, re.Pattern], a: str, b: str):
+def compare_similar_strings(patterns: List[str, re.Pattern], a: str, b: str):
     _a = a
     _b = b
     repl = '*REDACTED BY pytest-factory*'
     for pattern in patterns:
         _a = re.sub(pattern=pattern, string=_a, repl=repl)
         _b = re.sub(pattern=pattern, string=_b, repl=repl)
-    assert _a == _b
+    return _a == _b
