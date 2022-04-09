@@ -1,7 +1,8 @@
 from importlib import import_module
 from typing import Tuple, List, Optional, Set
-from jinja2 import Template
 from json import JSONDecodeError
+
+from jinja2 import Template
 
 from pytest_factory.http import MOCK_HTTP_RESPONSE
 from pytest_factory.inbound_request_double import MockHttpRequest
@@ -26,10 +27,10 @@ class Recording:
     def last(self) -> MOCK_HTTP_RESPONSE:
         return self.sut_exchange[1]
     
-    def get_factories() -> Set[str]:
+    def get_factories(self) -> Set[str]:
         factories = set()
         for request, _ in self.doc_exchanges:
-            factories.add(request.factory_name)
+            factories.add(request.FACTORY_NAME)
         return factories
 
 def lex(log_line: str) -> str:
