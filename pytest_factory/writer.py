@@ -1,6 +1,6 @@
 from importlib import import_module
 from typing import Tuple, List, Optional, Set
-from jinja import Template
+from jinja2 import Template
 from json import JSONDecodeError
 
 from pytest_factory.http import MOCK_HTTP_RESPONSE
