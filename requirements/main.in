@@ -3,3 +3,4 @@ tornado
 requests
 pytest-asyncio
 python-json-logger
+jinja
