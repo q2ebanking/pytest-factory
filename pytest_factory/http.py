@@ -59,6 +59,7 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
     """
 
     FACTORY_NAME = 'mock_http_server'
+    FACTORY_PATH = 'pytest_factory.http'
 
     def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
         """
@@ -66,6 +67,8 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         :param path: HTTP url
         :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """
+        self.kwargs = {**kwargs, 'method': method, 'path': path}
+        
         if kwargs.get('headers'):
             kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
 

@@ -32,6 +32,7 @@ class PassthruTestHandler(RequestHandler):
                 resp_str += f'caught RequestException: {rex}'
             else:
                 resp_str += resp.content
+                self.set_status(resp.status_code)
         self.write(resp_str)
 
     async def get(self):
