@@ -1,9 +1,11 @@
 import os
+os.unsetenv('TEST')
 
 
-def test_env_vars(update_env_vars):
-    """Demo of a test function using the fixture
-    to change values set on the environment temporarily.
-    """
-    fake_value = os.getenv("ENV")
-    assert fake_value == "test"
+class TestEnvVars:
+    def test_env_vars(self, store):
+        """
+        see tests/config.ini env_vars
+        """
+        val = os.getenv('TEST')
+        assert val == "42"
