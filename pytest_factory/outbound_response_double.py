@@ -26,13 +26,26 @@ class BaseMockRequest(Hashable):
         return id(self)
 
 
-class BaseFactoryPlugin:
-    def map_test_double(self, req_obj: BaseMockRequest) -> Any:
-        """
-        implement this method to create a factory plugin. a factory plugin is a module that routes a request
-        outbound from your component under test to the correct test double. gets invoked from Store.get_next_response
+class BasePlugin:
+    """
+    to create a pytest-factory plugin, inherit from this base class and define the following:
+    - self.PLUGIN_URL
+    - self.get_plugin_responses
 
-        :param req_obj: the request coming from your component under test
-        :return:
+    PLUGIN_URL is the url that corresponds to the depended-on-component that this plugin simulates
+    """
+    # TODO seems unnecessary to make this a class - rework to replace with module
+    PLUGIN_URL = None
+
+    def __init__(self):
+        if self.PLUGIN_URL is None:
+            raise NotImplementedError()
+
+    @staticmethod
+    def get_plugin_responses(req_obj: BaseMockRequest) -> Any:
+        """
+        this method will be called by Store.get_next_response when the system-under-test calls a url matching
+        self.PLUGIN_URL. the user-defined plugin should override this method to implement a router that returns
+        the plugin-defined test double response
         """
         raise NotImplementedError

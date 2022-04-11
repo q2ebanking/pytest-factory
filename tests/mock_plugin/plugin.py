@@ -1,7 +1,8 @@
 import json
 from typing import Any
 
-from pytest_factory.http import MockHttpRequest, BasePlugin
+from pytest_factory.http import MockHttpRequest
+from pytest_factory.outbound_response_double import BasePlugin
 from pytest_factory.framework.factory import make_factory
 from pytest_factory.framework.mall import MALL
 

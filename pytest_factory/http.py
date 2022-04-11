@@ -138,28 +138,3 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     except Exception as ex:
         raise RequestNormalizationException(req_obj_cls=MockHttpRequest, method=method, path=path, ex=ex, **kwargs)
     return make_factory(req_obj=expected_request, response=response)
-
-
-class BasePlugin:
-    """
-    to create a pytest-factory plugin, inherit from this base class and define the following:
-    - self.PLUGIN_URL
-    - self.get_plugin_responses
-
-    PLUGIN_URL is the url that corresponds to the depended-on-component that this plugin simulates
-    """
-    # TODO seems unnecessary to make this a class - rework to replace with module
-    PLUGIN_URL = None
-
-    def __init__(self):
-        if self.PLUGIN_URL is None:
-            raise NotImplementedError()
-
-    @staticmethod
-    def get_plugin_responses(req_obj: MockHttpRequest) -> MOCK_HTTP_RESPONSE:
-        """
-        this method will be called by Store.get_next_response when the system-under-test calls a url matching
-        self.PLUGIN_URL. the user-defined plugin should override this method to implement a router that returns
-        the plugin-defined test double response
-        """
-        raise NotImplementedError
