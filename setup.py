@@ -12,7 +12,7 @@ def get_reqs():
     :return: Required package names
     :rtype: list
     """
-    path = Path("requirements.txt")
+    path = Path("requirements/main.txt")
     with open(path, "r") as f:
         text = f.read()
     pattern = re.compile(r"^\w.*?")
