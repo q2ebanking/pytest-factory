@@ -29,7 +29,7 @@ class Mall:
 
     @property
     def env_vars(self) -> Dict[str, Any]:
-        return self._get_prop('env_vars')
+        return self._get_prop('env_vars') or {}
 
     @property
     def http_req_wildcard_fields(self) -> List[str]:
@@ -96,3 +96,6 @@ class Mall:
 
 
 MALL = Mall()
+
+if MALL.env_vars != {}:
+    raise Exception

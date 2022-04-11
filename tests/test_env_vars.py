@@ -1,4 +1,7 @@
 import os
+
+from pytest_factory.framework.mall import MALL
+
 os.unsetenv('TEST')
 
 
@@ -7,5 +10,6 @@ class TestEnvVars:
         """
         see tests/config.ini env_vars
         """
+        assert MALL.env_vars == {'TEST': '42'}
         val = os.getenv('TEST')
         assert val == "42"
