@@ -80,9 +80,9 @@ class TestHttp:
             assert resp == 'TestHttp'
             actual = get_logs(caplog)
             assert actual == []
-        
-        @mock_request(method='post', path='endpoint0', body='<xmlDoc>foo</xmlDoc>', 
-            headers={'Content-Type': 'text/xml'})
+
+        @mock_request(method='post', path='endpoint0', body='<xmlDoc>foo</xmlDoc>',
+                      headers={'Content-Type': 'text/xml'})
         async def test_http_call_xml(self, store):
             with pytest.raises(JSONDecodeError):
                 await store.handler.run_test()
