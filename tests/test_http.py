@@ -1,4 +1,3 @@
-from email import header
 from json import JSONDecodeError
 from typing import List
 import pytest
@@ -80,9 +79,9 @@ class TestHttp:
             assert resp == 'TestHttp'
             actual = get_logs(caplog)
             assert actual == []
-        
-        @mock_request(method='post', path='endpoint0', body='<xmlDoc>foo</xmlDoc>', 
-            headers={'Content-Type': 'text/xml'})
+
+        @mock_request(method='post', path='endpoint0', body='<xmlDoc>foo</xmlDoc>',
+                      headers={'Content-Type': 'text/xml'})
         async def test_http_call_xml(self, store):
             logger.error('HEY:' + store.handler.request.body)
             with pytest.raises(JSONDecodeError):
