@@ -1,44 +1,22 @@
 from importlib import import_module
-from typing import Tuple, List, Optional, Set
+from typing import Tuple, List, Dict
 
 from jinja2 import Template
 from requests import Response
 
 from pytest_factory.http import MOCK_HTTP_RESPONSE
 from pytest_factory.inbound_request_double import MockHttpRequest
+from pytest_factory.recorder.recording import Recording
 
 Exchange = Tuple[MockHttpRequest, MOCK_HTTP_RESPONSE]
 
 # TODO find a home for this
 assert_reproduction_as_success = True
 
-class Recording:
-    def __init__(self, incident_type: Exception, sut_exchange: Exchange, doc_exchanges: Optional[List[Exchange]] = []) -> None:
-        self.sut_exchange = sut_exchange
-        self.doc_exchanges = doc_exchanges
-        self.factory_paths: List[str] = []
-        self.incident_type = incident_type
-    
-    @property
-    def raises(self) -> bool:
-        return isinstance(self.last, type) and issubclass(self.last, Exception)
 
-    @property    
-    def first(self) -> MockHttpRequest:
-        return self.sut_exchange[0]
-    
-    @property
-    def last(self) -> MOCK_HTTP_RESPONSE:
-        return self.sut_exchange[1]
-    
-    def get_factories(self) -> Set[str]:
-        factories = set()
-        factories = {(request.FACTORY_PATH, request.FACTORY_NAME) for request, _ in self.doc_exchanges}
-        return factories
-
-def lex(log_line: str) -> str:
+def lex(log_line: str) -> Tuple[str, str, Dict]:
     input_dict = {}
-    return 'some.import.path', input_dict
+    return 'some.import.path', 'class_name', input_dict
 
 
 def parse(logs: List[str]) -> Recording:
@@ -48,8 +26,9 @@ def parse(logs: List[str]) -> Recording:
     requests = []
     responses = []
     for log_line in logs:
-        import_path, input_dict = lex(log_line=log_line)
-        new_cls = import_module(import_path)
+        import_path, import_name, input_dict = lex(log_line=log_line)
+        new_module = import_module(import_path)
+        new_cls = getattr(new_module, import_name)
         new_obj = new_cls(**input_dict)
         if isinstance(new_obj, MockHttpRequest):
             requests.append(new_obj)

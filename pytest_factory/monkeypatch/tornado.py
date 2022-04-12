@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable
+from typing import Callable, Optional
 
 from tornado.web import Application, RequestHandler
 
@@ -15,6 +15,11 @@ logger = get_logger(__name__)
 class TornadoMonkeyPatchException(PytestFactoryBaseException):
     def get_error_msg(self, log_msg: str, *args, **kwargs) -> str:
         return log_msg
+
+
+def read_from_write_buffer(buffer) -> Optional[str]:
+    result = buffer[len(buffer) - 1].decode('utf-8') if buffer else None
+    return result
 
 
 def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
@@ -61,12 +66,11 @@ async def run_test(self, assert_no_missing_calls: bool = None,
         await result
     store.check_no_uncalled_test_doubles()
 
-    if self._write_buffer:
-        raw_resp = self._write_buffer[len(self._write_buffer) - 1].decode('utf-8')
-        return raw_resp
+    return read_from_write_buffer(self._write_buffer)
 
 
 def finish(self, *_, **__) -> None:  # pylint: disable=unused-argument
+    # TODO pytest_factory.recorder.TornadoRecorderMixin.finish will get overwritten! maybe toggle by config?
     return self._write_buffer
 
 

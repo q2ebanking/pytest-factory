@@ -4,6 +4,7 @@ from pydoc import doc
 from pytest_factory.writer import MockHttpRequest, Exchange, List, Recording, Writer
 from pytest_factory.http import Response
 
+
 class TestWriter:
     def test_unexpected_xml(self):
         """
