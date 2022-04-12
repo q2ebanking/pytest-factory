@@ -126,5 +126,5 @@ following limitations in the current code (re: please submit a PR with a better 
 - if you define pytest_runtest_call in pytest.py and
     execute it within your pytest_runtest_call, it will execute
     item.runtest() TWICE. i do not know if this is a bug
-    or incorrect pytest documentation but it can break pytest-factory and will cause confusing
+    or incorrect pytest documentation, but it can break pytest-factory and will cause confusing
     behavior.
