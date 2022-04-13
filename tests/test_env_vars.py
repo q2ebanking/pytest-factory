@@ -1,9 +1,15 @@
 import os
 
+from pytest_factory.framework.mall import MALL
 
-def test_env_vars(update_env_vars):
-    """Demo of a test function using the fixture
-    to change values set on the environment temporarily.
-    """
-    fake_value = os.getenv("ENV")
-    assert fake_value == "test"
+os.unsetenv('TEST')
+
+
+class TestEnvVars:
+    def test_env_vars(self, store):
+        """
+        see tests/config.ini env_vars
+        """
+        assert MALL.env_vars == {'TEST': '42'}
+        val = os.getenv('TEST')
+        assert val == "42"

@@ -28,6 +28,10 @@ class Mall:
         return self._by_dir.get(self.current_test_dir, {}).get(key)
 
     @property
+    def env_vars(self) -> Dict[str, Any]:
+        return self._get_prop('env_vars') or {}
+
+    @property
     def http_req_wildcard_fields(self) -> List[str]:
         return self._get_prop('http_req_wildcard_fields')
 
@@ -56,7 +60,7 @@ class Mall:
             # If the same key exists in both, the one in self._by_dir wins
             conf.update(self._by_dir[key])
             # Reset self._by_dir with the updated values
-            self._by_dir = conf
+            self._by_dir[key] = conf
         else:
             # If self._by_dir doesn't have anything for the key yet,
             # add the entire dict
@@ -92,3 +96,6 @@ class Mall:
 
 
 MALL = Mall()
+
+if MALL.env_vars != {}:
+    raise Exception

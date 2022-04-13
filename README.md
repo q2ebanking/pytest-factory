@@ -118,10 +118,7 @@ following limitations in the current code (re: please submit a PR with a better 
 - the following are functionally tested and may require more work than is
     worthwhile to unit test:
     - framework/factory.py
-    - requests.py
     - framework/pytest.py
-- http.py has highly specialized, tightly coupled tests. please read
-    comments before updating
 - when possible please use the included logger in pytest_factory.framework.logger,
     especially if pytest is suppressing your print or warn statements or if you
     need to assert that a warning/error was emitted by your test code or if you
@@ -129,28 +126,5 @@ following limitations in the current code (re: please submit a PR with a better 
 - if you define pytest_runtest_call in pytest.py and
     execute it within your pytest_runtest_call, it will execute
     item.runtest() TWICE. i do not know if this is a bug
-    or incorrect pytest documentation but it can break pytest-factory and will cause confusing
+    or incorrect pytest documentation, but it can break pytest-factory and will cause confusing
     behavior.
-
-### style and code structure
-besides PEP and general code hygiene, the following guidance is recommended,
-organized by user role:
-- "end user"
-  - develops tests for their tornado server
-  - code for their use should:
-    - have functions be easily accessible via imports, including in
-        __init__.py
-    - be thoroughly documented per parameter and return value
-    - be fully type-hinted
-    - document examples where relevant
-- "plugin developer"
-  - develops pytest-factory plugins
-  - plugin code should:
-    - be imported into the settings.py for that plugin
-    - define or import all pytest invocations (e.g. pytest.fixture) in a single
-      module that will be included in end user's conftest.pytest_plugins
-- "contributor"
-  - develops pytest-factory itself
-  - contributed code should:
-    - "hide" with '_' attributes not intended for the end user
-    - keep modules and classes not intended for the end user in "framework"

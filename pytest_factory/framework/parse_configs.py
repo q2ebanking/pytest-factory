@@ -1,3 +1,4 @@
+import json
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Callable
@@ -32,6 +33,7 @@ CONFIG_MAP = {
     'tuples': lambda x: x.split(","),
     'imports': import_from_str_path,
     'bools': lambda x: x.lower() == 'true',
+    'dicts': lambda x: json.loads(x)
 }
 
 
