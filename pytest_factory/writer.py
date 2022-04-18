@@ -39,7 +39,7 @@ def parse(logs: List[str]) -> Recording:
             for j, response in enumerate(responses):
                 if request.exchange_id == response.exchange_id:
                     matching_pair_indices = (i, j)
-                    
+
         matching_request = requests.pop(matching_pair_indices[0])
         matching_response = responses.pop(matching_pair_indices[1])
         exchange_objects.append(tuple({matching_request, matching_response}))
@@ -47,9 +47,11 @@ def parse(logs: List[str]) -> Recording:
     recording = Recording(sut_exchange=exchange_objects[0], doc_exchanges=doc_exchanges)
     return recording
 
+
 EXCEPTION_PATH_LOOKUP = {
     'JSONDecodeError': 'json'
 }
+
 
 class Writer:
     def __init__(self, recording: Recording, handler_path: str):
@@ -59,7 +61,7 @@ class Writer:
             import_path = EXCEPTION_PATH_LOOKUP.get(self.recording.last.__name__)
             setattr(self.recording.last, 'IMPORT_PATH', import_path)
 
-    def write_test(self, output_path: str = 'tests/test_file.py') -> str:
+    def write_test(self, output_path: str = 'tests/test_file.py'):
         """
         writes a test module that reproduces the recorded session
         returns file path
@@ -85,5 +87,5 @@ class Writer:
         if not self.recording.raises:
             if isinstance(sut_response, Response) and sut_response.content:
                 sut_response = sut_response.content.decode()
-            with open(new_data_path, "w") as data_file:        
+            with open(new_data_path, "w") as data_file:
                 data_file.write(sut_response)
