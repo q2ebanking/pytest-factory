@@ -1,22 +1,11 @@
 from typing import Dict, Optional, Any, Union, List, Callable, Set, Tuple
 from functools import cached_property
 
-from tornado.web import RequestHandler
-
 import pytest_factory.framework.exceptions as exceptions
-from pytest_factory.outbound_response_double import BaseMockRequest
+from pytest_factory.framework.base_types import Factory, Shopper, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE
 from pytest_factory import logger
 
 logger = logger.get_logger(__name__)
-
-ROUTING_TYPE = Dict[
-    Union[
-        Dict[str, Any],
-        BaseMockRequest],
-    Any
-]
-
-MOCK_RESPONSES_TYPE = List[Tuple[bool, Any]]
 
 
 def is_plugin(kallable: Callable) -> bool:
@@ -33,14 +22,6 @@ def compare_unknown_types(a, b) -> bool:
     return compare_result
 
 
-class MissingHandler(RequestHandler):
-    def __init__(self):
-        pass
-
-    async def run_test(self):
-        raise exceptions.MissingHandlerException
-
-
 class Store:
     """
     stores test doubles for a given test method
@@ -49,13 +30,27 @@ class Store:
     def __init__(self, _test_name: str, **kwargs):
         self._test_name = _test_name
         self.request_handler_class: Optional[Callable] = None
-        self.handler: Optional[RequestHandler] = MissingHandler()
+        self._request_factory: Optional[Factory] = None
         self.assert_no_extra_calls: Optional[bool] = None
         self.assert_no_missing_calls: Optional[bool] = None
         self.factory_names: Set[str] = set()
+        self.messages = []
         for k, v in kwargs.items():
             if v is not None:
                 setattr(self, k, v)
+
+    @property
+    def handler(self) -> object:
+        if not self._request_factory:
+            raise exceptions.MissingHandlerException
+        return list(self._request_factory.values())[0]
+
+    def open(self, **kwargs) -> Shopper:
+        return Shopper(self, **kwargs)
+
+    def checkout(self, response: Any) -> Any:
+        self.messages.append(response)
+        return self.messages[-1]
 
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
         """
@@ -69,11 +64,12 @@ class Store:
         responses = [(False, _response) for _response in responses]
         self.factory_names.add(factory_name)
         if not hasattr(self, factory_name):  # store does not already have a test double from factory
-            setattr(self, factory_name, {req_obj: responses})
+            new_factory = Factory(req_obj=req_obj, responses=responses)
+            setattr(self, factory_name, new_factory)
         else:  # store already has test doubles from this factory
-            test_double_dict = getattr(self, factory_name)
-            if not test_double_dict.get(req_obj):
-                test_double_dict[req_obj] = responses
+            old_factory = getattr(self, factory_name)
+            if not old_factory.get(req_obj):
+                old_factory[req_obj] = responses
 
     def get_next_response(self, factory_name: str,
                           req_obj: BaseMockRequest) -> Any:
@@ -122,7 +118,8 @@ class Store:
             final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
         return final_response
 
-    def _mark_and_retrieve_test_double(self, req_obj: BaseMockRequest,
+    @staticmethod
+    def _mark_and_retrieve_test_double(req_obj: BaseMockRequest,
                                        mock_responses: MOCK_RESPONSES_TYPE) -> Tuple[
         Optional[Any], MOCK_RESPONSES_TYPE]:
         final_response = None

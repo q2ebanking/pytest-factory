@@ -1,9 +1,6 @@
-from __future__ import annotations
-import os
-from typing import Dict, Any, Optional, List, Union, Callable
+from typing import Dict, Any, Optional, List, Callable
 from functools import cached_property
 
-from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory.framework.store import Store, is_plugin
 from pytest_factory import logger
 

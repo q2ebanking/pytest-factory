@@ -53,12 +53,12 @@ pytestmark = pytest.mark.asyncio
 class TestClass:
     async def test_a(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'blah blah'
+        assert resp.content.decode() == 'blah blah'
 
     @mock_http_server(method='get', path='/hello', response='Hello, world!')
     async def test_b(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'Hello, world!'
+        assert resp.content.decode() == 'Hello, world!'
 ```
 
 ## features

@@ -34,30 +34,30 @@ class TestHttp:
     @mock_http_server(path='http://www.test.com/endpoint0', response='test_http_func_override')
     async def test_http_func_override(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'test_http_func_override'
+        assert resp.content.decode() == 'test_http_func_override'
 
     @mock_request(path='endpoint0/wildcard')
     @mock_http_server(path='http://www.test.com/endpoint0/*', response='test_http_wildcard_path')
     async def test_http_wildcard_path(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'test_http_wildcard_path'
+        assert resp.content.decode() == 'test_http_wildcard_path'
 
     @mock_http_server(path='http://www.test.com/endpoint0', response=lambda x: x.path)
     async def test_http_response_function(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'http://www.test.com/endpoint0'
+        assert resp.content.decode() == 'http://www.test.com/endpoint0'
 
     @mock_http_server(path='http://www.test.com/endpoint0', response=Timeout)
     async def test_http_response_exception(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'caught RequestException: MockHttpRequest(protocol=\'http\', host=\'127.0.0.1\', ' \
+        assert resp.content.decode() == 'caught RequestException: MockHttpRequest(protocol=\'http\', host=\'127.0.0.1\', ' \
                        'method=\'get\', uri=\'http://www.test.com/endpoint0\', version=\'HTTP/1.0\', remote_ip=None)'
 
     class TestResponseTracking:
         @mock_request(path='endpoint0?num=0')
         async def test_http_no_calls_warning(self, store, caplog):
             resp = await store.handler.run_test()
-            assert resp == ''
+            assert resp.content.decode() == ''
             actual = get_logs(caplog)
             assert actual == [
                 "the following test doubles were NOT used in this test: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): ['TestHttp']}} if this is not expected, set assert_no_missing_calls to True"]
@@ -67,7 +67,7 @@ class TestHttp:
             """
             """
             resp = await store.handler.run_test()
-            assert resp == 'TestHttpTestHttp'
+            assert resp.content.decode() == 'TestHttpTestHttp'
             actual = get_logs(caplog)
             assert actual == [
                 "expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)! will repeat last response: TestHttp"]
@@ -76,7 +76,7 @@ class TestHttp:
             """
             """
             resp = await store.handler.run_test()
-            assert resp == 'TestHttp'
+            assert resp.content.decode() == 'TestHttp'
             actual = get_logs(caplog)
             assert actual == []
 
@@ -92,17 +92,17 @@ class TestQueryParams:
     @mock_http_server(path='http://www.test.com/endpoint0', response='wild params')
     async def test_http_wildcard_params(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'wild params'
+        assert resp.content.decode() == 'wild params'
 
     @mock_http_server(path='http://www.test.com/endpoint0/*', response='wild path and params')
     async def test_http_wildcard_path_and_params(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'wild path and params'
+        assert resp.content.decode() == 'wild path and params'
 
     @mock_http_server(path='http://www.test.com/endpoint0?wild=card', response='exact match!')
     async def test_http_query_params_routing(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'exact match!'
+        assert resp.content.decode() == 'exact match!'
 
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar', response='exact match!')
     async def test_http_query_params_routing_fail(self, store):
@@ -114,4 +114,4 @@ class TestQueryParams:
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar&wild=card', response='exact match!')
     async def test_http_query_params_misordered_success(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'exact match!'
+        assert resp.content.decode() == 'exact match!'

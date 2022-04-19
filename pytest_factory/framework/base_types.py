@@ -1,4 +1,6 @@
-from typing import Hashable, Any
+from typing import Hashable, Any, Dict, Union, List, Tuple
+
+import pytest_factory.framework.exceptions as exceptions
 
 
 class BaseMockRequest(Hashable):
@@ -26,6 +28,12 @@ class BaseMockRequest(Hashable):
         return id(self)
 
 
+class Factory(dict):
+    def __init__(self, req_obj: Union[str, BaseMockRequest], responses: Any):
+        super(Factory, self).__init__()
+        self.__setitem__(req_obj, responses)
+
+
 class BasePlugin:
     """
     to create a pytest-factory plugin, inherit from this base class and define the following:
@@ -49,3 +57,29 @@ class BasePlugin:
         the plugin-defined test double response
         """
         raise NotImplementedError
+
+
+ROUTING_TYPE = Dict[
+    Union[
+        Dict[str, Any],
+        BaseMockRequest],
+    Any
+]
+
+MOCK_RESPONSES_TYPE = List[Tuple[bool, Any]]
+
+
+class Shopper:
+    def __init__(self, store: 'Store', *_, **kwargs):
+        self.store = store
+        for k, v in kwargs.items():
+            setattr(self.store, k, v)
+
+    def __enter__(self):
+        self.store.messages.append(self.store.handler.request)
+        return self.store
+
+    def __exit__(self, *args, **kwargs):
+        if len(self.store.messages) % 2 != 0 or isinstance(self.store.messages[-1], list):
+            raise exceptions.RecorderException()
+        self.store.check_no_uncalled_test_doubles()
