@@ -91,4 +91,4 @@ for method in HTTP_METHODS:
 
     new_methods[method.value] = new_method
 
-    update_monkey_patch_configs(factory_name='mock_http_server', callable_obj=requests, patch_members=new_methods)
+    update_monkey_patch_configs(callable_obj=requests, patch_members=new_methods)

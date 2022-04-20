@@ -1,4 +1,7 @@
-from typing import Hashable, Any
+from __future__ import annotations
+from typing import Hashable, Any, Dict, Union, List, Tuple
+
+import pytest_factory.framework.exceptions as exceptions
 
 
 class BaseMockRequest(Hashable):
@@ -26,6 +29,12 @@ class BaseMockRequest(Hashable):
         return id(self)
 
 
+class Factory(dict):
+    def __init__(self, req_obj: Union[str, BaseMockRequest], responses: Any):
+        super(Factory, self).__init__()
+        self.__setitem__(req_obj, responses)
+
+
 class BasePlugin:
     """
     to create a pytest-factory plugin, inherit from this base class and define the following:
@@ -49,3 +58,13 @@ class BasePlugin:
         the plugin-defined test double response
         """
         raise NotImplementedError
+
+
+ROUTING_TYPE = Dict[
+    Union[
+        Dict[str, Any],
+        BaseMockRequest],
+    Any
+]
+
+MOCK_RESPONSES_TYPE = List[Tuple[bool, Any]]

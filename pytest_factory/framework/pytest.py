@@ -22,13 +22,6 @@ def store():
     return store
 
 
-# def monkey_patch_all(monkeypatch, request) -> None:
-#     """
-#     """
-#     patch_callables(monkeypatch)
-#     patch_env_vars(monkeypatch)
-
-
 @pytest.fixture(autouse=True)
 def patch_callables(monkeypatch, request):
     """

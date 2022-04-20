@@ -47,16 +47,15 @@ def get_generic_caller(method_name: str, request_callable: Callable,
         return generic_caller
 
 
-def update_monkey_patch_configs(factory_name: str, callable_obj: Any, patch_members: Dict[str, Any]):
+def update_monkey_patch_configs(callable_obj: Any, patch_members: Dict[str, Any]):
     """
     Call this method at the bottom of your non HQ mock module to set up the fixtures.
-    :param factory_name: name of the mock module and decorator
     :param callable_obj: class or module that will have its method monkeypatched
     :param patch_members: dictionary of members where keys are the name of the member of callable_obj to be patched,
         and the values are the replacement member
     :return:
     """
-    MALL.monkey_patch_configs[factory_name] = {
+    MALL.monkey_patch_configs[callable_obj.__name__] = {
         'callable': callable_obj,
         'patch_methods': patch_members
     }
