@@ -65,7 +65,7 @@ def _response_callable(mock_response: MOCK_RESP_TYPE,
     takes the user-defined test double for the DOC response and casts it as a Response object
     """
     response = requests.Response()
-    if not mock_response:
+    if mock_response is None:
         response.status_code = 404
     elif isinstance(mock_response, str):  # string body 200
         response._content = mock_response

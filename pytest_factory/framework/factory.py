@@ -112,7 +112,7 @@ def mock_request(handler_class: Optional[Callable] = None,
             :return:
             """
             if store.handler != handler:
-                store._request_factory = Factory(req_obj='default', responses=handler)
+                store._request_factory = Factory(req_obj=factory_name, responses=handler)
                 handler._pytest_store = store
 
             await pytest_func(*args, **qwargs)
