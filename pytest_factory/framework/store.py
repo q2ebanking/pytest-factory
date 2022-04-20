@@ -1,8 +1,9 @@
+from __future__ import annotations
 from typing import Dict, Optional, Any, Union, List, Callable, Set, Tuple
 from functools import cached_property
 
 import pytest_factory.framework.exceptions as exceptions
-from pytest_factory.framework.base_types import Factory, Shopper, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE
+from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE
 from pytest_factory import logger
 from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
                                                       assert_no_extra_calls as default_assert_no_extra_calls)
@@ -190,3 +191,19 @@ class Store:
                                                                log_error=self.assert_no_missing_calls)
             if self.assert_no_missing_calls:
                 raise exception
+
+
+class Shopper:
+    def __init__(self, store: Store, *_, **kwargs):
+        self.store = store
+        for k, v in kwargs.items():
+            setattr(self.store, k, v)
+
+    def __enter__(self):
+        self.store.messages.append(self.store.handler.request)  # TODO this is tornado-specific
+        return self.store
+
+    def __exit__(self, *args, **kwargs):
+        if len(self.store.messages) % 2 != 0 or isinstance(self.store.messages[-1], list):
+            raise exceptions.RecorderException()
+        self.store.check_no_uncalled_test_doubles()

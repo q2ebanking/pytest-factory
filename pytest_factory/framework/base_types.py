@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Hashable, Any, Dict, Union, List, Tuple
 
 import pytest_factory.framework.exceptions as exceptions
@@ -67,19 +68,3 @@ ROUTING_TYPE = Dict[
 ]
 
 MOCK_RESPONSES_TYPE = List[Tuple[bool, Any]]
-
-
-class Shopper:
-    def __init__(self, store: 'Store', *_, **kwargs):
-        self.store = store
-        for k, v in kwargs.items():
-            setattr(self.store, k, v)
-
-    def __enter__(self):
-        self.store.messages.append(self.store.handler.request)
-        return self.store
-
-    def __exit__(self, *args, **kwargs):
-        if len(self.store.messages) % 2 != 0 or isinstance(self.store.messages[-1], list):
-            raise exceptions.RecorderException()
-        self.store.check_no_uncalled_test_doubles()
