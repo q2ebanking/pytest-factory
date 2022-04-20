@@ -1,8 +1,8 @@
 from json import JSONDecodeError
-from typing import List
+from typing import List, AnyStr, Optional
 import pytest
 
-from requests import Timeout
+from requests import Timeout, Response
 
 from pytest_factory.http import mock_http_server
 from pytest_factory.framework.exceptions import MissingTestDoubleException
@@ -28,6 +28,14 @@ def get_logs(caplog, levelname: str = 'WARNING') -> List[str]:
     return actual
 
 
+def get_response(status_code: int, body: Optional[AnyStr] = None) -> Response:
+    r = Response()
+    r.status_code = status_code
+    if body:
+        r._content = body if isinstance(body, bytes) else body.encode()
+    return r
+
+
 @mock_request(path='endpoint0')
 @mock_http_server(path='http://www.test.com/endpoint0', response='TestHttp')
 class TestHttp:
@@ -35,6 +43,11 @@ class TestHttp:
     async def test_http_func_override(self, store):
         resp = await store.handler.run_test()
         assert resp.content.decode() == 'test_http_func_override'
+
+    @mock_http_server(path='http://www.test.com/endpoint0', response=get_response(status_code=500))
+    async def test_http_500(self, store):
+        resp = await store.handler.run_test()
+        assert resp.status_code == 500
 
     @mock_request(path='endpoint0/wildcard')
     @mock_http_server(path='http://www.test.com/endpoint0/*', response='test_http_wildcard_path')
@@ -51,7 +64,7 @@ class TestHttp:
     async def test_http_response_exception(self, store):
         resp = await store.handler.run_test()
         assert resp.content.decode() == 'caught RequestException: MockHttpRequest(protocol=\'http\', host=\'127.0.0.1\', ' \
-                       'method=\'get\', uri=\'http://www.test.com/endpoint0\', version=\'HTTP/1.0\', remote_ip=None)'
+                                        'method=\'get\', uri=\'http://www.test.com/endpoint0\', version=\'HTTP/1.0\', remote_ip=None)'
 
     class TestResponseTracking:
         @mock_request(path='endpoint0?num=0')
