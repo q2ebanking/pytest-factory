@@ -4,6 +4,8 @@ from functools import cached_property
 import pytest_factory.framework.exceptions as exceptions
 from pytest_factory.framework.base_types import Factory, Shopper, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE
 from pytest_factory import logger
+from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
+                                                      assert_no_extra_calls as default_assert_no_extra_calls)
 
 logger = logger.get_logger(__name__)
 
@@ -31,8 +33,8 @@ class Store:
         self._test_name = _test_name
         self.request_handler_class: Optional[Callable] = None
         self._request_factory: Optional[Factory] = None
-        self.assert_no_extra_calls: Optional[bool] = None
-        self.assert_no_missing_calls: Optional[bool] = None
+        self.assert_no_extra_calls: bool = default_assert_no_extra_calls
+        self.assert_no_missing_calls: bool = default_assert_no_missing_calls
         self.factory_names: Set[str] = set()
         self.messages = []
         for k, v in kwargs.items():

@@ -9,6 +9,7 @@ from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 from pytest_factory.framework.base_types import BaseMockRequest
 from pytest_factory.framework.mall import MALL
+from pytest_factory.framework.default_configs import http_req_wildcard_fields as default_http_req_wildcard_fields
 
 MOCK_HTTP_RESPONSE = Optional[
     Union[
@@ -90,7 +91,8 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         that_dict = self._urlparse_to_dict(other.uri)
 
         for key, this_val in this_dict.items():
-            if this_val == "*" or (not this_val and key in MALL.http_req_wildcard_fields):
+            wildcard_fields = MALL.http_req_wildcard_fields or default_http_req_wildcard_fields
+            if this_val == "*" or (not this_val and key in wildcard_fields):
                 continue
             elif this_val != that_dict[key]:
                 return False
