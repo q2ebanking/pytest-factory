@@ -1,10 +1,8 @@
 from __future__ import annotations
-from typing import Hashable, Any, Dict, Union, List, Tuple
-
-import pytest_factory.framework.exceptions as exceptions
+from typing import Any, Dict, Union, List, Tuple
 
 
-class BaseMockRequest(Hashable):
+class BaseMockRequest:
     """
     dual-purpose class used to represent:
     - Actual Requests when created from parameters of @actual_request
@@ -25,14 +23,17 @@ class BaseMockRequest(Hashable):
         """
         raise NotImplementedError
 
-    def __hash__(self) -> int:
-        return id(self)
-
 
 class Factory(dict):
     def __init__(self, req_obj: Union[str, BaseMockRequest], responses: Any):
-        super(Factory, self).__init__()
+        super().__init__()
         self.__setitem__(req_obj, responses)
+
+    def __setitem__(self, key, value):
+        for _key in self.keys():
+            if key.compare(_key):
+                return
+        super().__setitem__(key, value)
 
 
 class BasePlugin:
