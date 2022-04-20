@@ -15,7 +15,7 @@ async def test_function_missing_handler(store):
 @mock_request(path='solo')
 async def test_function(store):
     resp = await store.handler.run_test()
-    assert resp == 'Hello, world'
+    assert resp.content.decode() == 'Hello, world'
 
 
 class TestInheritance:
@@ -23,11 +23,11 @@ class TestInheritance:
     class TestOverride:
         async def test_http_inherit_handler(self, store):
             resp = await store.handler.run_test()
-            assert resp == ''
+            assert resp.content.decode() == ''
 
         @mock_request(path='something')
         async def test_http_explicit_handler(self, store):
             """
             """
             resp = await store.handler.run_test()
-            assert resp == 'yay'
+            assert resp.content.decode() == 'yay'

@@ -17,7 +17,7 @@ from tornado.web import RequestHandler, Application
 class MainHandler(RequestHandler):
     async def get(self):
         resp = requests.get(url='https://www.world.com/hello')
-        self.write(resp.text)
+        self.write(resp.content)
 
 
 def make_app():
@@ -30,35 +30,45 @@ if __name__ == "__main__":
     app = make_app()
     app.listen(8888)
     IOLoop.current().start()
+
 ```
 
-your conftest.py:
+touch conftest.py:
 ```python
 pytest_plugins = "pytest_factory.framework.pytest"
 ```
 
-your test.py:
+touch config.ini:
+```ini
+[default]
+requests = pytest_factory.monkeypatch.requests
+tornado = pytest_factory.monkeypatch.tornado
+imports = requests, tornado
+```
+
+touch test.py:
 
 ```python
 import pytest
 from pytest_factory import mock_request, mock_http_server
 
-from tests.other_app import MainHandler
+from .app import MainHandler
 
 pytestmark = pytest.mark.asyncio
 
 
-@mock_http_server(method='get', path='/hello', response='blah blah')
+@mock_http_server(method='get', path='https://www.world.com/hello', response='blah blah')
 @mock_request(handler_class=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'blah blah'
+        assert resp.content.decode() == 'blah blah'
 
-    @mock_http_server(method='get', path='/hello', response='Hello, world!')
+    @mock_http_server(method='get', path='https://www.world.com/hello', response='Hello, world!')
     async def test_b(self, store):
         resp = await store.handler.run_test()
-        assert resp == 'Hello, world!'
+        assert resp.content.decode() == 'Hello, world!'
+
 ```
 
 ## features
