@@ -95,7 +95,10 @@ class Store:
             req_obj
         """
         if not hasattr(self, factory_name):
-            raise exceptions.MissingFactoryException(factory_name=factory_name)
+            if self.assert_no_missing_calls:
+                raise exceptions.MissingFactoryException(factory_name=factory_name)
+            else:
+                return None
         factory = getattr(self, factory_name)
         mock_responses = None
         for k, v in factory.items():

@@ -3,6 +3,6 @@
 #   NONE - means setting is supported by framework but is optional
 #   Exception - means setting is required by framework but be given value by user
 
-assert_no_missing_calls = False
-assert_no_extra_calls = False
+assert_no_missing_calls = True
+assert_no_extra_calls = True
 http_req_wildcard_fields = {"query"}
