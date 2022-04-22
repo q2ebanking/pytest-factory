@@ -3,8 +3,10 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Callable
 from importlib import import_module
-import pytest_factory.framework.default_configs as defaults
+from pytest_factory.logger import get_logger
 from pytest_factory.framework.exceptions import ConfigException
+
+logger = get_logger(__name__)
 
 
 def get_config_parser(path: str = '../**/config.ini') -> ConfigParser:
@@ -48,8 +50,7 @@ def parse_type(section: str, _type: str, parse_func: Callable, conf: ConfigParse
     split_str = str_to_split.split(",") if str_to_split else []
     sub_dict = {}
     for k in clean_whitespace(split_str):
-        default_value = getattr(defaults, k) if hasattr(defaults, k) else None
-        sub_dict[k] = parse_func(conf.get(section=section, option=k, fallback=default_value))
+        sub_dict[k] = parse_func(conf.get(section=section, option=k))
 
     return sub_dict
 
@@ -81,7 +82,11 @@ def prep_stores_update_local(
         conf_dict.update(sub_dict)
 
     # Check if any other string-only values need to be added
-    keys = set(conf[dir_name].keys()).difference(set(conf_dict.keys()))
+    try:
+        keys = set(conf[dir_name].keys()).difference(set(conf_dict.keys()))
+    except KeyError as ke:
+        msg = f"test suite is missing config.ini OR config.ini is missing section \"{ke}\"! proceeding with no configurations!"
+        raise ConfigException(log_msg=msg)
 
     # If we try to remove a key that isn't in the set, it will error
     no_add_present = [x for x in CONFIG_MAP.keys() if x in keys]

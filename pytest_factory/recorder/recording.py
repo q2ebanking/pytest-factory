@@ -1,7 +1,6 @@
 from typing import Tuple, List, Optional, Set, Union
 
-from pytest_factory.http import MOCK_HTTP_RESPONSE
-from pytest_factory.inbound_request_double import MockHttpRequest
+from pytest_factory.http import MOCK_HTTP_RESPONSE, MockHttpRequest
 
 Exchange = Tuple[MockHttpRequest, MOCK_HTTP_RESPONSE]
 

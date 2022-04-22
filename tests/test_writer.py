@@ -1,8 +1,7 @@
 from json import JSONDecodeError
-from pydoc import doc
 
 from pytest_factory.writer import MockHttpRequest, Exchange, List, Recording, Writer
-from pytest_factory.http import Response
+from requests import Response
 
 
 class TestWriter:

@@ -4,8 +4,7 @@ from typing import Tuple, List, Dict
 from jinja2 import Template
 from requests import Response
 
-from pytest_factory.http import MOCK_HTTP_RESPONSE
-from pytest_factory.inbound_request_double import MockHttpRequest
+from pytest_factory.http import MOCK_HTTP_RESPONSE, MockHttpRequest
 from pytest_factory.recorder.recording import Recording
 
 Exchange = Tuple[MockHttpRequest, MOCK_HTTP_RESPONSE]

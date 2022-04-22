@@ -1,7 +1,6 @@
-from typing import Any, Callable
+from typing import Any, Callable, Hashable
 
 from pytest_factory.logger import get_logger
-from pytest_factory.outbound_response_double import BaseMockRequest
 
 logger = get_logger(__name__)
 
@@ -82,7 +81,7 @@ class MissingTestDoubleException(PytestFactoryBaseException):
     setting up the factories OR an error in component under test not forming the request correctly
     """
 
-    def get_error_msg(self, req_obj: BaseMockRequest) -> str:
+    def get_error_msg(self, req_obj: Hashable) -> str:
         return f"could not find test double match for request signature: {req_obj}!"
 
 

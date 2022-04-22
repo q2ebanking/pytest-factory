@@ -1,11 +1,10 @@
-from __future__ import annotations
-import os
-from typing import Dict, Any, Optional, List, Union, Callable
+from typing import Dict, Any, Optional, List, Callable
 from functools import cached_property
 
-from pytest_factory.outbound_response_double import BaseMockRequest
 from pytest_factory.framework.store import Store, is_plugin
 from pytest_factory import logger
+from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
+                                                      assert_no_extra_calls as default_assert_no_extra_calls)
 
 logger = logger.get_logger(__name__)
 
@@ -41,11 +40,11 @@ class Mall:
 
     @property
     def assert_no_missing_calls(self) -> bool:
-        return self._get_prop('assert_no_missing_calls')
+        return self._get_prop('assert_no_missing_calls') or default_assert_no_missing_calls
 
     @property
     def assert_no_extra_calls(self) -> bool:
-        return self._get_prop('assert_no_extra_calls')
+        return self._get_prop('assert_no_extra_calls') or default_assert_no_extra_calls
 
     def load(self, conf: dict, key: str) -> dict:
         """
