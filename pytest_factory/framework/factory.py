@@ -11,6 +11,8 @@ from pytest_factory.framework.mall import MALL
 
 def make_factory(req_obj: Union[BaseMockRequest, str],
                  response: Any,
+                 setup: Optional[Callable] = None,
+                 teardown: Optional[Callable] = None,
                  factory_name: Optional[str] = None) -> Callable:
     """
     Creates a factory. For use by contributors and plugin
@@ -21,11 +23,11 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
 
     :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
     :param response: test double - generally a string or Response
-    :param get_route: a function that parses an incoming request and returns a string that identifies which test double
-    within the given factory is the correct test double
     :param factory_name: name of the factory that create test doubles for the
         returned Callable (TestClass or test_method_or_function; defaults to name of function that called this
         function
+    :param setup: a function that does work before the test is run
+    :param teardown: a function that does work after the test is complete
     :return: the test class or test function that is being decorated
     """
 
@@ -43,7 +45,13 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
         store.update(factory_name=factory_name,
                      req_obj=req_obj, response=response)
 
-        return pytest_func
+        @functools.wraps(pytest_func)  # TODO add tests for this!!!
+        async def pytest_func_wrapper(*args, **kwargs):
+            resp = setup(*args, **kwargs) if setup else None
+            pytest_func(*args, **kwargs)
+            if teardown:
+                teardown(resp, *args, **kwargs)
+        return pytest_func_wrapper
 
     def callable_wrapper(callable_obj: Callable) -> Callable:
         return apply_func_recursive(target=callable_obj,

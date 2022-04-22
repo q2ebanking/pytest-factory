@@ -23,6 +23,10 @@ class Mall:
         self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}
         self.get_handler_instance: Optional[Callable] = None
 
+    def __getattr__(self, name):
+        if name not in vars(self).keys():
+            return self._get_prop(name)
+
     def _get_prop(self, key: str) -> Any:
         return self._by_dir.get(self.current_test_dir, {}).get(key)
 
@@ -98,3 +102,15 @@ MALL = Mall()
 
 if MALL.env_vars != {}:
     raise Exception
+
+
+def main():
+    m = Mall()
+    m.current_test_dir = 'foo'
+    m._by_dir['foo'] = {'bar': 'pow!'}
+    assert m.bar == 'pow!'
+    print('success!')
+
+
+if __name__ == '__main__':
+    main()
