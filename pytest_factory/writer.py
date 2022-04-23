@@ -69,12 +69,14 @@ class Writer:
         with open(output_path, "w") as test_file:
             with open(template_path) as template_file:
                 template = Template(template_file.read())
-
+            request_factory_path, request_factory_name = self.recording.request_factory
             inputs = {
                 'recording': self.recording,
                 'incident_name': self.recording.incident_type.__name__,
                 'handler_path': self.handler_path,
                 'handler_name': self.handler_name,
+                'request_factory_path': request_factory_path,
+                'request_factory_name': request_factory_name,
                 'generated_test_id': 'example_0',
                 'assert_reproduction_as_success': assert_reproduction_as_success
             }
