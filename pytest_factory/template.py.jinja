@@ -1,11 +1,11 @@
 import pytest
 {% if recording.raises: %}
-from {{recording.last.IMPORT_PATH}} import {{recording.last.__name__}} 
+from {{recording.last.IMPORT_PATH}} import {{recording.last.__name__}}
 {% endif %}
 {% for factory_path, factory_name in recording.get_factories(): %}
 from {{factory_path}} import {{factory_name}}
 {% endfor %}
-from pytest_factory import {{recording.first.FACTORY_NAME}}
+from {{recording.first.FACTORY_PATH}} import {{recording.first.FACTORY_NAME}}
 
 from {{handler_path}} import {{handler_name}}
 

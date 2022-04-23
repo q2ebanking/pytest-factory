@@ -1,8 +1,6 @@
-from typing import Tuple, List, Optional, Set, Union
+from typing import Any, List, Optional, Set, Union, Tuple
 
-from pytest_factory.http import MOCK_HTTP_RESPONSE, MockHttpRequest
-
-Exchange = Tuple[MockHttpRequest, MOCK_HTTP_RESPONSE]
+from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE
 
 
 class Recording:
@@ -14,14 +12,21 @@ class Recording:
 
     @property
     def raises(self) -> bool:
-        return isinstance(self.last, type) and issubclass(self.last, Exception)
+        return isinstance(self.last, Exception) or issubclass(self.last, Exception)
 
     @property
-    def first(self) -> MockHttpRequest:
+    def first(self) -> Union[Any, BaseMockRequest]:
         return self.sut_exchange[0]
 
     @property
-    def last(self) -> Union[MOCK_HTTP_RESPONSE, type]:
+    def request_factory(self) -> Tuple[str, str]:
+        if hasattr(self.first, 'FACTORY_PATH') and hasattr(self.first, 'FACTORY_NAME'):
+            return getattr(self.first, 'FACTORY_PATH'), getattr(self.first, 'FACTORY_NAME')
+        else:
+            return 'pytest_factory.framework.factory', 'make_factory'
+
+    @property
+    def last(self) -> BASE_RESPONSE_TYPE:
         return self.sut_exchange[1]
 
     def get_factories(self) -> Set[str]:

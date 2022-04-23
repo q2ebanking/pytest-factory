@@ -38,7 +38,6 @@ def parse(logs: List[str]) -> Recording:
             for j, response in enumerate(responses):
                 if request.exchange_id == response.exchange_id:
                     matching_pair_indices = (i, j)
-
         matching_request = requests.pop(matching_pair_indices[0])
         matching_response = responses.pop(matching_pair_indices[1])
         exchange_objects.append(tuple({matching_request, matching_response}))
@@ -86,5 +85,7 @@ class Writer:
         if not self.recording.raises:
             if isinstance(sut_response, Response) and sut_response.content:
                 sut_response = sut_response.content.decode()
+            if not isinstance(sut_response, str):
+                sut_response = str(sut_response)
             with open(new_data_path, "w") as data_file:
                 data_file.write(sut_response)

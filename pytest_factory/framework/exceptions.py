@@ -26,7 +26,7 @@ class PytestFactoryBaseException(Exception):
             logger.warning(msg=self.log_msg)
 
     def get_warning_msg(self, *args, **kwargs) -> str:
-        raise NotImplementedError
+        return self.get_error_msg()
 
     def get_error_msg(self, *args, **kwargs) -> str:
         raise NotImplementedError
@@ -37,6 +37,11 @@ class PytestFactoryBaseException(Exception):
 
 class ConfigException(PytestFactoryBaseException):
     def get_error_msg(self, log_msg: str) -> str:
+        return log_msg
+
+
+class RecorderException(PytestFactoryBaseException):
+    def get_error_msg(self, log_msg) -> str:
         return log_msg
 
 

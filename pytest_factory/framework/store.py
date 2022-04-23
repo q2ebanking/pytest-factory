@@ -3,7 +3,7 @@ from typing import Dict, Optional, Any, Union, List, Callable, Set, Tuple
 from functools import cached_property
 
 import pytest_factory.framework.exceptions as exceptions
-from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE
+from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE, Exchange
 from pytest_factory import logger
 from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
                                                       assert_no_extra_calls as default_assert_no_extra_calls)
@@ -49,7 +49,7 @@ class Store:
         return list(self._request_factory.values())[0]
 
     def open(self, **kwargs) -> Shopper:
-        return Shopper(self, **kwargs)
+        return Shopper(store=self, **kwargs)
 
     def checkout(self, response: Any) -> Any:
         self.messages.append(response)
@@ -116,6 +116,7 @@ class Store:
             raise exceptions.MissingTestDoubleException(req_obj=req_obj)
         final_response, mock_responses = self._mark_and_retrieve_test_double(req_obj=req_obj,
                                                                              mock_responses=mock_responses)
+        self.messages.extend([req_obj, final_response])
 
         if mock_responses and not final_response:
             final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
@@ -158,7 +159,9 @@ class Store:
 
     @cached_property
     def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
-        test_doubles = {factory_name: getattr(self, factory_name) for factory_name in self.factory_names}
+        test_doubles = {factory_name: getattr(self, factory_name)
+                        for factory_name in self.factory_names
+                        if factory_name is not list(self._request_factory.keys())[0]}
         return test_doubles
 
     def load_defaults(self, default_routes: Dict[str, ROUTING_TYPE]):
@@ -194,16 +197,21 @@ class Store:
 
 
 class Shopper:
-    def __init__(self, store: Store, *_, **kwargs):
+    def __init__(self, response_attr: str, request_attr: str, store: Store, *_, **kwargs):
         self.store = store
+        self.response_attr = response_attr
+        self.request_attr = request_attr
         for k, v in kwargs.items():
             setattr(self.store, k, v)
 
     def __enter__(self):
-        self.store.messages.append(self.store.handler.request)  # TODO this is tornado-specific
+        sut_input = getattr(self.store.handler, self.request_attr)
+        self.store.messages.append(sut_input)
         return self.store
 
-    def __exit__(self, *args, **kwargs):
-        if len(self.store.messages) % 2 != 0 or isinstance(self.store.messages[-1], list):
-            raise exceptions.RecorderException()
+    def __exit__(self, exc_type, exc_val, traceback):
+        response = exc_val if exc_val else getattr(self.store.handler, self.response_attr)
+        self.store.messages.append(response)
+        if len(self.store.messages) % 2 != 0:
+            raise exceptions.RecorderException(log_msg='failed to record even number of messages!')
         self.store.check_no_uncalled_test_doubles()

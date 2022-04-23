@@ -1,6 +1,7 @@
-import requests
+import os
 from typing import Optional, Union, List
 
+import requests
 from tornado.web import RequestHandler, Application
 from tornado.httputil import HTTPServerRequest
 from tornado.concurrent import Future
@@ -45,7 +46,7 @@ class TornadoRecorderRequestHandlerMixin(RequestHandler):
         sut_exchange = (request, response)
         incident_type = self._incident_type
         r = Recording(sut_exchange=sut_exchange, doc_exchanges=self._doc_exchanges, incident_type=incident_type)
-        url = ''  # TODO pull accumulator url from env var?
+        url = os.environ.get('accumulator_url')
         resp = requests.post(url=url, data=r.serialize())
         # TODO handle error
         return future
