@@ -63,7 +63,7 @@ class TestHttp:
     @mock_http_server(path='http://www.test.com/endpoint0', response=Timeout)
     async def test_http_response_exception(self, store):
         resp = await store.handler.run_test()
-        assert resp.content.decode() == 'caught RequestException: <class \'pytest_factory.framework.http_types.MockHttpRequest\'>: {"method": "get", "path": "http://www.test.com/endpoint0"}'
+        assert resp.content.decode() == "caught RequestException: MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)"
 
     class TestResponseTracking:
         @tornado_handler(path='endpoint0?num=0')
@@ -82,7 +82,9 @@ class TestHttp:
             assert resp.content.decode() == 'TestHttpTestHttp'
             actual = get_logs(caplog)
             assert actual == [
-                '''expected only 1 calls to <class 'pytest_factory.framework.http_types.MockHttpRequest'>: {"method": "get", "path": "http://www.test.com/endpoint0"}! will repeat last response: b\'TestHttp\'''']
+                "expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1',"
+                " method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', "
+                "remote_ip=None)! will repeat last response: b'TestHttp'"]
 
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
             """

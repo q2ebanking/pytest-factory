@@ -7,7 +7,7 @@ from urllib.parse import urlparse, parse_qs
 from requests import Response
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
-from pytest_factory.framework.base_types import BaseMockRequest, Serializable, Writable
+from pytest_factory.framework.base_types import BaseMockRequest
 from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.default_configs import http_req_wildcard_fields as default_http_req_wildcard_fields
 
@@ -36,7 +36,7 @@ class HTTP_METHODS(Enum):
     OPTIONS = 'options'
 
 
-class MockHttpRequest(HTTPServerRequest, BaseMockRequest, Serializable, Writable):
+class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
     """
     abstract HTTP request class representing simulated and actual inbound and outbound requests.
     normalizing all requests within pytest-factory allows for direct comparison of requests, which has

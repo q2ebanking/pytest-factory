@@ -9,7 +9,6 @@ from typing import Union, Optional
 from tornado.httputil import HTTPHeaders
 
 from pytest_factory.http import MockHttpRequest, HTTP_METHODS
-from pytest_factory.framework.base_types import Serializable, Writable
 from pytest_factory.framework.exceptions import TestDoubleTypeException
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, get_generic_caller
 
@@ -103,8 +102,3 @@ for method in HTTP_METHODS:
     new_methods[method.value] = new_method
 
 update_monkey_patch_configs(callable_obj=requests, patch_members=new_methods)
-response_patches = {'__init__': ResponseMonkeyPatch.__init__,
-                    '__str__': Serializable.__str__,
-                    'write': Writable.write}
-for k, v in response_patches.items():
-    setattr(requests.Response, k, v)
