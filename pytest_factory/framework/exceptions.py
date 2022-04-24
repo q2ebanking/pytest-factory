@@ -51,7 +51,7 @@ class MissingHandlerException(PytestFactoryBaseException):
         return log_msg
 
 
-class TestDoubleTypeException(PytestFactoryBaseException):
+class TypeTestDoubleException(PytestFactoryBaseException):
     def get_error_msg(self, response: Any, request_module_name: str) -> str:
         log_msg = f'cannot convert test double {str(response)} of type {type(response)} into type expected by module {request_module_name}'
         return log_msg

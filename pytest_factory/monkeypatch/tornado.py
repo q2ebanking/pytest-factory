@@ -18,8 +18,8 @@ class TornadoMonkeyPatchException(PytestFactoryBaseException):
         return log_msg
 
 
-def read_from_write_buffer(buffer) -> Optional[str]:
-    result = buffer[len(buffer) - 1].decode('utf-8') if buffer else None
+def read_from_write_buffer(buffer) -> Optional[bytes]:
+    result = buffer[len(buffer) - 1] if buffer else None
     return result
 
 
@@ -41,9 +41,7 @@ def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
                     handler_class: Optional[Callable] = None, **kwargs) -> Callable:
     if req_obj is None:
         req_obj = TornadoRequest(**kwargs)
-    else:
-        req_obj.FACTORY_NAME = TornadoRequest.FACTORY_NAME
-        req_obj.FACTORY_PATH = TornadoRequest.FACTORY_PATH
+
     return make_factory(req_obj=req_obj,
                         handler_class=handler_class,
                         factory_name='tornado_handler')
@@ -95,18 +93,14 @@ class TornadoMonkeyPatches(RequestHandler):
             if self._write_buffer:
                 raw_resp = read_from_write_buffer(self._write_buffer)
                 response_obj = requests.Response()
-                response_obj._content = raw_resp.encode()
+                response_obj._content = raw_resp
                 response_obj.status_code = self.get_status()
                 if response_parser:
                     response_obj = response_parser(response_obj)
                 self._response = response_obj
                 return response_obj
 
-    def finish(self, *_, **__) -> None:  # pylint: disable=unused-argument
-        # TODO pytest_factory.recorder.TornadoRecorderMixin.finish will get overwritten! maybe toggle by config?
-        pass
 
-
-patch_members = {'run_test': TornadoMonkeyPatches.run_test, '_transforms': [], 'finish': TornadoMonkeyPatches.finish}
+patch_members = {'run_test': TornadoMonkeyPatches.run_test, '_transforms': []}
 MALL.get_handler_instance = get_handler_instance
 update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members)

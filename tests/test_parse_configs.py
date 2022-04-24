@@ -39,4 +39,6 @@ def test_untyped_config(setup_config_test):
 
     config = get_config_parser(path='**/test_config.ini')
     conf_dict = prep_stores_update_local(dir_name='tests', config=config)
+    assert conf_dict['string_var'] == 'FOO'
     assert MALL._by_dir['tests']['string_var'] == 'FOO'
+

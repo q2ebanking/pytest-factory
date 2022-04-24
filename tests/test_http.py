@@ -43,6 +43,9 @@ class TestHttp:
     async def test_http_func_override(self, store):
         resp = await store.handler.run_test()
         assert resp.content.decode() == 'test_http_func_override'
+        assert len(store.messages) == 4
+        assert store.messages[3] == resp
+        assert store.messages[2] == resp.content
 
     @mock_http_server(path='http://www.test.com/endpoint0', response=get_response(status_code=500))
     async def test_http_500(self, store):

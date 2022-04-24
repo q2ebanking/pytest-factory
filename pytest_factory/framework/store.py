@@ -30,7 +30,7 @@ class Store:
     stores test doubles for a given test method
     """
 
-    def __init__(self, _test_name: str, **kwargs):
+    def __init__(self, _test_name: str):
         self._test_name = _test_name
         self.request_handler_class: Optional[Callable] = None
         self._request_factory: Optional[Factory] = None
@@ -38,9 +38,6 @@ class Store:
         self.assert_no_missing_calls: bool = default_assert_no_missing_calls
         self.factory_names: Set[str] = set()
         self.messages = []
-        for k, v in kwargs.items():
-            if v is not None:
-                setattr(self, k, v)
 
     @property
     def handler(self) -> object:
@@ -51,13 +48,9 @@ class Store:
     def open(self, **kwargs) -> Shopper:
         return Shopper(store=self, **kwargs)
 
-    def checkout(self, response: Any) -> Any:
-        self.messages.append(response)
-        return self.messages[-1]
-
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
         """
-        always use this method to modify store AFTER configuration stage ends
+        always use this method to modify store AFTER configuration stage ends and BEFORE test running stage
         note that this will get invoked depth-first
         :param req_obj:
         :param factory_name:
@@ -163,13 +156,6 @@ class Store:
                         for factory_name in self.factory_names
                         if factory_name is not list(self._request_factory.keys())[0]}
         return test_doubles
-
-    def load_defaults(self, default_routes: Dict[str, ROUTING_TYPE]):
-        for key, route in default_routes.items():
-            if hasattr(self, key):
-                getattr(self, key).update(route)
-            else:
-                setattr(self, key, route)
 
     def check_no_uncalled_test_doubles(self):
         """
