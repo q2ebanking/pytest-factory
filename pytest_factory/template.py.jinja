@@ -1,9 +1,13 @@
 import pytest
+
 {% if recording.raises: %}
-from {{recording.last.IMPORT_PATH}} import {{recording.last.__name__}}
+from {{recording.last.__module__}} import {{recording.last.__name__}}
+{% else %}
+from pytest_factory.recorder.recording import reify
 {% endif %}
-{% for factory_path, factory_name in recording.get_factories(): %}
-from {{factory_path}} import {{factory_name}}
+{% for request, response in recording.doc_exchanges: %}
+from {{request.FACTORY_PATH}} import {{request.FACTORY_NAME}}
+from {{response.__module__}} import {{response.__class__.__name__}}
 {% endfor %}
 from {{request_factory_path}} import {{request_factory_name}}
 
@@ -15,8 +19,8 @@ pytestmark = pytest.mark.asyncio
 sut_inputs = {{recording.first.kwargs}}
 
 {% if not recording.raises %}
-with open('actual_response') as file:
-    actual_response = file.read()
+with open('tests/actual_response') as file:
+    actual_response_str = file.read()
 {% endif %}
 
 class Test{{handler_name}}{{incident_name}}:
@@ -25,7 +29,7 @@ class Test{{handler_name}}{{incident_name}}:
 
     """
     {% for request, response in recording.doc_exchanges: %}
-    @{{request.factory_name}}(**{{request.kwargs}}, response='{{response}}')
+    @{{request.FACTORY_NAME}}(**{{request.kwargs}}, response={{response.write()}})
     {% endfor %}
     @{{recording.first.FACTORY_NAME}}(**sut_inputs, handler_class={{handler_name}})
     async def test_{{generated_test_id}}(self, store):
@@ -33,6 +37,9 @@ class Test{{handler_name}}{{incident_name}}:
         with pytest.raises({{recording.last.__name__}}):
             await store.handler.run_test()
         {% else: %}
+        actual_response = reify(actual_response_str)
         simulated_response = await store.handler.run_test()
-        assert simulated_response == actual_response
+        {% for attribute in response_attributes: %}
+        assert simulated_response.{{attribute}} == actual_response.{{attribute}}
+        {% endfor %}
         {% endif %}

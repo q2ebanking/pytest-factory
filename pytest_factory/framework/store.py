@@ -118,7 +118,7 @@ class Store:
                                                                              mock_responses=mock_responses)
         self.messages.extend([req_obj, final_response])
 
-        if mock_responses and not final_response:
+        if mock_responses and final_response is None:
             final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
         return final_response
 

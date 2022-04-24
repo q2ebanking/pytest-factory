@@ -7,7 +7,7 @@ from urllib.parse import urlparse, parse_qs
 from requests import Response
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
-from pytest_factory.framework.base_types import BaseMockRequest
+from pytest_factory.framework.base_types import BaseMockRequest, Serializable, Writable
 from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.default_configs import http_req_wildcard_fields as default_http_req_wildcard_fields
 
@@ -36,7 +36,7 @@ class HTTP_METHODS(Enum):
     OPTIONS = 'options'
 
 
-class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
+class MockHttpRequest(HTTPServerRequest, BaseMockRequest, Serializable, Writable):
     """
     abstract HTTP request class representing simulated and actual inbound and outbound requests.
     normalizing all requests within pytest-factory allows for direct comparison of requests, which has
@@ -70,10 +70,6 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         self.connection = lambda: None
         setattr(self.connection, 'set_close_callback', lambda _: None)
 
-    def __str__(self):
-        d = {k: str(v) for k, v in self.kwargs.items()}
-        return f"{self.__class__}: {json.dumps(d)}"
-
     @staticmethod
     def _urlparse_to_dict(uri: str) -> dict:
         # TODO maybe support wildcarding names/values of query params as opposed to the whole query param string
@@ -104,8 +100,8 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         return True
 
     @property
-    def content(self) -> str:
-        return self.body.decode()
+    def content(self) -> bytes:
+        return self.body
 
     def __hash__(self) -> int:
         """

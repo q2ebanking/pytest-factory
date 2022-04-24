@@ -35,4 +35,6 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
         expected_request = req_obj or MockHttpRequest(method=method, path=path, **kwargs)
     except Exception as ex:
         raise RequestNormalizationException(req_obj_cls=MockHttpRequest, method=method, path=path, ex=ex, **kwargs)
+    if isinstance(response, str):
+        response = response.encode()
     return make_factory(req_obj=expected_request, response=response)

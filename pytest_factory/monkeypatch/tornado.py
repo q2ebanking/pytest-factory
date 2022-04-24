@@ -27,8 +27,6 @@ class TornadoRequest(MockHttpRequest):
     FACTORY_NAME = 'tornado_handler'
     FACTORY_PATH = 'pytest_factory.monkeypatch.tornado'
 
-    def __dict__(self):
-        return {'FACTORY_NAME'}
 
 def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
     """
@@ -95,9 +93,9 @@ class TornadoMonkeyPatches(RequestHandler):
                 await result
 
             if self._write_buffer:
-                raw_resp = self._write_buffer[len(self._write_buffer) - 1]
+                raw_resp = read_from_write_buffer(self._write_buffer)
                 response_obj = requests.Response()
-                response_obj._content = raw_resp
+                response_obj._content = raw_resp.encode()
                 response_obj.status_code = self.get_status()
                 if response_parser:
                     response_obj = response_parser(response_obj)

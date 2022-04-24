@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 from importlib import import_module
-from typing import Any, List, Callable, Optional, Set, Union, Tuple
+from typing import Any, List, Optional, Union, Tuple
 
 from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE
 
@@ -13,7 +13,8 @@ def reify(path) -> BASE_RESPONSE_TYPE:
     kwargs = None
     if len(path.split(':')) > 1:
         kwarg_str = path.split('>:')[1]
-        kwargs = json.loads(kwarg_str)
+        kwargs = {k: v[2:-1].encode() if isinstance(v, str) and v[0] == 'b' else v
+                  for k, v in json.loads(kwarg_str).items()}
     name = '.'.join(path_parts[0:-1]) if len(path_parts) > 2 else None
     module = import_module(name=name)
     kallable = getattr(module, path_parts[-1])
@@ -55,7 +56,7 @@ class Recording:
 
     @property
     def raises(self) -> bool:
-        return isinstance(self.last, Exception) or issubclass(self.last, Exception)
+        return isinstance(self.last, Exception) or isinstance(self.last, type) and issubclass(self.last, Exception)
 
     @property
     def first(self) -> Union[Any, BaseMockRequest]:
@@ -71,10 +72,6 @@ class Recording:
     @property
     def last(self) -> BASE_RESPONSE_TYPE:
         return self.sut_exchange[1]
-
-    def get_factories(self) -> Set[str]:
-        factories = {(request.FACTORY_PATH, request.FACTORY_NAME) for request, _ in self.doc_exchanges}
-        return factories
 
     def serialize(self) -> bytes:
         sut_exchange = self.sut_exchange
