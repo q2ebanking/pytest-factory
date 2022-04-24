@@ -29,6 +29,8 @@ def patch_callables(monkeypatch, request):
     running and need to set the "current_test" MALL property
     """
     test_name = request.node.name
+    path_parts = request.node.cls.__module__.split('.') if request.node.cls is not None else ['tests']
+    MALL.current_test_dir = path_parts[1] if len(path_parts) > 2 else path_parts[0]
     MALL.current_test = test_name
     for _, configs in MALL.monkey_patch_configs.items():
         callable_obj = configs.get('callable')
