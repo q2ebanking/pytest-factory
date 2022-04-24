@@ -18,9 +18,17 @@ class Serializable:
 
 
 class Writable:
-    def write(self) -> str:
+    def write(self, just_args=False) -> str:
         d = get_kwargs(self)
-        return f"{self.__class__.__name__}(**{d})"
+
+        def add_type_delimiters(s: Any) -> Any:
+            if isinstance(s, str):
+                return f'"{s}"'
+            if isinstance(s, bytes):
+                return f"b'{s.decode()}'"
+            return s
+        d_s = ", ".join([f"{k}={add_type_delimiters(v)}" for k, v in d.items()])
+        return d_s if just_args else f"{self.__class__.__name__}({d_s})"
 
 
 class BaseMockRequest:

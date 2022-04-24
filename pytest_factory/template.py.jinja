@@ -16,8 +16,6 @@ from {{handler_path}} import {{handler_name}}
 
 pytestmark = pytest.mark.asyncio
 
-sut_inputs = {{recording.first.kwargs}}
-
 {% if not recording.raises %}
 with open('tests/actual_response') as file:
     actual_response_str = file.read()
@@ -29,9 +27,9 @@ class Test{{handler_name}}{{incident_name}}:
 
     """
     {% for request, response in recording.doc_exchanges: %}
-    @{{request.FACTORY_NAME}}(**{{request.kwargs}}, response={{response.write()}})
+    @{{request.FACTORY_NAME}}({{request.write(just_args=True)}}, response={{response.write()}})
     {% endfor %}
-    @{{recording.first.FACTORY_NAME}}(**sut_inputs, handler_class={{handler_name}})
+    @{{recording.first.FACTORY_NAME}}({{recording.first.write(just_args=True)}}, handler_class={{handler_name}})
     async def test_{{generated_test_id}}(self, store):
         {% if recording.raises %}
         with pytest.raises({{recording.last.__name__}}):
