@@ -1,10 +1,12 @@
 import json
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Dict, Callable
+from typing import Dict, Callable, Optional, Any
 from importlib import import_module
+
 from pytest_factory.logger import get_logger
 from pytest_factory.framework.exceptions import ConfigException
+from pytest_factory.framework.mall import MALL
 
 logger = get_logger(__name__)
 
@@ -58,18 +60,15 @@ def parse_type(section: str, _type: str, parse_func: Callable, conf: ConfigParse
 def prep_defaults(conf: ConfigParser) -> Dict:
     conf_dict = {}
     for _type, parse_func in CONFIG_MAP.items():
-        conf_dict.update(parse_type(section="default", _type=_type, parse_func=parse_func, conf=conf))
+        conf_dict.update(parse_type(section="tests", _type=_type, parse_func=parse_func, conf=conf))
 
     return conf_dict
 
 
-def prep_stores_update_local(
-        dir_name: str,
-        conf: ConfigParser,
-        defaults: dict = None,
-) -> Dict:
+def prep_stores_update_local(dir_name: str, config: Optional[ConfigParser] = None) -> Dict[str, Any]:
     """Prep config values"""
-    conf_dict = prep_defaults(conf=conf) if defaults is None else defaults
+    conf = config or get_config_parser()
+    conf_dict = prep_defaults(conf=conf)
 
     # In each config.ini block, there are keys: paths, tuples
     # these are to note what handling the values in the matching keys need
@@ -85,7 +84,7 @@ def prep_stores_update_local(
     try:
         keys = set(conf[dir_name].keys()).difference(set(conf_dict.keys()))
     except KeyError as ke:
-        msg = f"test suite is missing config.ini OR config.ini is missing section \"{ke}\"! proceeding with no configurations!"
+        msg = f"test suite is missing config.ini OR config.ini is missing section \"{ke}\"!"
         raise ConfigException(log_msg=msg)
 
     # If we try to remove a key that isn't in the set, it will error
@@ -96,4 +95,5 @@ def prep_stores_update_local(
     additions = {k: conf.get(dir_name, k) for k in keys}
     conf_dict.update(additions)
 
+    MALL.load(conf=conf_dict, key=dir_name)
     return conf_dict
