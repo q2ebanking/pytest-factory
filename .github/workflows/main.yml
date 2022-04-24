@@ -3,7 +3,7 @@
 
 name: pytest-factory
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build_and_test:

@@ -4,3 +4,4 @@ requests
 pytest-asyncio
 python-json-logger
 jinja2
+black
