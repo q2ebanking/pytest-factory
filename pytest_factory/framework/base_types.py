@@ -71,5 +71,3 @@ ROUTING_TYPE = Dict[
 
 BASE_RESPONSE_TYPE = Union[Exception, object, AnyStr]
 MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]
-
-Exchange = Tuple[Union[Hashable, BaseMockRequest], BASE_RESPONSE_TYPE]
