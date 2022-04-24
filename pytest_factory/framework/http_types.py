@@ -70,6 +70,10 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         self.connection = lambda: None
         setattr(self.connection, 'set_close_callback', lambda _: None)
 
+    def __str__(self):
+        d = {k: str(v) for k, v in self.kwargs.items()}
+        return f"{self.__class__}: {json.dumps(d)}"
+
     @staticmethod
     def _urlparse_to_dict(uri: str) -> dict:
         # TODO maybe support wildcarding names/values of query params as opposed to the whole query param string

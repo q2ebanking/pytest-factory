@@ -66,7 +66,7 @@ class Writer:
         """
         new_data_path = f"tests/actual_response"
         template_path = f"pytest_factory/template.py.jinja"
-        with open(output_path, "w") as test_file:
+        with open(output_path, "x") as test_file:
             with open(template_path) as template_file:
                 template = Template(template_file.read())
             request_factory_path, request_factory_name = self.recording.request_factory

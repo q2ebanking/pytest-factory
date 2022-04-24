@@ -1,24 +1,33 @@
+import os
 from json import JSONDecodeError
 
 from requests import Response
+
 from pytest_factory.writer import Exchange, List, Recording, Writer
 from pytest_factory.monkeypatch.tornado import TornadoRequest
 
-
+test_file_path = 'tests/test_unexpected_xml.py'
 class TestWriter:
     def test_unexpected_xml(self):
         """
         this test will create a test module
         """
+        try:
+            os.remove(test_file_path)
+        except Exception as _:
+            pass
         hp = 'tests.passthru_app.PassthruTestHandler'
         request = TornadoRequest(method='post', path='/', body='<xmlDoc>foo</xmlDoc>')
         setattr(request, 'factory_name', 'tornado_handler')
         setattr(request, 'factory_path', 'pytest_factory.monkeypatch.tornado')
         response = JSONDecodeError
         se: Exchange = (request, response)
-        r = Recording(incident_type=JSONDecodeError, sut_exchange=se)
-        w = Writer(recording=r, handler_path=hp)
-        w.write_test('tests/test_unexpected_xml.py')
+        r0 = Recording(incident_type=JSONDecodeError, sut_exchange=se)
+        serialized_recording = r0.serialize()
+        r1 = Recording.deserialize(b_a=serialized_recording)
+        assert serialized_recording == r1.serialize()
+        w = Writer(recording=r1, handler_path=hp)
+        w.write_test(test_file_path)
 
     # def test_500_doc(self):
     #     hp = 'tests.passthru_app.PassthruTestHandler'

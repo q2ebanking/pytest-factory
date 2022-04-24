@@ -11,8 +11,7 @@ from pytest_factory.http import MockHttpRequest
 from pytest_factory.monkeypatch.tornado import read_from_write_buffer
 
 
-# class TornadoRecorderRequestHandlerMixin:
-class TornadoRecorderRequestHandlerMixin(RequestHandler):
+class TornadoRecorderRequestHandler(RequestHandler):
     def __init__(self, application: Application, request: HTTPServerRequest, **kwargs) -> None:
         super().__init__(application=application, request=request, **kwargs)
         self._doc_exchanges: List[Exchange] = []

@@ -27,6 +27,8 @@ class TornadoRequest(MockHttpRequest):
     FACTORY_NAME = 'tornado_handler'
     FACTORY_PATH = 'pytest_factory.monkeypatch.tornado'
 
+    def __dict__(self):
+        return {'FACTORY_NAME'}
 
 def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
     """
