@@ -35,7 +35,11 @@ if __name__ == "__main__":
 
 touch conftest.py:
 ```python
-pytest_plugins = "pytest_factory.framework.pytest"
+from pytest_factory.framework.parse_configs import prep_stores_update_local
+
+prep_stores_update_local(dir_name=__name__)
+
+pytest_plugins = ["pytest_factory.framework.pytest"]
 ```
 
 touch config.ini:
