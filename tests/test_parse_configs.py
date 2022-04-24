@@ -17,7 +17,7 @@ def setup_config_test():
 def test_prep_local_config(setup_config_test):
     dir_name, config = setup_config_test
     conf_dict = prep_stores_update_local(
-        dir_name=dir_name, conf=config
+        dir_name=dir_name, config=config
     )
 
     assert conf_dict == {
@@ -33,12 +33,10 @@ def test_untyped_config(setup_config_test):
     dir_name, config = setup_config_test
 
     # Add to MALL for this test dir
-    conf_dict = prep_stores_update_local(dir_name=dir_name, conf=config)
-    MALL.load(conf=conf_dict, key=dir_name)
+    prep_stores_update_local(dir_name=dir_name, config=config)
     assert MALL.current_test == 'test_untyped_config'
     assert MALL._by_dir['config_test']['string_var'] == 'BAR'
 
     config = get_config_parser(path='**/test_config.ini')
-    conf_dict = prep_stores_update_local(dir_name='default', conf=config)
-    MALL.load(conf=conf_dict, key='tests')
+    conf_dict = prep_stores_update_local(dir_name='tests', config=config)
     assert MALL._by_dir['tests']['string_var'] == 'FOO'
