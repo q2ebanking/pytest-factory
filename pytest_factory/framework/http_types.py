@@ -58,9 +58,6 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         """
         self.kwargs = {**kwargs, 'method': method, 'path': path}
 
-        if path:
-            self.path = path
-
         if kwargs.get('headers'):
             kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
 
