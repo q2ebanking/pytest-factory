@@ -88,8 +88,9 @@ class Store:
             req_obj
         """
         if not hasattr(self, factory_name):
+            ex = exceptions.MissingFactoryException(factory_name=factory_name)
             if self.assert_no_missing_calls:
-                raise exceptions.MissingFactoryException(factory_name=factory_name)
+                raise ex
             else:
                 return None
         factory = getattr(self, factory_name)
