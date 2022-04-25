@@ -6,6 +6,7 @@ import path to this file must be in pytest_plugins in conftest.py
 """
 import os
 import pytest
+import json
 
 from pytest_factory.framework.mall import MALL
 
@@ -39,9 +40,12 @@ def patch_callables(monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
-def patch_env_vars(monkeypatch):
-    current_env_vars = {k: os.getenv(k) for k, v in MALL.env_vars.items()}
-    envs = [monkeypatch.setenv(k, v) for k, v in MALL.env_vars.items()]
+def patch_env_vars(monkeypatch, request):
+    test_dir = request.module.__name__.split('.')[-2]
+    MALL.get_store(test_name=request.node.name, test_dir=test_dir)
+    env_vars = MALL.env_vars or {}
+    current_env_vars = {k: os.getenv(k) for k, v in env_vars.items()}
+    envs = [monkeypatch.setenv(k, v) for k, v in env_vars.items()]
 
     yield envs
     for k, v in current_env_vars.items():

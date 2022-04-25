@@ -1,10 +1,15 @@
 import pytest
+import os
 
 from requests import Response
 
 from pytest_factory.monkeypatch.requests import _request_callable, _response_callable, TypeTestDoubleException
 
 url = 'http://www.aol.com'
+
+
+def test_env_var(store):
+    assert os.getenv('TEST') == '420'
 
 
 class TestRequestCallable:

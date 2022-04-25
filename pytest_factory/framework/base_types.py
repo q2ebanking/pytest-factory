@@ -13,6 +13,9 @@ class BaseMockRequest:
     object
     """
 
+    FACTORY_NAME = 'make_factory'
+    FACTORY_PATH = 'pytest_factory.framework.factory'
+
     def compare(self, other) -> bool:
         """
         we are effectively simulating the third-party endpoint's router here. note that "this" is the request object of
@@ -34,6 +37,10 @@ class Factory(dict):
             if key.compare(_key):
                 return
         super().__setitem__(key, value)
+
+    @property
+    def FACTORY_NAME(self):
+        return list(self.keys())[0]
 
 
 class BasePlugin:

@@ -5,7 +5,6 @@ import requests
 from tornado.web import Application, RequestHandler
 
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
-from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
 from pytest_factory.http import MockHttpRequest, make_factory
 from pytest_factory.logger import get_logger
@@ -18,6 +17,12 @@ class TornadoMonkeyPatchException(PytestFactoryBaseException):
         return log_msg
 
 
+def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable, **kwargs) -> RequestHandler:
+    if req_obj is None and handler_class:
+        return handler_class(**kwargs)
+    return handler_class(application=Application(), request=req_obj)
+
+
 def read_from_write_buffer(buffer) -> Optional[bytes]:
     result = buffer[len(buffer) - 1] if buffer else None
     return result
@@ -26,15 +31,8 @@ def read_from_write_buffer(buffer) -> Optional[bytes]:
 class TornadoRequest(MockHttpRequest):
     FACTORY_NAME = 'tornado_handler'
     FACTORY_PATH = 'pytest_factory.monkeypatch.tornado'
-
-
-def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
-    """
-    this is a tornado-specific adapter for converting a req_obj into an instance of the handler under test and should
-    be generic across all handlers within a test suite
-    """
-    handler = handler_class(Application(), req_obj)
-    return handler
+    HANDLER_NAME = 'RequestHandler'
+    HANDLER_PATH = 'tornado.web'
 
 
 def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
@@ -101,6 +99,7 @@ class TornadoMonkeyPatches(RequestHandler):
                 return response_obj
 
 
-patch_members = {'run_test': TornadoMonkeyPatches.run_test, '_transforms': []}
-MALL.get_handler_instance = get_handler_instance
-update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members)
+patch_members = {'run_test': TornadoMonkeyPatches.run_test,
+                 '_transforms': []}
+update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members,
+                            _get_handler_instance=_get_handler_instance)
