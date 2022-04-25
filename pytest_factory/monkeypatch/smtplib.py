@@ -1,4 +1,4 @@
-from typing import Sequence, Callable, Optional
+from typing import Sequence, Callable, Optional, Union
 from smtplib import SMTP, SMTPException
 
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
@@ -24,7 +24,7 @@ class SMTPMonkeyPatches(SMTP):
 
     def sendmail(self,
                  from_addr: str,
-                 to_addrs: str | Sequence[str],
+                 to_addrs: Union[str, Sequence[str]],
                  msg: bytes | str,
                  mail_options: Sequence[str] = ...,
                  rcpt_options: Sequence[str] = ...,
