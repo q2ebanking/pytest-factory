@@ -26,7 +26,7 @@ class SmtpTestHandler(RequestHandler):
 
 def make_app():
     return Application([
-        (r"/", PassthruTestHandler),
+        (r"/", SmtpTestHandler),
     ])
 
 
