@@ -5,6 +5,7 @@ by monkeypatching the system-under-test (SUT) (as little as possible), its envir
 variables, and the packages it uses to connect with its depended-on-components (DOC).
 DOC packages supported:
 * requests
+* smtplib
 
 SUT packages supported:
 * tornado
@@ -71,12 +72,12 @@ pytestmark = pytest.mark.asyncio
 @tornado_handler(handler_class=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'blah blah'
 
     @mock_http_server(method='get', path='https://www.world.com/hello', response='Hello, world!')
     async def test_b(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'Hello, world!'
 
 ```
@@ -117,7 +118,7 @@ listed in order of increasing complexity:
 ### proper capitalization
 the original developer of this project is lazy about capitalization. please help!
 
-### support for smtplib/ftplib
+### support for ftplib
 
 ### support for aiohttp
 see pytest_factory.monkeypatch.requests for an example of what is needed.

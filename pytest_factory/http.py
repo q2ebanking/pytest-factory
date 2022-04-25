@@ -1,7 +1,7 @@
 from typing import Optional, Callable
 
 from pytest_factory.framework.factory import make_factory
-from pytest_factory.framework.http_types import HTTP_METHODS, MockHttpRequest, MOCK_HTTP_RESPONSE
+from pytest_factory.framework.http_types import HTTP_METHODS, MockHttpRequest, MOCK_HTTP_RESPONSE, MockHttpResponse
 from pytest_factory.framework.exceptions import RequestNormalizationException
 
 
@@ -37,4 +37,6 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
         raise RequestNormalizationException(req_obj_cls=MockHttpRequest, method=method, path=path, ex=ex, **kwargs)
     if isinstance(response, str):
         response = response.encode()
+    if isinstance(response, bytes):
+        response = MockHttpResponse(content=response)
     return make_factory(req_obj=expected_request, response=response)

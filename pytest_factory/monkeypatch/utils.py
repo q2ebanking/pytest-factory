@@ -9,6 +9,8 @@ def get_generic_caller(method_name: str, request_callable: Callable,
     this method will redefine the method with method_name in the module being
     monkeypatched while including in the new method the name of test function
     so it can look up mock responses
+    if the method being monkeypatched is for sending requests to a DOC, then it must extend store.messages
+    with the request and response
 
     :param method_name: the name of the method in the module being
         monkeypatched for this test
@@ -35,6 +37,7 @@ def get_generic_caller(method_name: str, request_callable: Callable,
 
         if response_callable:
             mock_response = response_callable(mock_response=mock_response, *args, **kwargs)
+        store.messages.extend([req_obj, mock_response])
         return mock_response
 
     if is_async:
@@ -57,8 +60,15 @@ def update_monkey_patch_configs(callable_obj: Any,
         and the values are the replacement member
     :return:
     """
-    MALL.monkey_patch_configs[callable_obj.__name__] = {
-        'callable': callable_obj,
-        'patch_methods': patch_members,
-        '_get_handler_instance': _get_handler_instance
-    }
+    key = callable_obj.__name__
+    patch_configs = MALL.monkey_patch_configs.get(key)
+    if patch_configs:
+        MALL.monkey_patch_configs[key].get('patch_methods').update(patch_members)
+        if _get_handler_instance:
+            MALL.monkey_patch_configs[key]['_get_handler_instance'] = _get_handler_instance
+    else:
+        MALL.monkey_patch_configs[callable_obj.__name__] = {
+            'callable': callable_obj,
+            'patch_methods': patch_members,
+            '_get_handler_instance': _get_handler_instance
+        }

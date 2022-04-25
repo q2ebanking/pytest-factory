@@ -74,7 +74,7 @@ class TornadoMonkeyPatches(RequestHandler):
         :return:
         """
         store = self._pytest_store
-        with store.open(assert_no_extra_calls=assert_no_extra_calls,
+        with store.shop(assert_no_extra_calls=assert_no_extra_calls,
                         assert_no_missing_calls=assert_no_missing_calls,
                         request_attr='request',
                         response_attr='_response') as _:
@@ -97,6 +97,8 @@ class TornadoMonkeyPatches(RequestHandler):
                     response_obj = response_parser(response_obj)
                 self._response = response_obj
                 return response_obj
+            else:
+                self._response = None
 
 
 patch_members = {'run_test': TornadoMonkeyPatches.run_test,

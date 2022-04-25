@@ -19,7 +19,7 @@ class Foo:
 
 @make_factory(req_obj='42', handler_class=Foo)
 def test_abtract(store):
-    resp = store.handler.bar()
+    resp = store.sut.bar()
     assert resp == 42
 
 
@@ -35,5 +35,5 @@ def _teardown(store: Store, resp: str):
 
 @make_factory(req_obj='42', handler_class=Foo, setup=_setup, teardown=_teardown)
 def test_setup(store):
-    resp = store.handler.bar()
+    resp = store.sut.bar()
     assert resp == 42

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict, Union, List, Tuple, AnyStr
+from typing import Any, Dict, Union, List, Tuple, AnyStr, Optional, TypeVar
 
 
 class BaseMockRequest:
@@ -27,6 +27,16 @@ class BaseMockRequest:
         raise NotImplementedError
 
 
+def compare_unknown_types(a, b) -> bool:
+    if hasattr(a, 'compare'):
+        compare_result = a.compare(b)
+    elif hasattr(b, 'compare'):
+        compare_result = b.compare(a)
+    else:
+        compare_result = a == b
+    return compare_result
+
+
 class Factory(dict):
     def __init__(self, req_obj: Union[str, BaseMockRequest], responses: Any):
         super().__init__()
@@ -34,7 +44,7 @@ class Factory(dict):
 
     def __setitem__(self, key, value):
         for _key in self.keys():
-            if key.compare(_key):
+            if compare_unknown_types(key, _key):
                 return
         super().__setitem__(key, value)
 
@@ -74,6 +84,8 @@ ROUTING_TYPE = Dict[
         BaseMockRequest],
     Any
 ]
+T = TypeVar("T")
 
+MAGIC_TYPE = Optional[Union[List[T], T]]
 BASE_RESPONSE_TYPE = Union[Exception, object, AnyStr]
 MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]
