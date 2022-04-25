@@ -34,10 +34,6 @@ class TornadoRequest(MockHttpRequest):
     HANDLER_NAME = 'RequestHandler'
     HANDLER_PATH = 'tornado.web'
 
-    def __init__(self, method: str = 'GET', path: Optional[str] = None, **kwargs):
-        super().__init__(method=method, path=path, **kwargs)
-        self.uri = path
-
 
 def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
                     handler_class: Optional[Callable] = None, **kwargs) -> Callable:
