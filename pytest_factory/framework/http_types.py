@@ -25,6 +25,15 @@ MOCK_HTTP_RESPONSE = Optional[
                 Response]]]]
 
 
+class MockHttpResponse(Response):
+    def __init__(self, content: Optional[bytes] = b'', status_code: Optional[int] = 200):
+        self._content = content
+        self.status_code = status_code
+
+    def __repr__(self):
+        return self.content.decode()
+
+
 # based on what the requests module supports
 class HTTP_METHODS(Enum):
     GET = 'get'
