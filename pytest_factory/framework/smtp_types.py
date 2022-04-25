@@ -1,8 +1,8 @@
-from typing import Sequence, Tuple, Dict
+from typing import Sequence, Tuple, Dict, Union
 
 from pytest_factory.framework.base_types import BaseMockRequest
 
-MOCK_SMTP_RESPONSE = Dict[str, Tuple[int, str]]
+MOCK_SMTP_RESPONSE = Union[Exception, Dict[str, Tuple[int, str]]]
 
 
 class SMTPRequest(BaseMockRequest):

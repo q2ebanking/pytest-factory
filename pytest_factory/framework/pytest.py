@@ -6,6 +6,7 @@ import path to this file must be in pytest_plugins in conftest.py
 """
 import os
 import pytest
+import json
 
 from pytest_factory.framework.mall import MALL
 
@@ -29,6 +30,8 @@ def patch_callables(monkeypatch, request):
     running and need to set the "current_test" MALL property
     """
     test_name = request.node.name
+    path_parts = request.node.cls.__module__.split('.') if request.node.cls is not None else ['tests']
+    MALL.current_test_dir = path_parts[1] if len(path_parts) > 2 else path_parts[0]
     MALL.current_test = test_name
     for _, configs in MALL.monkey_patch_configs.items():
         callable_obj = configs.get('callable')
@@ -37,9 +40,12 @@ def patch_callables(monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
-def patch_env_vars(monkeypatch):
-    current_env_vars = {k: os.getenv(k) for k, v in MALL.env_vars.items()}
-    envs = [monkeypatch.setenv(k, v) for k, v in MALL.env_vars.items()]
+def patch_env_vars(monkeypatch, request):
+    test_dir = request.module.__name__.split('.')[-2]
+    MALL.get_store(test_name=request.node.name, test_dir=test_dir)
+    env_vars = MALL.env_vars or {}
+    current_env_vars = {k: os.getenv(k) for k, v in env_vars.items()}
+    envs = [monkeypatch.setenv(k, v) for k, v in env_vars.items()]
 
     yield envs
     for k, v in current_env_vars.items():

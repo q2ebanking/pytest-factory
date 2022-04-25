@@ -9,7 +9,7 @@ from typing import Union
 from tornado.httputil import HTTPHeaders
 
 from pytest_factory.http import MockHttpRequest, HTTP_METHODS
-from pytest_factory.framework.exceptions import TestDoubleTypeException
+from pytest_factory.framework.exceptions import TypeTestDoubleException
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, get_generic_caller
 
 
@@ -51,12 +51,16 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
 
     elif kwargs.get('json'):
         mock_http_request_kwargs['body'] = json.dumps(kwargs.get('json')).encode()
+        if mock_http_request_kwargs.get('headers'):
+            mock_http_request_kwargs['headers']['Content-Type'] = 'application/json'
+        else:
+            mock_http_request_kwargs['headers'] = HTTPHeaders({'Content-Type': 'application/json'})
 
     req_obj = MockHttpRequest(**mock_http_request_kwargs)
     return req_obj
 
 
-MOCK_RESP_TYPE = Union[None, requests.Response, str, dict, Exception]
+MOCK_RESP_TYPE = Union[None, requests.Response, bytes, str, dict, Exception]
 
 
 def _response_callable(mock_response: MOCK_RESP_TYPE,
@@ -67,14 +71,16 @@ def _response_callable(mock_response: MOCK_RESP_TYPE,
     response = requests.Response()
     if mock_response is None:
         response.status_code = 404
-    elif isinstance(mock_response, str):  # string body 200
+    elif isinstance(mock_response, bytes):  # bytes body 200
         response._content = mock_response
+    elif isinstance(mock_response, str):
+        response._content = mock_response.encode()
     elif isinstance(mock_response, dict):  # json body 200
-        response._content = json.dumps(mock_response)
+        response._content = json.dumps(mock_response).encode()
     elif isinstance(mock_response, requests.Response):
         response = mock_response
     else:
-        raise TestDoubleTypeException(request_module_name='requests', response=mock_response)
+        raise TypeTestDoubleException(request_module_name='requests', response=mock_response)
 
     # TODO need to replicate redirect behavior unless allow_redirects==False.
     #  how though? could return an array instead and then it's up to
@@ -91,4 +97,4 @@ for method in HTTP_METHODS:
 
     new_methods[method.value] = new_method
 
-    update_monkey_patch_configs(callable_obj=requests, patch_members=new_methods)
+update_monkey_patch_configs(callable_obj=requests, patch_members=new_methods)

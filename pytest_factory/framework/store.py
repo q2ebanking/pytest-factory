@@ -30,7 +30,7 @@ class Store:
     stores test doubles for a given test method
     """
 
-    def __init__(self, _test_name: str, **kwargs):
+    def __init__(self, _test_name: str):
         self._test_name = _test_name
         self.request_handler_class: Optional[Callable] = None
         self._request_factory: Optional[Factory] = None
@@ -38,9 +38,6 @@ class Store:
         self.assert_no_missing_calls: bool = default_assert_no_missing_calls
         self.factory_names: Set[str] = set()
         self.messages = []
-        for k, v in kwargs.items():
-            if v is not None:
-                setattr(self, k, v)
 
     @property
     def handler(self) -> object:
@@ -49,15 +46,11 @@ class Store:
         return list(self._request_factory.values())[0]
 
     def open(self, **kwargs) -> Shopper:
-        return Shopper(self, **kwargs)
-
-    def checkout(self, response: Any) -> Any:
-        self.messages.append(response)
-        return self.messages[-1]
+        return Shopper(store=self, **kwargs)
 
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
         """
-        always use this method to modify store AFTER configuration stage ends
+        always use this method to modify store AFTER configuration stage ends and BEFORE test running stage
         note that this will get invoked depth-first
         :param req_obj:
         :param factory_name:
@@ -119,8 +112,9 @@ class Store:
             raise exceptions.MissingTestDoubleException(req_obj=req_obj)
         final_response, mock_responses = self._mark_and_retrieve_test_double(req_obj=req_obj,
                                                                              mock_responses=mock_responses)
+        self.messages.extend([req_obj, final_response])
 
-        if mock_responses and not final_response:
+        if mock_responses and final_response is None:
             final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
         return final_response
 
@@ -161,15 +155,10 @@ class Store:
 
     @cached_property
     def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
-        test_doubles = {factory_name: getattr(self, factory_name) for factory_name in self.factory_names}
+        test_doubles = {factory_name: getattr(self, factory_name)
+                        for factory_name in self.factory_names
+                        if factory_name is not list(self._request_factory.keys())[0]}
         return test_doubles
-
-    def load_defaults(self, default_routes: Dict[str, ROUTING_TYPE]):
-        for key, route in default_routes.items():
-            if hasattr(self, key):
-                getattr(self, key).update(route)
-            else:
-                setattr(self, key, route)
 
     def check_no_uncalled_test_doubles(self):
         """
@@ -197,16 +186,21 @@ class Store:
 
 
 class Shopper:
-    def __init__(self, store: Store, *_, **kwargs):
+    def __init__(self, response_attr: str, request_attr: str, store: Store, *_, **kwargs):
         self.store = store
+        self.response_attr = response_attr
+        self.request_attr = request_attr
         for k, v in kwargs.items():
             setattr(self.store, k, v)
 
     def __enter__(self):
-        self.store.messages.append(self.store.handler.request)  # TODO this is tornado-specific
+        sut_input = getattr(self.store.handler, self.request_attr)
+        self.store.messages.append(sut_input)
         return self.store
 
-    def __exit__(self, *args, **kwargs):
-        if len(self.store.messages) % 2 != 0 or isinstance(self.store.messages[-1], list):
-            raise exceptions.RecorderException()
+    def __exit__(self, exc_type, exc_val, traceback):
+        response = exc_val if exc_val else getattr(self.store.handler, self.response_attr)
+        self.store.messages.append(response)
+        if len(self.store.messages) % 2 != 0:
+            raise exceptions.RecorderException(log_msg='failed to record even number of messages!')
         self.store.check_no_uncalled_test_doubles()
