@@ -4,7 +4,7 @@ import pytest
 
 from requests import Timeout, Response
 
-from pytest_factory.http import mock_http_server
+from pytest_factory.http import mock_http_server, MockHttpResponse
 from pytest_factory.framework.exceptions import UnCalledTestDoubleException
 from pytest_factory.monkeypatch.tornado import tornado_handler
 from pytest_factory import logger
@@ -28,14 +28,6 @@ def get_logs(caplog, levelname: str = 'WARNING') -> List[str]:
     return actual
 
 
-def get_response(status_code: int, body: Optional[AnyStr] = None) -> Response:
-    r = Response()
-    r.status_code = status_code
-    if body:
-        r._content = body if isinstance(body, bytes) else body.encode()
-    return r
-
-
 @tornado_handler(path='endpoint0')
 @mock_http_server(path='http://www.test.com/endpoint0', response='TestHttp')
 class TestHttp:
@@ -47,7 +39,7 @@ class TestHttp:
         assert store.messages[3] == resp
         assert store.messages[2].content == resp.content
 
-    @mock_http_server(path='http://www.test.com/endpoint0', response=get_response(status_code=500))
+    @mock_http_server(path='http://www.test.com/endpoint0', response=MockHttpResponse(status_code=500))
     async def test_http_500(self, store):
         resp = await store.sut.run_test()
         assert resp.status_code == 500
@@ -74,8 +66,10 @@ class TestHttp:
             resp = await store.sut.run_test()
             assert resp.content.decode() == ''
             actual = get_logs(caplog)
-            assert actual == [
-                "the following test doubles were NOT used in this test: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): [b'TestHttp']}} if this is not expected, set assert_no_missing_calls to True"]
+            assert actual == ["the following test doubles were NOT used in this test: {'mock_http_server': "
+                              "{MockHttpRequest(protocol='http', host='127.0.0.1', method='get', "
+                              "uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): "
+                              '[TestHttp]}} if this is not expected, set assert_no_missing_calls to True']
 
         @tornado_handler(path='endpoint0?num=2')
         async def test_http_extra_call_warning(self, store, caplog):
@@ -87,7 +81,7 @@ class TestHttp:
             assert actual == [
                 "expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1',"
                 " method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', "
-                "remote_ip=None)! will repeat last response: b'TestHttp'"]
+                "remote_ip=None)! will repeat last response: \"TestHttp\""]
 
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
             """
