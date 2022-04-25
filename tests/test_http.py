@@ -5,7 +5,7 @@ import pytest
 from requests import Timeout, Response
 
 from pytest_factory.http import mock_http_server
-from pytest_factory.framework.exceptions import MissingTestDoubleException
+from pytest_factory.framework.exceptions import UnCalledTestDoubleException
 from pytest_factory.monkeypatch.tornado import tornado_handler
 from pytest_factory import logger
 
@@ -45,7 +45,7 @@ class TestHttp:
         assert resp.content.decode() == 'test_http_func_override'
         assert len(store.messages) == 4
         assert store.messages[3] == resp
-        assert store.messages[2] == resp.content
+        assert store.messages[2].content == resp.content
 
     @mock_http_server(path='http://www.test.com/endpoint0', response=get_response(status_code=500))
     async def test_http_500(self, store):
@@ -123,9 +123,8 @@ class TestQueryParams:
 
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar', response='exact match!')
     async def test_http_query_params_routing_fail(self, store):
-        with pytest.raises(expected_exception=MissingTestDoubleException,
-                           match=r'.*http://www.test.com/endpoint0\?wild=card.*'):
-            await store.handler.run_test()
+        with pytest.raises(expected_exception=UnCalledTestDoubleException):
+            await store.handler.run_test(assert_no_missing_calls=True)
 
     @tornado_handler(path="endpoint0?wild=card&foo=bar")
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar&wild=card', response='exact match!')

@@ -5,6 +5,7 @@ by monkeypatching the system-under-test (SUT) (as little as possible), its envir
 variables, and the packages it uses to connect with its depended-on-components (DOC).
 DOC packages supported:
 * requests
+* smtplib
 
 SUT packages supported:
 * tornado
@@ -117,7 +118,7 @@ listed in order of increasing complexity:
 ### proper capitalization
 the original developer of this project is lazy about capitalization. please help!
 
-### support for smtplib/ftplib
+### support for ftplib
 
 ### support for aiohttp
 see pytest_factory.monkeypatch.requests for an example of what is needed.

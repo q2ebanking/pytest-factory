@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict, Union, List, Tuple, AnyStr
+from typing import Any, Dict, Union, List, Tuple, AnyStr, Optional, TypeVar
 
 
 class BaseMockRequest:
@@ -74,6 +74,8 @@ ROUTING_TYPE = Dict[
         BaseMockRequest],
     Any
 ]
+T = TypeVar("T")
 
+MAGIC_TYPE = Optional[Union[List[T], T]]
 BASE_RESPONSE_TYPE = Union[Exception, object, AnyStr]
 MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]
