@@ -72,12 +72,12 @@ pytestmark = pytest.mark.asyncio
 @tornado_handler(handler_class=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'blah blah'
 
     @mock_http_server(method='get', path='https://www.world.com/hello', response='Hello, world!')
     async def test_b(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'Hello, world!'
 
 ```
