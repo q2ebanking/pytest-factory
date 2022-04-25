@@ -1,6 +1,7 @@
 import functools
 import inspect
 import sys
+from asyncio import iscoroutine, iscoroutinefunction
 from typing import Callable, Optional, Union
 
 from pytest_factory.framework.base_types import BaseMockRequest, Factory, BASE_RESPONSE_TYPE
@@ -9,6 +10,8 @@ from pytest_factory.framework.mall import MALL
 
 
 def make_factory(req_obj: Union[BaseMockRequest, str],
+                 setup: Optional[Callable] = None,
+                 teardown: Optional[Callable] = None,
                  response: Optional[BASE_RESPONSE_TYPE] = None,
                  handler_class: Optional[Callable] = None,
                  factory_name: Optional[str] = None) -> Callable:
@@ -26,6 +29,8 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     :param factory_name: name of the factory that create test doubles for the
         returned Callable (TestClass or test_method_or_function; defaults to name of function that called this
         function
+    :param setup: a function that does work before the test is run
+    :param teardown: a function that does work after the test is complete
     :return: the test class or test function that is being decorated
     """
 
@@ -40,34 +45,36 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     def register_test_func(pytest_func: Callable) -> Callable:
         test_name = pytest_func.__name__
         store = MALL.get_store(test_name=test_name)
-        if response is None:
-            final_handler_class = handler_class or store.request_handler_class or MALL.request_handler_class
-
-            if not final_handler_class:
-                raise MissingHandlerException
-            handler = MALL.get_handler_instance(handler_class=final_handler_class, req_obj=req_obj)
-            store._request_factory = Factory(req_obj=factory_name, responses=handler)
-            handler._pytest_store = store
-        store.update(factory_name=factory_name,
-                     req_obj=req_obj, response=response)
 
         @functools.wraps(pytest_func)
-        async def wrapped_pytest_func(*args, **qwargs):
-            """
-            we need to override test function because the handler arg can be overridden
-            :param args:
-            :param qwargs: odd name to avoid shadowing kwargs
-            :return:
-            """
-            if response is None:
-                if store.handler != handler:
-                    store._request_factory = Factory(req_obj=factory_name, responses=handler)
-                    handler._pytest_store = store
-            # resp = store.setup(*args, **qwargs)
-            await pytest_func(*args, **qwargs)
-            # store.teardown(resp)
+        async def pytest_func_wrapper(*args, **kwargs):
+            resp = setup(store) if setup else None
+            if iscoroutine(pytest_func) or iscoroutinefunction(pytest_func):
+                await pytest_func(*args, **kwargs)
+            else:
+                pytest_func(*args, **kwargs)
+            if teardown:
+                teardown(resp=resp, store=store)
 
-        return wrapped_pytest_func
+        if hasattr(store, factory_name) and store._request_factory \
+                and store._request_factory.FACTORY_NAME == factory_name:
+            return pytest_func_wrapper
+        store.update(factory_name=factory_name,
+                     req_obj=req_obj, response=response)
+        if response is None:
+            final_handler_class = handler_class or store.request_handler_class or MALL.request_handler_class
+            if not final_handler_class:
+                raise MissingHandlerException
+            if hasattr(req_obj, 'HANDLER_NAME'):
+                key = req_obj.HANDLER_NAME
+                init_request = MALL.monkey_patch_configs.get(key, {}).get('_get_handler_instance')
+                handler = init_request(handler_class=final_handler_class, req_obj=req_obj)
+            else:
+                handler = final_handler_class(req_obj)
+            store._request_factory = Factory(req_obj=factory_name, responses=handler)
+            handler._pytest_store = store
+
+        return pytest_func_wrapper
 
     def callable_wrapper(callable_obj: Callable) -> Callable:
         return apply_func_recursive(target=callable_obj,

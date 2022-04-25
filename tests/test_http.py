@@ -100,7 +100,6 @@ class TestHttp:
         @tornado_handler(method='post', path='endpoint0', body='<xmlDoc>foo</xmlDoc>',
                          headers={'Content-Type': 'text/xml'})
         async def test_http_call_xml(self, store):
-            logger.error('HEY:' + store.handler.request.body)
             with pytest.raises(JSONDecodeError):
                 await store.handler.run_test()
 
