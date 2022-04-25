@@ -8,7 +8,7 @@ MOCK_SMTP_RESPONSE = Union[Exception, Dict[str, Tuple[int, str]]]
 class SMTPRequest(BaseMockRequest):
     def __init__(self,
                  from_addr: str,
-                 to_addrs: str | Sequence[str], *args,
+                 to_addrs: Union[str, Sequence[str]], *args,
                  host: Optional[str],
                  **kwargs):
         self.host = host
