@@ -3,7 +3,8 @@ from typing import Dict, Optional, Any, Union, List, Callable, Set, Tuple
 from functools import cached_property
 
 import pytest_factory.framework.exceptions as exceptions
-from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE
+from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE, \
+    compare_unknown_types
 from pytest_factory import logger
 from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
                                                       assert_no_extra_calls as default_assert_no_extra_calls)
@@ -13,16 +14,6 @@ logger = logger.get_logger(__name__)
 
 def is_plugin(kallable: Callable) -> bool:
     return hasattr(kallable, 'get_plugin_responses')
-
-
-def compare_unknown_types(a, b) -> bool:
-    if hasattr(a, 'compare'):
-        compare_result = a.compare(b)
-    elif hasattr(b, 'compare'):
-        compare_result = b.compare(a)
-    else:
-        compare_result = a == b
-    return compare_result
 
 
 class Store:

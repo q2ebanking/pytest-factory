@@ -27,6 +27,16 @@ class BaseMockRequest:
         raise NotImplementedError
 
 
+def compare_unknown_types(a, b) -> bool:
+    if hasattr(a, 'compare'):
+        compare_result = a.compare(b)
+    elif hasattr(b, 'compare'):
+        compare_result = b.compare(a)
+    else:
+        compare_result = a == b
+    return compare_result
+
+
 class Factory(dict):
     def __init__(self, req_obj: Union[str, BaseMockRequest], responses: Any):
         super().__init__()
@@ -34,7 +44,7 @@ class Factory(dict):
 
     def __setitem__(self, key, value):
         for _key in self.keys():
-            if key.compare(_key):
+            if compare_unknown_types(key, _key):
                 return
         super().__setitem__(key, value)
 
