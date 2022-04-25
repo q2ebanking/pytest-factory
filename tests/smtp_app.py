@@ -5,8 +5,8 @@ from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application
 
 test_url_map = {
-    'endpoint0': 'http://www.test.com',
-    'plugin0': 'http://somedomain.com'
+    'endpoint0': 'smtp.test.com:25',
+    'endpoint1': 'smtp.somedomain.com'
 }
 
 
@@ -16,7 +16,8 @@ class SmtpTestHandler(RequestHandler):
         to_addrs = body_dict.get('to_addrs')
         from_addr = body_dict.get('from_addr')
         msg = body_dict.get('msg')
-        smtp_client = SMTP()
+        host = test_url_map.get(self.request.path)
+        smtp_client = SMTP(host=host)
         try:
             response = smtp_client.sendmail(from_addr=from_addr, to_addrs=to_addrs, msg=msg)
         except SMTPException as se:

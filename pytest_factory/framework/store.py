@@ -109,10 +109,12 @@ class Store:
                 break
 
         if mock_responses is None:
-            raise exceptions.MissingTestDoubleException(req_obj=req_obj)
+            ex = exceptions.MissingTestDoubleException(req_obj=req_obj)
+            if self.assert_no_missing_calls:
+                raise ex
+            return mock_responses
         final_response, mock_responses = self._mark_and_retrieve_test_double(req_obj=req_obj,
                                                                              mock_responses=mock_responses)
-        self.messages.extend([req_obj, final_response])
 
         if mock_responses and final_response is None:
             final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
