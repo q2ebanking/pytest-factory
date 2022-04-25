@@ -104,15 +104,3 @@ MALL = Mall()
 
 if MALL.env_vars != {}:
     raise Exception
-
-
-def main():
-    m = Mall()
-    m.current_test_dir = 'foo'
-    m._by_dir['foo'] = {'bar': 'pow!'}
-    assert m.bar == 'pow!'
-    print('success!')
-
-
-if __name__ == '__main__':
-    main()
