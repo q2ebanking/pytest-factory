@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict, Union, List, Tuple
+from typing import Any, Dict, Union, List, Tuple, AnyStr
 
 
 class BaseMockRequest:
@@ -12,6 +12,9 @@ class BaseMockRequest:
     these are stored in store fixture, indexed by: test name, factory name(s), then BaseMockRequest
     object
     """
+
+    FACTORY_NAME = 'make_factory'
+    FACTORY_PATH = 'pytest_factory.framework.factory'
 
     def compare(self, other) -> bool:
         """
@@ -34,6 +37,10 @@ class Factory(dict):
             if key.compare(_key):
                 return
         super().__setitem__(key, value)
+
+    @property
+    def FACTORY_NAME(self):
+        return list(self.keys())[0]
 
 
 class BasePlugin:
@@ -68,4 +75,5 @@ ROUTING_TYPE = Dict[
     Any
 ]
 
-MOCK_RESPONSES_TYPE = List[Tuple[bool, Any]]
+BASE_RESPONSE_TYPE = Union[Exception, object, AnyStr]
+MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]

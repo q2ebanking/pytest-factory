@@ -58,6 +58,9 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         """
         self.kwargs = {**kwargs, 'method': method, 'path': path}
 
+        if path:
+            self.path = path
+
         if kwargs.get('headers'):
             kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
 
@@ -100,8 +103,8 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         return True
 
     @property
-    def content(self) -> str:
-        return self.body.decode()
+    def content(self) -> bytes:
+        return self.body
 
     def __hash__(self) -> int:
         """

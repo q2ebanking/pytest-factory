@@ -26,7 +26,7 @@ class PytestFactoryBaseException(Exception):
             logger.warning(msg=self.log_msg)
 
     def get_warning_msg(self, *args, **kwargs) -> str:
-        raise NotImplementedError
+        return self.get_error_msg()
 
     def get_error_msg(self, *args, **kwargs) -> str:
         raise NotImplementedError
@@ -40,13 +40,18 @@ class ConfigException(PytestFactoryBaseException):
         return log_msg
 
 
+class RecorderException(PytestFactoryBaseException):
+    def get_error_msg(self, log_msg) -> str:
+        return log_msg
+
+
 class MissingHandlerException(PytestFactoryBaseException):
     def get_error_msg(self) -> str:
         log_msg = 'this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'
         return log_msg
 
 
-class TestDoubleTypeException(PytestFactoryBaseException):
+class TypeTestDoubleException(PytestFactoryBaseException):
     def get_error_msg(self, response: Any, request_module_name: str) -> str:
         log_msg = f'cannot convert test double {str(response)} of type {type(response)} into type expected by module {request_module_name}'
         return log_msg

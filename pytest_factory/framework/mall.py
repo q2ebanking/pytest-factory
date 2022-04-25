@@ -21,7 +21,6 @@ class Mall:
         self.current_test: Optional[str] = None
         self.current_test_dir: Optional[str] = None
         self.monkey_patch_configs: Dict[str, Dict[str, Callable]] = {}
-        self.get_handler_instance: Optional[Callable] = None
 
     def __getattr__(self, name):
         if name not in vars(self).keys():
@@ -80,15 +79,18 @@ class Mall:
                 return_dict[v.PLUGIN_URL] = v
         return return_dict
 
-    def get_store(self, test_name: Optional[str] = None) -> Store:
+    def get_store(self, test_name: Optional[str] = None, test_dir: Optional[str] = None) -> Store:
         """
         :param test_name: name of the pytest test function associated with the
             requested store
+        :param test_dir: name of the pytest test directory we are currently in
         :return: the Store associated with the given test_name; a new Store if
             a Store has not already been created for this test
         """
         if test_name:
             self.current_test = test_name
+        if test_dir:
+            self.current_test_dir = test_dir
 
         store = self._by_test.get(self.current_test)
         if not store:
