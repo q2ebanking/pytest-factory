@@ -47,7 +47,7 @@ class RecorderException(PytestFactoryBaseException):
 
 class MissingHandlerException(PytestFactoryBaseException):
     def get_error_msg(self) -> str:
-        log_msg = 'this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'
+        log_msg = 'this test case is missing a request handler factory! no RequestHandler defined to test!'
         return log_msg
 
 

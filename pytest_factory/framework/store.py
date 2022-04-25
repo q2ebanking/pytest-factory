@@ -38,15 +38,25 @@ class Store:
         self.assert_no_missing_calls: bool = default_assert_no_missing_calls
         self.factory_names: Set[str] = set()
         self.messages = []
+        self._opened: bool = False
 
     @property
-    def handler(self) -> object:
-        if not self._request_factory:
+    def sut(self) -> object:
+        if not self._request_factory and self._opened:
             raise exceptions.MissingHandlerException
-        return list(self._request_factory.values())[0]
+        try:
+            return list(self._request_factory.values())[0]
+        except AttributeError as _:
+            return None
 
-    def open(self, **kwargs) -> Shopper:
+    def shop(self, **kwargs) -> Shopper:
         return Shopper(store=self, **kwargs)
+
+    def open(self):
+        self._opened = True
+
+    def close(self):
+        self._opened = False
 
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
         """
@@ -59,7 +69,7 @@ class Store:
         responses = [response] if not isinstance(response, list) else response
         responses = [(False, _response) for _response in responses]
         self.factory_names.add(factory_name)
-        if not hasattr(self, factory_name):  # store does not already have a test double from factory
+        if not hasattr(self, factory_name) or getattr(self, factory_name) is None:
             new_factory = Factory(req_obj=req_obj, responses=responses)
             setattr(self, factory_name, new_factory)
         else:  # store already has test doubles from this factory
@@ -197,12 +207,12 @@ class Shopper:
             setattr(self.store, k, v)
 
     def __enter__(self):
-        sut_input = getattr(self.store.handler, self.request_attr)
+        sut_input = getattr(self.store.sut, self.request_attr)
         self.store.messages.append(sut_input)
         return self.store
 
     def __exit__(self, exc_type, exc_val, traceback):
-        response = exc_val if exc_val else getattr(self.store.handler, self.response_attr)
+        response = exc_val if exc_val else getattr(self.store.sut, self.response_attr)
         self.store.messages.append(response)
         if len(self.store.messages) % 2 != 0:
             raise exceptions.RecorderException(log_msg='failed to record even number of messages!')

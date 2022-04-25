@@ -78,9 +78,9 @@ def parse_section(conf: ConfigParser, section: str = 'tests') -> Dict:
     return conf_dict
 
 
-def prep_stores_update_local(dir_name: str, config: Optional[ConfigParser] = None) -> Dict[str, Any]:
+def prep_stores_update_local(dir_name: Optional[str] = 'tests', path: Optional[str] = '../**/config.ini') -> Dict[str, Any]:
     """Prep config values"""
-    conf = config or get_config_parser()
+    conf = get_config_parser(path=path)
     conf_dict = parse_section(conf=conf)
 
     sub_dict = parse_section(conf=conf, section=dir_name)

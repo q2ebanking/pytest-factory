@@ -41,7 +41,7 @@ def get_response(status_code: int, body: Optional[AnyStr] = None) -> Response:
 class TestHttp:
     @mock_http_server(path='http://www.test.com/endpoint0', response='test_http_func_override')
     async def test_http_func_override(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'test_http_func_override'
         assert len(store.messages) == 4
         assert store.messages[3] == resp
@@ -49,29 +49,29 @@ class TestHttp:
 
     @mock_http_server(path='http://www.test.com/endpoint0', response=get_response(status_code=500))
     async def test_http_500(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.status_code == 500
 
     @tornado_handler(path='endpoint0/wildcard')
     @mock_http_server(path='http://www.test.com/endpoint0/*', response='test_http_wildcard_path')
     async def test_http_wildcard_path(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'test_http_wildcard_path'
 
     @mock_http_server(path='http://www.test.com/endpoint0', response=lambda x: x.path)
     async def test_http_response_function(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'http://www.test.com/endpoint0'
 
     @mock_http_server(path='http://www.test.com/endpoint0', response=Timeout)
     async def test_http_response_exception(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == "caught RequestException: MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)"
 
     class TestResponseTracking:
         @tornado_handler(path='endpoint0?num=0')
         async def test_http_no_calls_warning(self, store, caplog):
-            resp = await store.handler.run_test()
+            resp = await store.sut.run_test()
             assert resp.content.decode() == ''
             actual = get_logs(caplog)
             assert actual == [
@@ -81,7 +81,7 @@ class TestHttp:
         async def test_http_extra_call_warning(self, store, caplog):
             """
             """
-            resp = await store.handler.run_test()
+            resp = await store.sut.run_test()
             assert resp.content.decode() == 'TestHttpTestHttp'
             actual = get_logs(caplog)
             assert actual == [
@@ -92,7 +92,7 @@ class TestHttp:
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
             """
             """
-            resp = await store.handler.run_test()
+            resp = await store.sut.run_test()
             assert resp.content.decode() == 'TestHttp'
             actual = get_logs(caplog)
             assert actual == []
@@ -101,33 +101,33 @@ class TestHttp:
                          headers={'Content-Type': 'text/xml'})
         async def test_http_call_xml(self, store):
             with pytest.raises(JSONDecodeError):
-                await store.handler.run_test()
+                await store.sut.run_test()
 
 
 @tornado_handler(path="endpoint0?wild=card")
 class TestQueryParams:
     @mock_http_server(path='http://www.test.com/endpoint0', response='wild params')
     async def test_http_wildcard_params(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'wild params'
 
     @mock_http_server(path='http://www.test.com/endpoint0/*', response='wild path and params')
     async def test_http_wildcard_path_and_params(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'wild path and params'
 
     @mock_http_server(path='http://www.test.com/endpoint0?wild=card', response='exact match!')
     async def test_http_query_params_routing(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'exact match!'
 
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar', response='exact match!')
     async def test_http_query_params_routing_fail(self, store):
         with pytest.raises(expected_exception=UnCalledTestDoubleException):
-            await store.handler.run_test(assert_no_missing_calls=True)
+            await store.sut.run_test(assert_no_missing_calls=True)
 
     @tornado_handler(path="endpoint0?wild=card&foo=bar")
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar&wild=card', response='exact match!')
     async def test_http_query_params_misordered_success(self, store):
-        resp = await store.handler.run_test()
+        resp = await store.sut.run_test()
         assert resp.content.decode() == 'exact match!'

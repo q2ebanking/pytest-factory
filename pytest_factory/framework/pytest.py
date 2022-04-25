@@ -20,7 +20,9 @@ def store():
     """
     store = MALL.get_store()
     store.register_plugins(plugins=MALL.plugins)
-    return store
+    store.open()
+    yield store
+    store.close()
 
 
 @pytest.fixture(autouse=True)
