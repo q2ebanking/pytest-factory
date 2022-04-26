@@ -195,7 +195,8 @@ class Shopper:
         self.response_attr = response_attr
         self.request_attr = request_attr
         for k, v in kwargs.items():
-            setattr(self.store, k, v)
+            if v is not None:
+                setattr(self.store, k, v)
 
     def __enter__(self):
         sut_input = getattr(self.store.sut, self.request_attr)

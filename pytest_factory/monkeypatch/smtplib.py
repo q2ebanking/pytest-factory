@@ -17,10 +17,8 @@ def mock_smtp_server(to_addrs: Sequence[str], host: Optional[str] = None, from_a
 
 
 class SMTPMonkeyPatches(SMTP):
-
-    def connect(self, host='localhost', port=0, source_address=None):
+    def __init__(self, host='localhost', *_, **__):
         self._host = host
-        return 220, b''
 
     def sendmail(self,
                  from_addr: str,
@@ -42,6 +40,6 @@ class SMTPMonkeyPatches(SMTP):
 
 patch_members = {
     'sendmail': SMTPMonkeyPatches.sendmail,
-    'connect': SMTPMonkeyPatches.connect
+    '__init__': SMTPMonkeyPatches.__init__
 }
 update_monkey_patch_configs(callable_obj=SMTP, patch_members=patch_members)
