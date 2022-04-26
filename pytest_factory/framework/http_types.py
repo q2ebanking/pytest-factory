@@ -109,7 +109,7 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         for key, this_val in this_dict.items():
             wildcard_fields = MALL.http_req_wildcard_fields or default_http_req_wildcard_fields
             if this_val == "*" or that_dict[key] == "*" or key in wildcard_fields \
-                    and (not this_val or not that_dict[key]):  # TODO add unit test
+                    and (not this_val or not that_dict[key]):
                 continue
             elif this_val != that_dict[key]:
                 return False
