@@ -17,7 +17,7 @@ def mock_smtp_server(to_addrs: Sequence[str], host: Optional[str] = None, from_a
 
 
 class SMTPMonkeyPatches(SMTP):
-    def __init__(self, host='localhost', local_hostname=None, *args, **kwargs):
+    def __init__(self, host='localhost', *_, **__):
         self._host = host
 
     def sendmail(self,

@@ -63,24 +63,24 @@ class TestHttp:
     class TestResponseTracking:
         @tornado_handler(path='endpoint0?num=0')
         async def test_http_no_calls_warning(self, store, caplog):
-            resp = await store.sut.run_test()
+            resp = await store.sut.run_test(assert_no_missing_calls=False)
             assert resp.content.decode() == ''
             actual = get_logs(caplog)
-            assert actual == ["the following test doubles were NOT used in this test: {'mock_http_server': "
-                              "{MockHttpRequest(protocol='http', host='127.0.0.1', method='get', "
-                              "uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None): "
-                              '[TestHttp]}} if this is not expected, set assert_no_missing_calls to True']
+            assert actual == ["UnCalledTestDoubleException: the following test doubles were NOT used in "
+                              "this test: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1',"
+                              " method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None):"
+                              " [TestHttp]}} if this is not expected, set assert_no_missing_calls to True"]
 
         @tornado_handler(path='endpoint0?num=2')
         async def test_http_extra_call_warning(self, store, caplog):
             """
             """
-            resp = await store.sut.run_test()
+            resp = await store.sut.run_test(assert_no_extra_calls=False)
             assert resp.content.decode() == 'TestHttpTestHttp'
             actual = get_logs(caplog)
             assert actual == [
-                "expected only 1 calls to MockHttpRequest(protocol='http', host='127.0.0.1',"
-                " method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', "
+                "OverCalledTestDoubleException: expected only 1 calls to MockHttpRequest(protocol='http',"
+                " host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', "
                 "remote_ip=None)! will repeat last response: \"TestHttp\""]
 
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
@@ -95,7 +95,7 @@ class TestHttp:
                          headers={'Content-Type': 'text/xml'})
         async def test_http_call_xml(self, store):
             with pytest.raises(JSONDecodeError):
-                await store.sut.run_test()
+                await store.sut.run_test(assert_no_missing_calls=False)
 
 
 @tornado_handler(path="endpoint0?wild=card")
@@ -118,7 +118,7 @@ class TestQueryParams:
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar', response='exact match!')
     async def test_http_query_params_routing_fail(self, store):
         with pytest.raises(expected_exception=UnCalledTestDoubleException):
-            await store.sut.run_test(assert_no_missing_calls=True)
+            await store.sut.run_test()
 
     @tornado_handler(path="endpoint0?wild=card&foo=bar")
     @mock_http_server(path='http://www.test.com/endpoint0?foo=bar&wild=card', response='exact match!')

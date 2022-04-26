@@ -31,5 +31,5 @@ class TestFactoryPlugin:
     @tornado_handler(method='post', path="plugin0", body=get_body('mock_service1', 'route0'))
     @mock_service1(key='route0', response='wild')
     async def test_plugin_complex_routing(self, store):
-        resp = await store.sut.run_test()
+        resp = await store.sut.run_test(assert_no_missing_calls=False)
         assert resp.content.decode() == 'wild'
