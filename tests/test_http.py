@@ -1,8 +1,8 @@
 from json import JSONDecodeError
-from typing import List, AnyStr, Optional
+from typing import List
 import pytest
 
-from requests import Timeout, Response
+from requests import Timeout
 
 from pytest_factory.http import mock_http_server, MockHttpResponse
 from pytest_factory.framework.exceptions import UnCalledTestDoubleException
