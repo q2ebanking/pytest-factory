@@ -59,8 +59,8 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
 MOCK_RESP_TYPE = Union[None, requests.Response, str, dict, Exception]
 
 
-def _response_callable(mock_response: MOCK_RESP_TYPE,
-                       *_, **__) -> requests.Response:
+def _response_callable(*_, mock_response: MOCK_RESP_TYPE,
+                       **__) -> requests.Response:
     """
     takes the user-defined test double for the DOC response and casts it as a Response object
     """

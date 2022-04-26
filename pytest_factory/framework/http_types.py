@@ -25,6 +25,18 @@ MOCK_HTTP_RESPONSE = Optional[
                 Response]]]]
 
 
+class MockHttpResponse(Response):
+    def __init__(self, content: Optional[bytes] = b'', status_code: Optional[int] = 200):
+        self._content = content
+        self.status_code = status_code
+        self.reason = ''
+        self.url = ''
+        self.encoding = 'UTF-8'
+
+    def __repr__(self):
+        return self.content.decode()
+
+
 # based on what the requests module supports
 class HTTP_METHODS(Enum):
     GET = 'get'
@@ -90,9 +102,13 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         this_dict = self._urlparse_to_dict(self.uri)
         that_dict = self._urlparse_to_dict(other.uri)
 
+        if self.method != other.method:
+            return False
+
         for key, this_val in this_dict.items():
             wildcard_fields = MALL.http_req_wildcard_fields or default_http_req_wildcard_fields
-            if this_val == "*" or (not this_val and key in wildcard_fields):
+            if this_val == "*" or that_dict[key] == "*" \
+                    or key in wildcard_fields and (not this_val or not that_dict[key]):
                 continue
             elif this_val != that_dict[key]:
                 return False
