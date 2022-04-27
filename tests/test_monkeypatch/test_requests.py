@@ -15,7 +15,7 @@ def test_env_var(store):
 class TestRequestCallable:
     def test_happy(self):
         o = _request_callable(method_name='get', url=url)
-        assert o.uri == url
+        assert o.url == url
         assert o.method == 'get'
 
     def test_no_url(self):
@@ -50,10 +50,14 @@ class TestResponseCallable:
         r._content = b'blah'
         o = _response_callable(mock_response=r)
         assert o == r
+        assert not o.ok
+        assert o.text == 'blah'
 
     def test_bytes(self):
         o = _response_callable(mock_response=b'blah')
         assert o.content == b'blah'
+        assert o.ok
+        assert o.text == 'blah'
 
     def test_str(self):
         o = _response_callable(mock_response='blah')

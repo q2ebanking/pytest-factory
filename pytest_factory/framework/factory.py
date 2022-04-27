@@ -18,7 +18,7 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     """
     Creates a factory. For use by contributors and plugin
     developers to create new factories. A factory is a decorator that modifies a TestClass or test_method_or_function
-    in order to populate the store fixture with test mocks during the pytest collection phase.
+    in order to populate the store fixture with test doubles during the pytest collection phase.
 
     See http.py for an example of usage.
 
@@ -43,11 +43,19 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
             req_obj = id(req_obj)
 
     def register_test_func(pytest_func: Callable) -> Callable:
+        """
+        is executed during pytest collection; the store is bound to the test case at this time
+        if response is not None, and store.sut is not yet assigned, this factory will create the
+    system-under-test (SUT).
+        """
         test_name = pytest_func.__name__
         store = MALL.get_store(test_name=test_name)
 
         @functools.wraps(pytest_func)
         async def pytest_func_wrapper(*args, **kwargs):
+            """
+            is executed during pytest run; executes setup, then the test function, finally teardown
+            """
             resp = setup(store) if setup else None
             if iscoroutine(pytest_func) or iscoroutinefunction(pytest_func):
                 await pytest_func(*args, **kwargs)
@@ -67,7 +75,7 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
                 raise MissingHandlerException
             if hasattr(req_obj, 'HANDLER_NAME'):
                 key = req_obj.HANDLER_NAME
-                init_request = MALL.monkey_patch_configs.get(key, {}).get('_get_handler_instance')
+                init_request = MALL.monkey_patch_configs.get(key, {}).get('constructor')
                 handler = init_request(handler_class=final_handler_class, req_obj=req_obj)
             else:
                 handler = final_handler_class(req_obj)

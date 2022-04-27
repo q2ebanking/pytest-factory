@@ -6,7 +6,6 @@ import path to this file must be in pytest_plugins in conftest.py
 """
 import os
 import pytest
-import json
 
 from pytest_factory.framework.mall import MALL
 

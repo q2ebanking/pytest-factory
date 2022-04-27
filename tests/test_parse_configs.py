@@ -1,9 +1,7 @@
-import pytest
-
-from pytest_factory.framework.parse_configs import prep_stores_update_local, get_config_parser
+from pytest_factory.framework.parse_configs import prep_stores_update_local
 from pytest_factory.framework.mall import MALL
 
-from tests.passthru_app import PassthruTestHandler
+from tests.test_http.passthru_app import PassthruTestHandler
 
 
 def test_prep_local_config():
