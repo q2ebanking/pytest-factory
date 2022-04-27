@@ -1,11 +1,12 @@
 from typing import Optional, Callable
 
 from pytest_factory.framework.factory import make_factory
-from pytest_factory.framework.http_types import HTTP_METHODS, MockHttpRequest, MOCK_HTTP_RESPONSE, MockHttpResponse
+from pytest_factory.framework.base_types import Union, MAGIC_TYPE, AnyStr
+from pytest_factory.framework.http_types import HTTP_METHODS, MockHttpRequest, MockHttpResponse
 from pytest_factory.framework.exceptions import RequestNormalizationException
 
 
-def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
+def mock_http_server(response: MAGIC_TYPE[Union[Exception, AnyStr, MockHttpResponse]] = None,
                      req_obj: Optional[MockHttpRequest] = None,
                      method: Optional[str] = HTTP_METHODS.GET.value,
                      path: Optional[str] = None, **kwargs) -> Callable:
@@ -18,7 +19,8 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     - str: will get returned as requests.Response where the response string is
         the body
     - Exception: will get raised as if the requests method failed and not attempt to generate a response
-    - Response: returned directly
+    - Response: returned directly; note that the type should not be specific to the package that was
+    monkeypatched to call this dependency. this will cause the test to fail should you switch packages
     - Callable: must be a function that takes the req_obj as argument and
         returns one of the above types
         - for when user wants mock server to have some correlation between
@@ -32,11 +34,11 @@ def mock_http_server(response: MOCK_HTTP_RESPONSE = None,
     :return: the test class or function being decorated
     """
     try:
-        expected_request = req_obj or MockHttpRequest(method=method, path=path, **kwargs)
+        expected_request = req_obj or MockHttpRequest(method=method, url=path, **kwargs)
     except Exception as ex:
         raise RequestNormalizationException(req_obj_cls=MockHttpRequest, method=method, path=path, ex=ex, **kwargs)
     if isinstance(response, str):
         response = response.encode()
     if isinstance(response, bytes):
-        response = MockHttpResponse(content=response)
+        response = MockHttpResponse(body=response)
     return make_factory(req_obj=expected_request, response=response)

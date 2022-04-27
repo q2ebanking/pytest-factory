@@ -21,7 +21,7 @@ async def test_function(store):
 class TestInheritance:
     @tornado_handler(path='?num=0')
     class TestOverride:
-        async def test_http_inherit_handler(self, store):
+        async def test_http_inherit_handletr(self, store):
             resp = await store.sut.run_test()
             assert resp.content.decode() == ''
 

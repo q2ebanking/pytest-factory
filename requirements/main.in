@@ -1,7 +1,2 @@
 pytest
-tornado
-requests
-pytest-asyncio
 python-json-logger
-jinja2
-black

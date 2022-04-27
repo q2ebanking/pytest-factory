@@ -6,6 +6,7 @@ variables, and the packages it uses to connect with its depended-on-components (
 DOC packages supported:
 * requests
 * smtplib
+* aiohttp
 
 SUT packages supported:
 * tornado

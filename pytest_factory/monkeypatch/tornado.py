@@ -1,12 +1,14 @@
 import inspect
+import json
 from typing import Callable, Optional, Union, Any
 
 import requests
 from tornado.web import Application, RequestHandler
+from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
-from pytest_factory.http import MockHttpRequest, make_factory
+from pytest_factory.http import MockHttpRequest, make_factory, HTTP_METHODS
 from pytest_factory.logger import get_logger
 
 logger = get_logger(__name__)
@@ -17,10 +19,16 @@ class TornadoMonkeyPatchException(PytestFactoryBaseException):
         return log_msg
 
 
-def _get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable, **kwargs) -> RequestHandler:
-    if req_obj is None and handler_class:
-        return handler_class(**kwargs)
-    return handler_class(application=Application(), request=req_obj)
+def connection(): pass
+
+
+setattr(connection, 'set_close_callback', lambda _: None)
+
+
+def constructor(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
+    request = HTTPServerRequest(method=req_obj.method, uri=req_obj.url, body=req_obj.body, headers=req_obj.headers)
+    request.connection = connection
+    return handler_class(application=Application(), request=request)
 
 
 def read_from_write_buffer(buffer) -> Optional[bytes]:
@@ -33,6 +41,27 @@ class TornadoRequest(MockHttpRequest):
     FACTORY_PATH = 'pytest_factory.monkeypatch.tornado'
     HANDLER_NAME = 'RequestHandler'
     HANDLER_PATH = 'tornado.web'
+
+    def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
+        """
+        :param method: HTTP method, e.g. GET or POST
+        :param path: HTTP url or path
+        :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
+        """
+        self.kwargs = {**kwargs, 'method': method, 'path': path}
+
+        if kwargs.get('headers'):
+            kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
+
+        if kwargs.get('json'):
+            json_dict = kwargs.pop('json')
+            kwargs['body'] = json.dumps(json_dict).encode()
+
+        super().__init__(method=method, url=path, **kwargs)
+
+    @property
+    def content(self) -> bytes:
+        return self.body
 
 
 def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
@@ -104,4 +133,4 @@ class TornadoMonkeyPatches(RequestHandler):
 patch_members = {'run_test': TornadoMonkeyPatches.run_test,
                  '_transforms': []}
 update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members,
-                            _get_handler_instance=_get_handler_instance)
+                            constructor=constructor)
