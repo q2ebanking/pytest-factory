@@ -49,7 +49,8 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     system-under-test (SUT).
         """
         test_name = pytest_func.__name__
-        store = MALL.get_store(test_name=test_name)
+        test_dir = pytest_func.__module__.split('.')[-2]
+        store = MALL.get_store(test_name=test_name, test_dir=test_dir)
 
         @functools.wraps(pytest_func)
         async def pytest_func_wrapper(*args, **kwargs):
@@ -75,7 +76,7 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
                 raise MissingHandlerException
             if hasattr(req_obj, 'HANDLER_NAME'):
                 key = req_obj.HANDLER_NAME
-                init_request = MALL.monkey_patch_configs.get(key, {}).get('constructor')
+                init_request = MALL.get_constructor(handler_type=key)
                 handler = init_request(handler_class=final_handler_class, req_obj=req_obj)
             else:
                 handler = final_handler_class(req_obj)

@@ -61,17 +61,8 @@ def update_monkey_patch_configs(callable_obj: Any,
     :param callable_obj: class or module that will have its method monkeypatched
     :param patch_members: dictionary of members where keys are the name of the member of callable_obj to be patched,
         and the values are the replacement member
+    :param constructor: method that returns a new callable_obj if callable_obj is a class and not a module and
+    the resulting object is a test double needed for this test suite
     :return:
     """
-    key = callable_obj.__name__
-    patch_configs = MALL.monkey_patch_configs.get(key)
-    if patch_configs:
-        MALL.monkey_patch_configs[key].get('patch_methods').update(patch_members)
-        if constructor:
-            MALL.monkey_patch_configs[key]['constructor'] = constructor
-    else:
-        MALL.monkey_patch_configs[callable_obj.__name__] = {
-            'callable': callable_obj,
-            'patch_methods': patch_members,
-            'constructor': constructor
-        }
+    MALL.load_monkeypatch_configs(callable_obj=callable_obj, patch_members=patch_members, constructor=constructor)

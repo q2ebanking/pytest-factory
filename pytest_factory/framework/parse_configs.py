@@ -2,43 +2,35 @@ import json
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Callable, Optional, Any
-from importlib import import_module
 
 from pytest_factory.logger import get_logger
 from pytest_factory.framework.exceptions import ConfigException
-from pytest_factory.framework.mall import MALL
 
 logger = get_logger(__name__)
 
 
-def get_config_parser(path: str = '../**/config.ini') -> ConfigParser:
+def get_config_parser(path: Optional[str] = None) -> ConfigParser:
     config = ConfigParser()
     p = Path()
+    path = path or '**/config.ini'
     p_list = list(p.glob(path))
+    if len(p_list) != 1:
+        path = '../' + path
+        p_list = list(p.glob(path))
     if len(p_list) != 1:
         raise ConfigException(log_msg=f'{path} is missing from project!')
     config.read(p_list[0])
     return config
 
 
-def import_from_str_path(path: str) -> Callable:
-    path_parts = path.split('.')
-    import_path = '.'.join(path_parts[:-1])
-    import_callable = path_parts[-1]
-    module = import_module(import_path)
-    try:
-        kallable = getattr(module, import_callable)
-    except AttributeError as _:
-        kallable = import_module(path)
-    return kallable
-
-
 CONFIG_MAP = {
     'tuples': lambda x: x.split(","),
-    'imports': import_from_str_path,
+    'imports': lambda x: x,
     'bools': lambda x: x.lower() == 'true',
     'dicts': lambda x: json.loads(x)
 }
+
+DEFAULT_FOLDER_NAME = 'tests'
 
 
 def clean_whitespace(input: list) -> list:
@@ -57,7 +49,7 @@ def parse_type(section: str, _type: str, parse_func: Callable, conf: ConfigParse
     return sub_dict
 
 
-def parse_section(conf: ConfigParser, section: str = 'tests') -> Dict:
+def parse_section(conf: ConfigParser, section: str = DEFAULT_FOLDER_NAME) -> Dict:
     try:
         conf[section]
     except KeyError as ke:
@@ -72,19 +64,25 @@ def parse_section(conf: ConfigParser, section: str = 'tests') -> Dict:
 
     keys = set(conf[section].keys()).difference(set(conf_dict.keys()))
     for key in keys:
-        if key not in CONFIG_MAP.keys():
+        if key not in CONFIG_MAP.keys() or key == 'imports':
             conf_dict[key] = conf[section][key]
 
     return conf_dict
 
 
-def prep_stores_update_local(dir_name: Optional[str] = 'tests', path: Optional[str] = '../**/config.ini') -> Dict[str, Any]:
+def prep_stores_update_local(dir_name: Optional[str] = DEFAULT_FOLDER_NAME,
+                             path: Optional[str] = None) -> Dict[str, Any]:
     """Prep config values"""
+    conf_dict = {}
     conf = get_config_parser(path=path)
-    conf_dict = parse_section(conf=conf)
+    conf_dict[DEFAULT_FOLDER_NAME] = parse_section(conf=conf)
+    if dir_name == DEFAULT_FOLDER_NAME:
+        sub_sections = [k for k in conf._sections.keys() if k != DEFAULT_FOLDER_NAME]
+    else:
+        sub_sections = [dir_name]
 
-    sub_dict = parse_section(conf=conf, section=dir_name)
-    conf_dict.update(sub_dict)
+    for section in sub_sections:
+        sub_dict = parse_section(conf=conf, section=section)
+        conf_dict[section] = sub_dict
 
-    MALL.load(conf=conf_dict, key=dir_name)
     return conf_dict
