@@ -6,7 +6,7 @@ import requests
 from tornado.web import Application, RequestHandler
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
-from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
+from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, MALL
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
 from pytest_factory.http import MockHttpRequest, make_factory, HTTP_METHODS
 from pytest_factory.logger import get_logger
@@ -102,7 +102,7 @@ class TornadoMonkeyPatches(RequestHandler):
         needs to make an assertion against (e.g. some data within the Response.content)
         :return:
         """
-        store = self._pytest_store
+        store = MALL.get_store()
         with store.shop(assert_no_extra_calls=assert_no_extra_calls,
                         assert_no_missing_calls=assert_no_missing_calls,
                         request_attr='request',

@@ -80,7 +80,6 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
             else:
                 handler = final_handler_class(req_obj)
             store._request_factory = Factory(req_obj=factory_name, responses=handler)
-            handler._pytest_store = store
 
         return pytest_func_wrapper
 
