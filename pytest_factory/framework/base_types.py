@@ -1,5 +1,34 @@
 from __future__ import annotations
-from typing import Any, Dict, Union, List, Tuple
+import json
+from typing import Any, Dict, Union, List, Tuple, AnyStr, Hashable, Optional, Set
+
+
+def get_kwargs(o: object, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
+    allowed_types = allowed_types or {int, bytes, str}
+    d = {k: v if type(v) in allowed_types else str(v)
+         for k, v in o.kwargs.items()
+         if v is not o and k is not '__class__'}
+    return d
+
+
+class Serializable:
+    def __str__(self):
+        d = get_kwargs(self, allowed_types={int, str})
+        return f"{self.__class__}: {json.dumps(d)}"
+
+
+class Writable:
+    def write(self, just_args=False) -> str:
+        d = get_kwargs(self)
+
+        def add_type_delimiters(s: Any) -> Any:
+            if isinstance(s, str):
+                return f'"{s}"'
+            if isinstance(s, bytes):
+                return f"b'{s.decode()}'"
+            return s
+        d_s = ", ".join([f"{k}={add_type_delimiters(v)}" for k, v in d.items()])
+        return d_s if just_args else f"{self.__class__.__name__}({d_s})"
 
 
 class BaseMockRequest:
@@ -68,4 +97,7 @@ ROUTING_TYPE = Dict[
     Any
 ]
 
-MOCK_RESPONSES_TYPE = List[Tuple[bool, Any]]
+BASE_RESPONSE_TYPE = Union[Exception, object, AnyStr]
+MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]
+
+Exchange = Tuple[Union[Hashable, BaseMockRequest], BASE_RESPONSE_TYPE]

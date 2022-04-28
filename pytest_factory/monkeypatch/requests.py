@@ -4,11 +4,12 @@ in store
 """
 import requests
 import json
-from typing import Union
+from typing import Union, Optional
 
 from tornado.httputil import HTTPHeaders
 
 from pytest_factory.http import MockHttpRequest, HTTP_METHODS
+from pytest_factory.framework.base_types import Serializable, Writable
 from pytest_factory.framework.exceptions import TestDoubleTypeException
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, get_generic_caller
 
@@ -67,8 +68,10 @@ def _response_callable(*_, mock_response: MOCK_RESP_TYPE,
     response = requests.Response()
     if mock_response is None:
         response.status_code = 404
-    elif isinstance(mock_response, str):  # string body 200
+    elif isinstance(mock_response, bytes):  # bytes body 200
         response._content = mock_response
+    elif isinstance(mock_response, str):
+        response._content = mock_response.encode()
     elif isinstance(mock_response, dict):  # json body 200
         response._content = json.dumps(mock_response)
     elif isinstance(mock_response, requests.Response):
@@ -83,6 +86,14 @@ def _response_callable(*_, mock_response: MOCK_RESP_TYPE,
     return response
 
 
+class ResponseMonkeyPatch(requests.Response):
+    def __init__(self, content: Optional[bytes] = b'', status_code: Optional[int] = 200):
+        self.kwargs = locals()
+        super(requests.Response, self).__init__()
+        self._content = content
+        self.status_code = status_code
+
+
 new_methods = {}
 for method in HTTP_METHODS:
     new_method = get_generic_caller(method_name=method.value,
@@ -91,4 +102,9 @@ for method in HTTP_METHODS:
 
     new_methods[method.value] = new_method
 
-    update_monkey_patch_configs(callable_obj=requests, patch_members=new_methods)
+update_monkey_patch_configs(callable_obj=requests, patch_members=new_methods)
+response_patches = {'__init__': ResponseMonkeyPatch.__init__,
+                    '__str__': Serializable.__str__,
+                    'write': Writable.write}
+for k, v in response_patches.items():
+    setattr(requests.Response, k, v)

@@ -50,7 +50,8 @@ touch test.py:
 
 ```python
 import pytest
-from pytest_factory import mock_request, mock_http_server
+from pytest_factory import mock_http_server
+from pytest_factory.monkeypatch.tornado import tornado_handler
 
 from .app import MainHandler
 
@@ -58,7 +59,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @mock_http_server(method='get', path='https://www.world.com/hello', response='blah blah')
-@mock_request(handler_class=MainHandler, method='get')
+@tornado_handler(handler_class=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
         resp = await store.handler.run_test()

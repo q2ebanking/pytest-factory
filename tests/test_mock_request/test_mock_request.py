@@ -1,6 +1,6 @@
 import pytest
 
-from pytest_factory import mock_request
+from pytest_factory.monkeypatch.tornado import tornado_handler
 from pytest_factory.framework.exceptions import MissingHandlerException
 
 pytestmark = pytest.mark.asyncio
@@ -12,20 +12,20 @@ async def test_function_missing_handler(store):
         await store.handler.run_test()
 
 
-@mock_request(path='solo')
+@tornado_handler(path='solo')
 async def test_function(store):
     resp = await store.handler.run_test()
     assert resp.content.decode() == 'Hello, world'
 
 
 class TestInheritance:
-    @mock_request(path='?num=0')
+    @tornado_handler(path='?num=0')
     class TestOverride:
         async def test_http_inherit_handler(self, store):
             resp = await store.handler.run_test()
             assert resp.content.decode() == ''
 
-        @mock_request(path='something')
+        @tornado_handler(path='something')
         async def test_http_explicit_handler(self, store):
             """
             """
