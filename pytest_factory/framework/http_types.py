@@ -11,7 +11,7 @@ from pytest_factory.framework.default_configs import http_req_wildcard_fields as
 class MockHttpResponse(Message):
     def __init__(self, body: Optional[bytes] = b'', status: Optional[int] = 200,
                  headers: Optional[Dict[str, str]] = None):
-        self.kwargs = locals()
+        self.kwargs = {k: v for k, v in locals().items() if v != self}
         self.body = body
         self.status = status
         self.headers = headers or {}
@@ -49,7 +49,7 @@ class MockHttpRequest(BaseMockRequest):
         :param body:
         :param headers:
         """
-        self.kwargs = locals()
+        self.kwargs = {k: v for k, v in locals().items() if v != self}
         self.url = url
         self.method = method
         self.body = body

@@ -34,46 +34,46 @@ class TestHttp:
     @mock_http_server(url='http://www.test.com/endpoint0', response='test_http_func_override')
     async def test_http_func_override(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'test_http_func_override'
+        assert resp.body.decode() == 'test_http_func_override'
         assert len(store.messages) == 4
         assert store.messages[3] == resp
-        assert store.messages[2].content == resp.content
+        assert store.messages[2].content == resp.body
 
     @mock_http_server(url='http://www.test.com/endpoint0', response=MockHttpResponse(status=500))
     async def test_http_500(self, store):
         resp = await store.sut.run_test()
-        assert resp.status_code == 500
+        assert resp.status == 500
 
     @tornado_handler(url='endpoint0/wildcard')
     @mock_http_server(url='http://www.test.com/endpoint0/*', response='test_http_wildcard_path')
     async def test_http_wildcard_path(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'test_http_wildcard_path'
+        assert resp.body.decode() == 'test_http_wildcard_path'
 
     @mock_http_server(url='http://www.test.com/endpoint0', response=lambda x: x.url)
     async def test_http_response_function(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'http://www.test.com/endpoint0'
+        assert resp.body.decode() == 'http://www.test.com/endpoint0'
 
     @mock_http_server(url='http://www.test.com/endpoint0', response=Timeout)
     async def test_http_response_exception(self, store):
         resp = await store.sut.run_test()
         msg = "caught RequestException: <class pytest_factory.framework.http_types.MockHttpRequest: {'url': " \
-              "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': '{}'}>"
-        assert resp.content.decode() == msg
+              "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': {}}>"
+        assert resp.body.decode() == msg
 
     class TestResponseTracking:
         @tornado_handler(url='endpoint0?num=0')
         async def test_http_no_calls_warning(self, store, caplog):
             resp = await store.sut.run_test(assert_no_missing_calls=False)
-            assert resp.content.decode() == ''
+            assert resp.body.decode() == ''
             actual = get_logs(caplog)
             msg = ['UnCalledTestDoubleException: the following test doubles were NOT used in '
                    "this test: {'mock_http_server': "
                    "{<class pytest_factory.framework.http_types.MockHttpRequest: {'url': "
                    "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': "
-                   "'{}'}>: [<class pytest_factory.framework.http_types.MockHttpResponse: {'body': "
-                   "b'TestHttp', 'status': 200, 'headers': '{}'}>]}} if this is not expected, "
+                   "{}}>: [<class pytest_factory.framework.http_types.MockHttpResponse: {'body': "
+                   "b'TestHttp', 'status': 200, 'headers': {}}>]}} if this is not expected, "
                    'set assert_no_missing_calls to True']
             assert actual == msg
 
@@ -82,20 +82,20 @@ class TestHttp:
             """
             """
             resp = await store.sut.run_test(assert_no_extra_calls=False)
-            assert resp.content.decode() == 'TestHttpTestHttp'
+            assert resp.body.decode() == 'TestHttpTestHttp'
             actual = get_logs(caplog)
             assert actual == ['OverCalledTestDoubleException: expected only 1 calls to <class '
                               "pytest_factory.framework.http_types.MockHttpRequest: {'url': "
                               "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': "
-                              '\'{}\'}>! will repeat last response: "<class '
+                              '{}}>! will repeat last response: "<class '
                               "pytest_factory.framework.http_types.MockHttpResponse: {'body': b'TestHttp', "
-                              '\'status\': 200, \'headers\': \'{}\'}>"']
+                              '\'status\': 200, \'headers\': {}}>"']
 
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
             """
             """
             resp = await store.sut.run_test()
-            assert resp.content.decode() == 'TestHttp'
+            assert resp.body.decode() == 'TestHttp'
             actual = get_logs(caplog)
             assert actual == []
 
@@ -111,17 +111,17 @@ class TestQueryParams:
     @mock_http_server(url='http://www.test.com/endpoint0', response='wild params')
     async def test_http_wildcard_params(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'wild params'
+        assert resp.body.decode() == 'wild params'
 
     @mock_http_server(url='http://www.test.com/endpoint0/*', response='wild path and params')
     async def test_http_wildcard_path_and_params(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'wild path and params'
+        assert resp.body.decode() == 'wild path and params'
 
     @mock_http_server(url='http://www.test.com/endpoint0?wild=card', response='exact match!')
     async def test_http_query_params_routing(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'exact match!'
+        assert resp.body.decode() == 'exact match!'
 
     @mock_http_server(url='http://www.test.com/endpoint0?foo=bar', response='exact match!')
     async def test_http_query_params_routing_fail(self, store):
@@ -132,4 +132,4 @@ class TestQueryParams:
     @mock_http_server(url='http://www.test.com/endpoint0?foo=bar&wild=card', response='exact match!')
     async def test_http_query_params_misordered_success(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'exact match!'
+        assert resp.body.decode() == 'exact match!'

@@ -5,6 +5,7 @@ from asyncio import iscoroutine, iscoroutinefunction
 from typing import Callable, Optional, Union
 
 from pytest_factory.framework.base_types import BaseMockRequest, Factory, BASE_RESPONSE_TYPE
+from pytest_factory.framework.parse_configs import DEFAULT_FOLDER_NAME
 from pytest_factory.framework.exceptions import MissingHandlerException
 from pytest_factory.framework.mall import MALL
 
@@ -49,7 +50,8 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     system-under-test (SUT).
         """
         test_name = pytest_func.__name__
-        test_dir = pytest_func.__module__.split('.')[-2]
+        module_parts = pytest_func.__module__.split('.')
+        test_dir = module_parts[-2] if len(module_parts) > 1 else DEFAULT_FOLDER_NAME
         store = MALL.get_store(test_name=test_name, test_dir=test_dir)
 
         @functools.wraps(pytest_func)

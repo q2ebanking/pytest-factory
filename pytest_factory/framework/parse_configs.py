@@ -14,10 +14,10 @@ def get_config_parser(path: Optional[str] = None) -> ConfigParser:
     p = Path()
     path = path or '**/config.ini'
     p_list = list(p.glob(path))
-    if len(p_list) != 1:
+    if len(p_list) < 1:
         path = '../' + path
         p_list = list(p.glob(path))
-    if len(p_list) != 1:
+    if len(p_list) < 1:
         raise ConfigException(log_msg=f'{path} is missing from project!')
     config_path = p_list[0]
     config.read(config_path)

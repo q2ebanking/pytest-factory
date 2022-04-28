@@ -2,9 +2,11 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Union, List, Tuple, AnyStr, Optional, TypeVar, Set
 
+ALLOWED_TYPES = {int, bytes, str, type(None), bool, dict}
+
 
 def get_kwargs(o: object, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
-    allowed_types = allowed_types or {int, bytes, str, type(None), bool}
+    allowed_types = allowed_types or ALLOWED_TYPES
     d = o.kwargs if pre_not_de else vars(o)
     d = {k: v if type(v) in allowed_types else str(v)
          for k, v in d.items()
@@ -30,14 +32,14 @@ def convert(x):
 class Message:
     def write(self, just_args: bool = False) -> str:
         d = get_kwargs(self, pre_not_de=True)
+        s = ', '.join([f"{k}={convert(v)}" for k, v in d.items()])
         if just_args:
-            s = ', '.join([f"{k}={convert(v)}" for k, v in d.items()])
             return s
-        return f"{self.__class__.__name__}(**{d})"
+        return f"{self.__class__.__name__}({s})"
 
     def serialize(self):
-        d = get_kwargs(self, pre_not_de=True, allowed_types={int, str})
-        return f"{self.__class__}: {json.dumps(d)}"
+        d = get_kwargs(self, pre_not_de=True)
+        return f"{self.__class__}: {json.dumps(d, default=convert)}"
 
     def __repr__(self):
         return f"<class {self.__class__.__module__}.{self.__class__.__name__}: {get_kwargs(self)}>"

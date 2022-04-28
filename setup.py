@@ -32,6 +32,10 @@ setuptools.setup(
     install_requires=get_reqs(),
     url="https://github.com/pytest-factory/pytest-factory",
     packages=setuptools.find_packages(),
+    include_package_data=True,
+    package_data={
+        "pytest_factory": ["template.py.jinja"]
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache LICENSE-2.0",

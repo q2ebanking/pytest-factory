@@ -1,3 +1,4 @@
+import re
 from typing import List
 from pathlib import Path
 
@@ -56,14 +57,15 @@ class Writer:
             with open(template_path) as template_file:
                 template = Template(template_file.read())
             request_factory_path, request_factory_name = self.recording.request_factory
+            incident_name = self.recording.incident_type.__name__
             inputs = {
                 'recording': self.recording,
-                'incident_name': self.recording.incident_type.__name__,
+                'incident_name': incident_name,
                 'handler_path': self.handler_path,
                 'handler_name': self.handler_name,
                 'request_factory_path': request_factory_path,
                 'request_factory_name': request_factory_name,
-                'generated_test_id': 'example_0',
+                'generated_test_id': re.sub(r'(?<!^)(?=[A-Z])', '_', incident_name).lower(),
                 'response_attributes': {
                     'status',
                     'body'
@@ -78,6 +80,6 @@ class Writer:
         sut_response = self.recording.last
         if not self.recording.raises:
             if not isinstance(sut_response, str):
-                sut_response = str(sut_response)
+                sut_response = sut_response.serialize()
             with open(new_data_path, "w") as data_file:
                 data_file.write(sut_response)

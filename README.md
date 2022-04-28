@@ -13,9 +13,10 @@ SUT packages supported:
 * tornado
 
 ## example
-given a tornado application app.py (see tests/app.py for a more complex
-example):
+given a tornado application app.py (see tests/ for a more complex
+examples):
 ```python
+#app.py
 import requests
 
 from tornado.ioloop import IOLoop
@@ -41,27 +42,27 @@ if __name__ == "__main__":
 
 ```
 
-touch conftest.py:
 ```python
+#conftest.py
 pytest_plugins = ["pytest_factory.framework.pytest"]
+
 ```
 
-touch config.ini:
 ```ini
+;config.ini
 [tests]
 requests = pytest_factory.monkeypatch.requests
 tornado = pytest_factory.monkeypatch.tornado
 imports = requests, tornado
 ```
 
-touch test.py:
-
 ```python
+#test.py
 import pytest
 from pytest_factory import mock_http_server
 from pytest_factory.monkeypatch.tornado import tornado_handler
 
-from .app import MainHandler
+from app import MainHandler
 
 pytestmark = pytest.mark.asyncio
 
@@ -71,12 +72,12 @@ pytestmark = pytest.mark.asyncio
 class TestClass:
     async def test_a(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'blah blah'
+        assert resp.body.decode() == 'blah blah'
 
     @mock_http_server(method='get', url='https://www.world.com/hello', response='Hello, world!')
     async def test_b(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'Hello, world!'
+        assert resp.body.decode() == 'Hello, world!'
 
 ```
 

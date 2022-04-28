@@ -3,19 +3,21 @@ from json import loads, dumps, JSONDecodeError
 from importlib import import_module
 from typing import Any, List, Optional, Union, Tuple
 
-from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE
+from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE, ALLOWED_TYPES
 
 
-def infer_type(s: str):
+def infer_type(s: Any):
+    if type(s) in ALLOWED_TYPES and not isinstance(s, str):
+        return s
     r = {
         'None': None,
         'True': True,
         'False': False
-    }.get(s, JSONDecodeError)
-    if r is not JSONDecodeError:
+    }.get(s, Exception)
+    if r is not Exception:
         return r
-    if len(s) > 2 and s[:1] in {'b"', "b'"}:
-        return s[2:-2].encode()
+    if len(s) > 2 and s[:2] in {'b"', "b'"}:
+        return s[2:-1].encode()
     try:
         d = loads(s)
         return d

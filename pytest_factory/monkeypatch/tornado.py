@@ -8,7 +8,7 @@ from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, MALL
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
-from pytest_factory.http import MockHttpRequest, make_factory, HTTP_METHODS
+from pytest_factory.http import MockHttpRequest, make_factory, HTTP_METHODS, MockHttpResponse
 from pytest_factory.logger import get_logger
 
 logger = get_logger(__name__)
@@ -121,9 +121,7 @@ class TornadoMonkeyPatches(RequestHandler):
 
             if self._write_buffer:
                 raw_resp = read_from_write_buffer(self._write_buffer)
-                response_obj = requests.Response()
-                response_obj._content = raw_resp
-                response_obj.status_code = self.get_status()
+                response_obj = MockHttpResponse(body=raw_resp, status=self.get_status())
                 if response_parser:
                     response_obj = response_parser(response_obj)
                 self._response = response_obj

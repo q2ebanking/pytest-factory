@@ -38,7 +38,7 @@ class Test{{handler_name}}{{incident_name}}:
             await store.sut.run_test()
         {% else: %}
         actual_response = reify(actual_response_str)
-        simulated_response = await store.handler.run_test()
+        simulated_response = await store.sut.run_test()
         {% for attribute in response_attributes: %}
         assert simulated_response.{{attribute}} == actual_response.{{attribute}}
         {% endfor %}
