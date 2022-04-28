@@ -76,8 +76,8 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
                 raise MissingHandlerException
             if hasattr(req_obj, 'HANDLER_NAME'):
                 key = req_obj.HANDLER_NAME
-                init_request = MALL.get_constructor(handler_type=key)
-                handler = init_request(handler_class=final_handler_class, req_obj=req_obj)
+                constructor = MALL.get_constructor(handler_type=key)
+                handler = constructor(handler_class=final_handler_class, req_obj=req_obj)
             else:
                 handler = final_handler_class(req_obj)
             store._request_factory = Factory(req_obj=factory_name, responses=handler)
