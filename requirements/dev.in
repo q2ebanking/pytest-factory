@@ -4,5 +4,8 @@ wheel
 pip-tools
 pytest-cov
 pytest-html
-pytest
+pytest-asyncio
 pytest-random-order
+aiohttp
+requests
+tornado
