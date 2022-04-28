@@ -3,6 +3,7 @@ pytest-factory creates a test environment for your service using decorators on
 test classes/methods to generate configurable and reusable test doubles. it accomplishes this
 by monkeypatching the system-under-test (SUT) (as little as possible), its environment
 variables, and the packages it uses to connect with its depended-on-components (DOC).
+
 DOC packages supported:
 * requests
 * smtplib
