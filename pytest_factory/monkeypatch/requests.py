@@ -8,7 +8,7 @@ from typing import Union
 
 from tornado.httputil import HTTPHeaders
 
-from pytest_factory.http import MockHttpRequest, HTTP_METHODS
+from pytest_factory.http import MockHttpRequest, HTTP_METHODS, MockHttpResponse
 from pytest_factory.framework.exceptions import TypeTestDoubleException
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, get_generic_caller
 
@@ -37,7 +37,7 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
 
     mock_http_request_kwargs = {
         'method': method_name,
-        'path': path
+        'url': path
     }
 
     if kwargs.get('headers'):
@@ -68,24 +68,30 @@ def _response_callable(*_, mock_response: MOCK_RESP_TYPE,
     """
     takes the user-defined test double for the DOC response and casts it as a Response object
     """
-    response = requests.Response()
-    if mock_response is None:
-        response.status_code = 404
-    elif isinstance(mock_response, bytes):  # bytes body 200
-        response._content = mock_response
-    elif isinstance(mock_response, str):
-        response._content = mock_response.encode()
-    elif isinstance(mock_response, dict):  # json body 200
-        response._content = json.dumps(mock_response).encode()
-    elif isinstance(mock_response, requests.Response):
+
+    if isinstance(mock_response, requests.Response):
         response = mock_response
     else:
-        raise TypeTestDoubleException(request_module_name='requests', response=mock_response)
+        response = requests.Response()
+        if mock_response is None:
+            response.status_code = 404
+        elif isinstance(mock_response, MockHttpResponse):
+            response._content = mock_response.body
+            response.status_code = mock_response.status
+        elif isinstance(mock_response, bytes):  # bytes body 200
+            response._content = mock_response
+        elif isinstance(mock_response, str):
+            response._content = mock_response.encode()
+        elif isinstance(mock_response, dict):  # json body 200
+            response._content = json.dumps(mock_response).encode()
+        else:
+            raise TypeTestDoubleException(request_module_name='requests', response=mock_response)
+    response.reason = response.url = ''
+    response.encoding = 'utf-8'
+    response.status_code = response.status_code or 200
 
-    # TODO need to replicate redirect behavior unless allow_redirects==False.
-    #  how though? could return an array instead and then it's up to
-    # if response.status_code == 302 and kwargs.get('allow_redirects') is not False:
-    # wut do
+    # if response.status_code == 302 and 'allow_redirects' is True:
+    #  TODO
     return response
 
 

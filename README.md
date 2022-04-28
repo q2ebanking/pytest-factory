@@ -6,6 +6,7 @@ variables, and the packages it uses to connect with its depended-on-components (
 DOC packages supported:
 * requests
 * smtplib
+* aiohttp
 
 SUT packages supported:
 * tornado
@@ -41,16 +42,12 @@ if __name__ == "__main__":
 
 touch conftest.py:
 ```python
-from pytest_factory.framework.parse_configs import prep_stores_update_local
-
-prep_stores_update_local(dir_name=__name__)
-
 pytest_plugins = ["pytest_factory.framework.pytest"]
 ```
 
 touch config.ini:
 ```ini
-[default]
+[tests]
 requests = pytest_factory.monkeypatch.requests
 tornado = pytest_factory.monkeypatch.tornado
 imports = requests, tornado

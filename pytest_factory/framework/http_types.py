@@ -1,40 +1,22 @@
 from __future__ import annotations
-import json
 from enum import Enum
-from typing import Callable, Union, List, Optional
+from typing import Optional, Dict
 from urllib.parse import urlparse, parse_qs
-
-from requests import Response
-from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 from pytest_factory.framework.base_types import BaseMockRequest
 from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.default_configs import http_req_wildcard_fields as default_http_req_wildcard_fields
 
-MOCK_HTTP_RESPONSE = Optional[
-    Union[
-        Exception,
-        str,
-        Response,
-        Callable,
-        List[
-            Union[
-                Callable,
-                Exception,
-                str,
-                Response]]]]
 
-
-class MockHttpResponse(Response):
-    def __init__(self, content: Optional[bytes] = b'', status_code: Optional[int] = 200):
-        self._content = content
-        self.status_code = status_code
-        self.reason = ''
-        self.url = ''
-        self.encoding = 'UTF-8'
+class MockHttpResponse:
+    def __init__(self, body: Optional[bytes] = b'', status: Optional[int] = 200,
+                 headers: Optional[Dict[str, str]] = None):
+        self.body = body
+        self.status = status
+        self.headers = headers or {}
 
     def __repr__(self):
-        return self.content.decode()
+        return self.body.decode()
 
 
 # based on what the requests module supports
@@ -48,7 +30,7 @@ class HTTP_METHODS(Enum):
     OPTIONS = 'options'
 
 
-class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
+class MockHttpRequest(BaseMockRequest):
     """
     abstract HTTP request class representing simulated and actual inbound and outbound requests.
     normalizing all requests within pytest-factory allows for direct comparison of requests, which has
@@ -62,29 +44,14 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
     FACTORY_NAME = 'mock_http_server'
     FACTORY_PATH = 'pytest_factory.http'
 
-    def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
-        """
-        :param method: HTTP method, e.g. GET or POST
-        :param path: HTTP url
-        :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
-        """
-        self.kwargs = {**kwargs, 'method': method, 'path': path}
-
-        if kwargs.get('headers'):
-            kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
-
-        if kwargs.get('json'):
-            json_dict = kwargs.pop('json')
-            kwargs['body'] = json.dumps(json_dict).encode()
-
-        super().__init__(method=method, uri=path, **kwargs)
-
-        self.connection = lambda: None
-        setattr(self.connection, 'set_close_callback', lambda _: None)
+    def __init__(self, url: str, method: str = 'get', body: Optional[bytes] = b'', headers: Optional[dict] = None):
+        self.url = url
+        self.method = method
+        self.body = body
+        self.headers = headers or {}
 
     @staticmethod
     def _urlparse_to_dict(uri: str) -> dict:
-        # TODO maybe support wildcarding names/values of query params as opposed to the whole query param string
         url_parts = urlparse(uri)
         url_component_dict = {key: getattr(url_parts, key) for key in ("scheme", "netloc", "params", "fragment")}
         url_component_dict["query"] = url_parts.query if url_parts.query == "*" else parse_qs(url_parts.query)
@@ -97,14 +64,14 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
         compares this HTTP request to another
         """
         if isinstance(other, str):
-            substr_index = self.full_url().find(other)
+            substr_index = self.url.find(other)
             return substr_index > -1
 
         if self.method != other.method:
             return False
 
-        this_dict = self._urlparse_to_dict(self.uri)
-        that_dict = self._urlparse_to_dict(other.uri)
+        this_dict = self._urlparse_to_dict(self.url)
+        that_dict = self._urlparse_to_dict(other.url)
 
         for key, this_val in this_dict.items():
             wildcard_fields = MALL.http_req_wildcard_fields or default_http_req_wildcard_fields
@@ -115,10 +82,6 @@ class MockHttpRequest(HTTPServerRequest, BaseMockRequest):
                 return False
 
         return True
-
-    @property
-    def content(self) -> bytes:
-        return self.body
 
     def __hash__(self) -> int:
         """

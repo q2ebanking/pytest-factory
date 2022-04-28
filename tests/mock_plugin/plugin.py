@@ -16,7 +16,7 @@ class MockPlugin(BasePlugin):
         note there is no "self" because this method will be used as an independent function
         in this example we will keep the factory name and service name the same but this is rarely the case in real life
         """
-        body_dict = json.loads(req_obj.content)
+        body_dict = json.loads(req_obj.body.decode())
         factory_name = body_dict.get('service_name')
         routing_param = body_dict.get('service_param')
         store = MALL.get_store()

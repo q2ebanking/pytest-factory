@@ -39,7 +39,7 @@ class TestHttp:
         assert store.messages[3] == resp
         assert store.messages[2].content == resp.content
 
-    @mock_http_server(path='http://www.test.com/endpoint0', response=MockHttpResponse(status_code=500))
+    @mock_http_server(path='http://www.test.com/endpoint0', response=MockHttpResponse(status=500))
     async def test_http_500(self, store):
         resp = await store.sut.run_test()
         assert resp.status_code == 500
@@ -50,7 +50,7 @@ class TestHttp:
         resp = await store.sut.run_test()
         assert resp.content.decode() == 'test_http_wildcard_path'
 
-    @mock_http_server(path='http://www.test.com/endpoint0', response=lambda x: x.path)
+    @mock_http_server(path='http://www.test.com/endpoint0', response=lambda x: x.url)
     async def test_http_response_function(self, store):
         resp = await store.sut.run_test()
         assert resp.content.decode() == 'http://www.test.com/endpoint0'
@@ -58,7 +58,9 @@ class TestHttp:
     @mock_http_server(path='http://www.test.com/endpoint0', response=Timeout)
     async def test_http_response_exception(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == "caught RequestException: MockHttpRequest(protocol='http', host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None)"
+        msg = "caught RequestException: <pytest_factory.framework.http_types.MockHttpRequest: " \
+              "{'url': 'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': {}}>"
+        assert resp.content.decode() == msg
 
     class TestResponseTracking:
         @tornado_handler(path='endpoint0?num=0')
@@ -66,10 +68,11 @@ class TestHttp:
             resp = await store.sut.run_test(assert_no_missing_calls=False)
             assert resp.content.decode() == ''
             actual = get_logs(caplog)
-            assert actual == ["UnCalledTestDoubleException: the following test doubles were NOT used in "
-                              "this test: {'mock_http_server': {MockHttpRequest(protocol='http', host='127.0.0.1',"
-                              " method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', remote_ip=None):"
-                              " [TestHttp]}} if this is not expected, set assert_no_missing_calls to True"]
+            msg = "UnCalledTestDoubleException: the following test doubles were NOT used in this test: " \
+                  "{'mock_http_server': {<pytest_factory.framework.http_types.MockHttpRequest: {'url': " \
+                  "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': {}}>: [TestHttp]}} " \
+                  "if this is not expected, set assert_no_missing_calls to True"
+            assert actual == [msg]
 
         @tornado_handler(path='endpoint0?num=2')
         async def test_http_extra_call_warning(self, store, caplog):
@@ -78,10 +81,10 @@ class TestHttp:
             resp = await store.sut.run_test(assert_no_extra_calls=False)
             assert resp.content.decode() == 'TestHttpTestHttp'
             actual = get_logs(caplog)
-            assert actual == [
-                "OverCalledTestDoubleException: expected only 1 calls to MockHttpRequest(protocol='http',"
-                " host='127.0.0.1', method='get', uri='http://www.test.com/endpoint0', version='HTTP/1.0', "
-                "remote_ip=None)! will repeat last response: \"TestHttp\""]
+            assert actual == ['OverCalledTestDoubleException: expected only 1 calls to '
+                              "<pytest_factory.framework.http_types.MockHttpRequest: {'url': "
+                              "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': "
+                              '{}}>! will repeat last response: "TestHttp"']
 
         async def test_http_call_same_endpoint_diff_test(self, store, caplog):
             """

@@ -5,13 +5,12 @@ from typing import Optional
 from smtplib import SMTPConnectError
 
 from pytest_factory.framework.base_types import MAGIC_TYPE
-from pytest_factory.framework.exceptions import MissingFactoryException, MissingTestDoubleException, \
-    UnCalledTestDoubleException
+from pytest_factory.framework.exceptions import MissingFactoryException, UnCalledTestDoubleException
 from pytest_factory.monkeypatch.tornado import tornado_handler
 from pytest_factory.monkeypatch.smtplib import mock_smtp_server
 from pytest_factory import logger
-from tests.smtp_app import test_url_map
-from tests.test_http import get_logs
+from tests.test_smtp.smtp_app import test_url_map
+from tests.test_http.test_http import get_logs
 
 logger = logger.get_logger(__name__)
 
@@ -21,7 +20,10 @@ DEFAULT_TO_ADDRS = ["mom@aol.com", "test@pytest-factory.com"]
 
 
 def get_body(to_addrs: MAGIC_TYPE[str] = None, from_addr: Optional[str] = None):
-    body_dict = {'to_addrs': to_addrs or DEFAULT_TO_ADDRS}
+    body_dict = {
+        'to_addrs': to_addrs or DEFAULT_TO_ADDRS,
+        'msg': 'omg email'
+    }
     if from_addr:
         body_dict['from_addr'] = from_addr
     return json.dumps(body_dict).encode()

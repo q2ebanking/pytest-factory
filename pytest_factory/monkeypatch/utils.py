@@ -3,7 +3,7 @@ from typing import Callable, Dict, Optional, Any
 from pytest_factory.framework.mall import MALL
 
 
-def get_generic_caller(method_name: str, request_callable: Callable,
+def get_generic_caller(request_callable: Callable, method_name: Optional[str] = None,
                        response_callable: Optional[Callable] = None, is_async=False) -> Callable:
     """
     this method will redefine the method with method_name in the module being
@@ -13,9 +13,10 @@ def get_generic_caller(method_name: str, request_callable: Callable,
     with the request and response
 
     :param method_name: the name of the method in the module being
-        monkeypatched for this test
+        monkeypatched for this test unless this is unambiguous
     :param request_callable: class of the request object or function that will
-        return one; must always take method_name as kwarg
+        return one; must always take keyword argument method_name and return a
+        MockHttpRequest
     :param response_callable: class of the response object or function that
         will return one
     :param is_async: must set to True if the monkeypatched method is async
@@ -27,8 +28,10 @@ def get_generic_caller(method_name: str, request_callable: Callable,
         """
         this method replaces method_name in the module being monkeypatched
         """
+        if method_name:
+            kwargs['method_name'] = method_name
 
-        req_obj = request_callable(method_name=method_name, *args, **kwargs)
+        req_obj = request_callable(*args, **kwargs)
         store = MALL.get_store()
         mock_response = store.get_next_response(factory_name=req_obj.FACTORY_NAME, req_obj=req_obj)
 
@@ -52,23 +55,14 @@ def get_generic_caller(method_name: str, request_callable: Callable,
 
 def update_monkey_patch_configs(callable_obj: Any,
                                 patch_members: Dict[str, Any],
-                                _get_handler_instance: Optional[Callable] = None):
+                                constructor: Optional[Callable] = None):
     """
     Call this method at the bottom of your non HQ mock module to set up the fixtures.
     :param callable_obj: class or module that will have its method monkeypatched
     :param patch_members: dictionary of members where keys are the name of the member of callable_obj to be patched,
         and the values are the replacement member
+    :param constructor: method that returns a new callable_obj if callable_obj is a class and not a module and
+    the resulting object is a test double needed for this test suite
     :return:
     """
-    key = callable_obj.__name__
-    patch_configs = MALL.monkey_patch_configs.get(key)
-    if patch_configs:
-        MALL.monkey_patch_configs[key].get('patch_methods').update(patch_members)
-        if _get_handler_instance:
-            MALL.monkey_patch_configs[key]['_get_handler_instance'] = _get_handler_instance
-    else:
-        MALL.monkey_patch_configs[callable_obj.__name__] = {
-            'callable': callable_obj,
-            'patch_methods': patch_members,
-            '_get_handler_instance': _get_handler_instance
-        }
+    MALL.load_monkeypatch_configs(callable_obj=callable_obj, patch_members=patch_members, constructor=constructor)
