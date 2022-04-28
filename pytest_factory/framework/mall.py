@@ -126,16 +126,6 @@ class Mall:
             if v:
                 os.environ[k] = v
 
-    def _load(self, conf: dict) -> dict:
-        """
-        always use this method to modify MALL when configuration stage ends
-        :param conf: the store config to fall back on if no test-specific
-            store is defined normally passed in from Settings
-        """
-        self._by_dir = conf
-
-        return self._by_dir
-
     @cached_property
     def plugins(self) -> Dict[str, Callable]:
         return_dict = {}
