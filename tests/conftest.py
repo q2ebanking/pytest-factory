@@ -24,15 +24,15 @@ def write_readme_examples_to_file():
             elif in_code_block:
                 file_lines_buffer.append(line)
 
+    out_dir = Path(__file__).parent.joinpath('tests')
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
     for file_name, file_lines in files.items():
-        if file_name == 'conftest.py':
+        if file_name in {'conftest.py', 'config.ini'}:
             continue
-        out_dir = Path(__file__).parent.joinpath('tests')
         file_path = out_dir.joinpath(file_name)
-        if not os.path.exists(out_dir):
-            os.mkdir(out_dir)
         if os.path.exists(file_path):
-            os.remove(file_path)  # maybe have pytest track files to clean up after?
+            os.remove(file_path)
         with open(file_path, 'w') as new_file:
             new_file.writelines(file_lines)
 
