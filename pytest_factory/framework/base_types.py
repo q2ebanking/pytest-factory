@@ -1,34 +1,30 @@
 from __future__ import annotations
 import json
-from typing import Any, Dict, Union, List, Tuple, AnyStr, Hashable, Optional, Set
+from typing import Any, Dict, Union, List, Tuple, AnyStr, Optional, TypeVar, Set
 
 
-def get_kwargs(o: object, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
+def get_kwargs(o: object, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
     allowed_types = allowed_types or {int, bytes, str}
+    d = o.kwargs if pre_not_de else vars(o)
     d = {k: v if type(v) in allowed_types else str(v)
-         for k, v in o.kwargs.items()
-         if v is not o and k is not '__class__'}
+         for k, v in d.items()
+         if v is not o and k not in {'__class__', 'kwargs'}}
     return d
 
 
-class Serializable:
-    def __str__(self):
-        d = get_kwargs(self, allowed_types={int, str})
+class Message:
+    def write(self, just_args: bool = False) -> str:
+        d = get_kwargs(self, pre_not_de=True)
+        if just_args:
+            return json.dumps(d)[1:-2]
+        return f"{self.__class__.__name__}(**{d})"
+
+    def serialize(self):
+        d = get_kwargs(self, pre_not_de=True, allowed_types={int, str})
         return f"{self.__class__}: {json.dumps(d)}"
 
-
-class Writable:
-    def write(self, just_args=False) -> str:
-        d = get_kwargs(self)
-
-        def add_type_delimiters(s: Any) -> Any:
-            if isinstance(s, str):
-                return f'"{s}"'
-            if isinstance(s, bytes):
-                return f"b'{s.decode()}'"
-            return s
-        d_s = ", ".join([f"{k}={add_type_delimiters(v)}" for k, v in d.items()])
-        return d_s if just_args else f"{self.__class__.__name__}({d_s})"
+    def __repr__(self):
+        return f"<{self.__class__.__module__}.{self.__class__.__name__}: {get_kwargs(self)}>"
 
 
 class BaseMockRequest:
@@ -42,6 +38,9 @@ class BaseMockRequest:
     object
     """
 
+    FACTORY_NAME = 'make_factory'
+    FACTORY_PATH = 'pytest_factory.framework.factory'
+
     def compare(self, other) -> bool:
         """
         we are effectively simulating the third-party endpoint's router here. note that "this" is the request object of
@@ -53,6 +52,16 @@ class BaseMockRequest:
         raise NotImplementedError
 
 
+def compare_unknown_types(a, b) -> bool:
+    if hasattr(a, 'compare'):
+        compare_result = a.compare(b)
+    elif hasattr(b, 'compare'):
+        compare_result = b.compare(a)
+    else:
+        compare_result = a == b
+    return compare_result
+
+
 class Factory(dict):
     def __init__(self, req_obj: Union[str, BaseMockRequest], responses: Any):
         super().__init__()
@@ -60,9 +69,13 @@ class Factory(dict):
 
     def __setitem__(self, key, value):
         for _key in self.keys():
-            if key.compare(_key):
+            if compare_unknown_types(key, _key):
                 return
         super().__setitem__(key, value)
+
+    @property
+    def FACTORY_NAME(self):
+        return list(self.keys())[0]
 
 
 class BasePlugin:
@@ -96,8 +109,12 @@ ROUTING_TYPE = Dict[
         BaseMockRequest],
     Any
 ]
+T = TypeVar("T")
 
-BASE_RESPONSE_TYPE = Union[Exception, object, AnyStr]
+MAGIC_TYPE = Optional[Union[List[T], T]]
+
+
+BASE_RESPONSE_TYPE = Union[Exception, T, AnyStr]
 MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]
-
-Exchange = Tuple[Union[Hashable, BaseMockRequest], BASE_RESPONSE_TYPE]
+ANY_MOCK_RESPONSE = MAGIC_TYPE[BASE_RESPONSE_TYPE[T, T]]
+Exchange = Tuple[Union[BaseMockRequest], BASE_RESPONSE_TYPE]

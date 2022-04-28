@@ -47,19 +47,21 @@ class RecorderException(PytestFactoryBaseException):
 
 class MissingHandlerException(PytestFactoryBaseException):
     def get_error_msg(self) -> str:
-        log_msg = 'this test case is missing a mock_request or similar factory! no RequestHandler defined to test!'
+        log_msg = 'MissingHandlerException: this test case is missing a request ' \
+                  'handler factory! no RequestHandler defined to test!'
         return log_msg
 
 
-class TestDoubleTypeException(PytestFactoryBaseException):
+class TypeTestDoubleException(PytestFactoryBaseException):
     def get_error_msg(self, response: Any, request_module_name: str) -> str:
-        log_msg = f'cannot convert test double {str(response)} of type {type(response)} into type expected by module {request_module_name}'
+        log_msg = f'TypeTestDoubleException: cannot convert test double {str(response)}' \
+                  f' of type {type(response)} into type expected by module {request_module_name}'
         return log_msg
 
 
 class UnhandledPluginException(PytestFactoryBaseException):
     def get_error_msg(self, plugin_name: str, exception: Exception, *args, **kwargs) -> str:
-        log_msg = f'unhandled exception in plugin {plugin_name}: {exception}'
+        log_msg = f'UnhandledPluginException: unhandled exception in plugin {plugin_name}: {exception}'
         return log_msg
 
 
@@ -70,13 +72,14 @@ class RequestNormalizationException(PytestFactoryBaseException):
             "path": path,
             **kwargs
         }
-        log_msg = f'while creating {req_obj_cls} with kwargs: {qwargs}, encountered unhandled exception: {ex}'
+        log_msg = f'RequestNormalizationException: while creating {req_obj_cls} with kwargs:' \
+                  f' {qwargs}, encountered unhandled exception: {ex}'
         return log_msg
 
 
 class MissingFactoryException(PytestFactoryBaseException):
     def get_error_msg(self, factory_name: str, *_, **__) -> str:
-        log_msg = f'this test case is missing the requested factory: {factory_name}! '
+        log_msg = f'MissingFactoryException: this test case is missing the requested factory: {factory_name}! '
         return log_msg
 
 
@@ -87,12 +90,13 @@ class MissingTestDoubleException(PytestFactoryBaseException):
     """
 
     def get_error_msg(self, req_obj: Hashable) -> str:
-        return f"could not find test double match for request signature: {req_obj}!"
+        return f"MissingTestDoubleException: could not find test double match for request signature: {req_obj}!"
 
 
 class UnCalledTestDoubleException(PytestFactoryBaseException):
     def get_error_msg(self, uncalled_test_doubles: dict) -> str:
-        return f"the following test doubles were NOT used in this test: {uncalled_test_doubles}"
+        return f"UnCalledTestDoubleException: the following test doubles were NOT used in " \
+               f"this test: {uncalled_test_doubles}"
 
     def get_warning_msg(self, uncalled_test_doubles: dict):
         warning_msg = " if this is not expected, set assert_no_missing_calls to True"
@@ -101,8 +105,8 @@ class UnCalledTestDoubleException(PytestFactoryBaseException):
 
 class OverCalledTestDoubleException(PytestFactoryBaseException):
     def get_error_msg(self, mock_responses: list, req_obj: Any) -> str:
-        return f'expected only {len(mock_responses)} calls to {req_obj}!'
+        return f'OverCalledTestDoubleException: expected only {len(mock_responses)} calls to {req_obj}!'
 
     def get_warning_msg(self, mock_responses: list, req_obj: Any) -> str:
-        warning_msg = f" will repeat last response: {mock_responses[-1][1]}"
+        warning_msg = f" will repeat last response: \"{mock_responses[-1][1]}\""
         return self.get_error_msg(mock_responses=mock_responses, req_obj=req_obj) + warning_msg
