@@ -42,22 +42,24 @@ class TornadoRequest(MockHttpRequest):
     HANDLER_NAME = 'RequestHandler'
     HANDLER_PATH = 'tornado.web'
 
-    def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
+    def __init__(self, method: str = HTTP_METHODS.GET.value, url: Optional[str] = None, **kwargs):
         """
         :param method: HTTP method, e.g. GET or POST
-        :param path: HTTP url or path
+        :param url: HTTP url or path
         :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """
-        self.kwargs = {**kwargs, 'method': method, 'path': path}
+        qwargs = {'method': method, 'url': url}
 
         if kwargs.get('headers'):
-            kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
+            qwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
 
         if kwargs.get('json'):
             json_dict = kwargs.pop('json')
-            kwargs['body'] = json.dumps(json_dict).encode()
+            qwargs['body'] = json.dumps(json_dict).encode()
+        elif kwargs.get('body'):
+            qwargs['body'] = kwargs.get('body')
 
-        super().__init__(method=method, url=path, **kwargs)
+        super().__init__(**qwargs)
 
     @property
     def content(self) -> bytes:

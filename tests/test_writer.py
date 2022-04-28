@@ -24,8 +24,8 @@ class TestWriter:
             os.remove(test_file_path)
         except FileNotFoundError as _:
             pass
-        hp = 'tests.passthru_app.PassthruTestHandler'
-        request = TornadoRequest(method='post', path='/', body='<xmlDoc>foo</xmlDoc>')
+        hp = 'tests.test_http.passthru_app.PassthruTestHandler'
+        request = TornadoRequest(method='post', url='/', body=b'<xmlDoc>foo</xmlDoc>')
         setattr(request, 'factory_name', 'tornado_handler')
         setattr(request, 'factory_path', 'pytest_factory.monkeypatch.tornado')
         response = JSONDecodeError
@@ -43,8 +43,8 @@ class TestWriter:
             os.remove(test_file_path)
         except FileNotFoundError as _:
             pass
-        hp = 'tests.passthru_app.PassthruTestHandler'
-        request = TornadoRequest(path='endpoint0')
+        hp = 'tests.test_http.passthru_app.PassthruTestHandler'
+        request = TornadoRequest(url='endpoint0')
         setattr(request, 'factory_name', 'tornado_handler')
         setattr(request, 'factory_path', 'pytest_factory.monkeypatch.tornado')
         response = MockHttpResponse(status=500, body=b'ERROR: 500')

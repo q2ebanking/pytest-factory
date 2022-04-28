@@ -28,7 +28,7 @@ class HTTP_METHODS(Enum):
     OPTIONS = 'options'
 
 
-class MockHttpRequest(BaseMockRequest, Message):
+class MockHttpRequest(BaseMockRequest):
     """
     abstract HTTP request class representing simulated and actual inbound and outbound requests.
     normalizing all requests within pytest-factory allows for direct comparison of requests, which has
@@ -43,6 +43,12 @@ class MockHttpRequest(BaseMockRequest, Message):
     FACTORY_PATH = 'pytest_factory.http'
 
     def __init__(self, url: str, method: str = 'get', body: Optional[bytes] = b'', headers: Optional[dict] = None):
+        """
+        :param url:
+        :param method:
+        :param body:
+        :param headers:
+        """
         self.kwargs = locals()
         self.url = url
         self.method = method

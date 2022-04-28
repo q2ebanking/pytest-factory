@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Dict, Any, Optional, List, Callable, Iterable, Union
 from functools import cached_property
 from importlib import import_module
@@ -73,13 +74,16 @@ class Mall:
             prop = self._by_dir.get('tests', {}).get(key)
         return prop
 
+    def get_full_path(self, new_file_name: Optional[str] = None):
+        p = Path(self._config_path)
+        p = p.parent
+        if new_file_name:
+            p = p.joinpath(new_file_name)
+        return p
+
     @property
     def env_vars(self) -> Dict[str, Any]:
         return self._get_prop('env_vars') or {}
-
-    @property
-    def http_req_wildcard_fields(self) -> List[str]:
-        return self._get_prop('http_req_wildcard_fields')
 
     @property
     def request_handler_class(self) -> Callable:
@@ -98,7 +102,7 @@ class Mall:
             self._current_test_dir = test_dir
 
         conf = prep_stores_update_local(dir_name=test_dir)
-        self._load(conf=conf)
+        self._by_dir = conf
         env_vars = self.env_vars or {}
         self._backup_env_vars.update({k: os.getenv(k) for k, v in env_vars.items()})
         for k, v in env_vars.items():

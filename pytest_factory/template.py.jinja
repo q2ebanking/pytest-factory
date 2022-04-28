@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 
 {% if recording.raises: %}
 from {{recording.last.__module__}} import {{recording.last.__name__}}
@@ -17,7 +18,8 @@ from {{handler_path}} import {{handler_name}}
 pytestmark = pytest.mark.asyncio
 
 {% if not recording.raises %}
-with open('tests/actual_response') as file:
+p = Path(__file__).parent.joinpath('actual_response')
+with open(p) as file:
     actual_response_str = file.read()
 {% endif %}
 
@@ -33,7 +35,7 @@ class Test{{handler_name}}{{incident_name}}:
     async def test_{{generated_test_id}}(self, store):
         {% if recording.raises %}
         with pytest.raises({{recording.last.__name__}}):
-            await store.handler.run_test()
+            await store.sut.run_test()
         {% else: %}
         actual_response = reify(actual_response_str)
         simulated_response = await store.handler.run_test()

@@ -29,7 +29,7 @@ def get_body(to_addrs: MAGIC_TYPE[str] = None, from_addr: Optional[str] = None):
     return json.dumps(body_dict).encode()
 
 
-@tornado_handler(method='post', path='endpoint0', body=get_body())
+@tornado_handler(method='post', url='endpoint0', body=get_body())
 class TestSmtp:
     @mock_smtp_server(host=test_url_map.get('endpoint0'), to_addrs=DEFAULT_TO_ADDRS, response={})
     async def test_smtp_sendmail(self, store):
@@ -53,7 +53,7 @@ class TestSmtp:
         assert re.search(string=actual[1], pattern=r'UnCalledTestDoubleException')
 
     @mock_smtp_server(host=test_url_map.get('endpoint0'), to_addrs=DEFAULT_TO_ADDRS, response={})
-    @tornado_handler(method='post', path='endpoint1', body=get_body())
+    @tornado_handler(method='post', url='endpoint1', body=get_body())
     @mock_smtp_server(host=test_url_map.get('endpoint1'), to_addrs=DEFAULT_TO_ADDRS,
                       response=SMTPConnectError(code=550, msg=b''))
     async def test_smtp_sendmail_diff_host(self, store):

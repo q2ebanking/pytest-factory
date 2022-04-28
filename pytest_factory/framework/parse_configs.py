@@ -19,7 +19,10 @@ def get_config_parser(path: Optional[str] = None) -> ConfigParser:
         p_list = list(p.glob(path))
     if len(p_list) != 1:
         raise ConfigException(log_msg=f'{path} is missing from project!')
-    config.read(p_list[0])
+    config_path = p_list[0]
+    config.read(config_path)
+    config_path = config_path.resolve()
+    config.set(DEFAULT_FOLDER_NAME, '_config_path', str(config_path))
     return config
 
 

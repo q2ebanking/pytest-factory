@@ -66,14 +66,9 @@ class UnhandledPluginException(PytestFactoryBaseException):
 
 
 class RequestNormalizationException(PytestFactoryBaseException):
-    def get_error_msg(self, req_obj_cls: Callable, method: str, path: str, ex: Exception, *args, **kwargs) -> str:
-        qwargs = {
-            "method": method,
-            "path": path,
-            **kwargs
-        }
+    def get_error_msg(self, req_obj_cls: Callable, ex: Exception, *args, **kwargs) -> str:
         log_msg = f'RequestNormalizationException: while creating {req_obj_cls} with kwargs:' \
-                  f' {qwargs}, encountered unhandled exception: {ex}'
+                  f' {kwargs}, encountered unhandled exception: {ex}'
         return log_msg
 
 

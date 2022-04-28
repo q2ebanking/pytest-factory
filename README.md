@@ -66,14 +66,14 @@ from .app import MainHandler
 pytestmark = pytest.mark.asyncio
 
 
-@mock_http_server(method='get', path='https://www.world.com/hello', response='blah blah')
+@mock_http_server(method='get', url='https://www.world.com/hello', response='blah blah')
 @tornado_handler(handler_class=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
         resp = await store.sut.run_test()
         assert resp.content.decode() == 'blah blah'
 
-    @mock_http_server(method='get', path='https://www.world.com/hello', response='Hello, world!')
+    @mock_http_server(method='get', url='https://www.world.com/hello', response='Hello, world!')
     async def test_b(self, store):
         resp = await store.sut.run_test()
         assert resp.content.decode() == 'Hello, world!'

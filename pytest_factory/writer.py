@@ -1,14 +1,12 @@
 from typing import List
+from pathlib import Path
 
 from black import format_str, FileMode
 from jinja2 import Template
-from requests import Response
 
 from pytest_factory.http import MockHttpRequest
+from pytest_factory.framework.mall import MALL
 from pytest_factory.recorder.recording import Recording, reify
-
-# TODO find a home for this
-assert_reproduction_as_success = True
 
 
 def parse(logs: List[str]) -> Recording:
@@ -36,18 +34,24 @@ def parse(logs: List[str]) -> Recording:
     return recording
 
 
+def get_template(file_path: str):
+    p = Path(__file__).parent
+    return p.joinpath(file_path)
+
+
 class Writer:
     def __init__(self, recording: Recording, handler_path: str):
         self.recording = recording
         self.handler_path, self.handler_name = handler_path.rsplit('.', 1)
 
-    def write_test(self, output_path: str = 'tests/test_file.py'):
+    def write_test(self, output_path: str):
         """
         writes a test module that reproduces the recorded session
         returns file path
         """
-        new_data_path = f"tests/actual_response"
-        template_path = f"pytest_factory/template.py.jinja"
+
+        new_data_path = MALL.get_full_path("actual_response")
+        template_path = get_template("template.py.jinja")
         with open(output_path, "x") as test_file:
             with open(template_path) as template_file:
                 template = Template(template_file.read())
@@ -61,10 +65,10 @@ class Writer:
                 'request_factory_name': request_factory_name,
                 'generated_test_id': 'example_0',
                 'response_attributes': {
-                    'status_code',
-                    'content'
+                    'status',
+                    'body'
                 },
-                'assert_reproduction_as_success': assert_reproduction_as_success
+                'assert_reproduction_as_success': MALL.assert_reproduction_as_success
             }
 
             test_module_str = template.render(**inputs)

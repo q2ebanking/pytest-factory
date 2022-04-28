@@ -4,7 +4,7 @@ from typing import Any, Dict, Union, List, Tuple, AnyStr, Optional, TypeVar, Set
 
 
 def get_kwargs(o: object, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
-    allowed_types = allowed_types or {int, bytes, str}
+    allowed_types = allowed_types or {int, bytes, str, type(None), bool}
     d = o.kwargs if pre_not_de else vars(o)
     d = {k: v if type(v) in allowed_types else str(v)
          for k, v in d.items()
@@ -12,11 +12,27 @@ def get_kwargs(o: object, pre_not_de: bool = False, allowed_types: Optional[Set[
     return d
 
 
+def convert(x):
+    if isinstance(x, bytes):
+        return f"b'{x.decode()}'"
+    elif isinstance(x, str):
+        return f'"{x}"'
+    elif x is None:
+        return 'None'
+    elif x is True:
+        return 'True'
+    elif x is False:
+        return 'False'
+    else:
+        return str(x)
+
+
 class Message:
     def write(self, just_args: bool = False) -> str:
         d = get_kwargs(self, pre_not_de=True)
         if just_args:
-            return json.dumps(d)[1:-2]
+            s = ', '.join([f"{k}={convert(v)}" for k, v in d.items()])
+            return s
         return f"{self.__class__.__name__}(**{d})"
 
     def serialize(self):
@@ -24,10 +40,10 @@ class Message:
         return f"{self.__class__}: {json.dumps(d)}"
 
     def __repr__(self):
-        return f"<{self.__class__.__module__}.{self.__class__.__name__}: {get_kwargs(self)}>"
+        return f"<class {self.__class__.__module__}.{self.__class__.__name__}: {get_kwargs(self)}>"
 
 
-class BaseMockRequest:
+class BaseMockRequest(Message):
     """
     dual-purpose class used to represent:
     - Actual Requests when created from parameters of @actual_request
@@ -112,7 +128,6 @@ ROUTING_TYPE = Dict[
 T = TypeVar("T")
 
 MAGIC_TYPE = Optional[Union[List[T], T]]
-
 
 BASE_RESPONSE_TYPE = Union[Exception, T, AnyStr]
 MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]
