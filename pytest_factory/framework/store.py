@@ -3,7 +3,8 @@ from typing import Dict, Optional, Any, Union, List, Callable, Set, Tuple
 from functools import cached_property
 
 import pytest_factory.framework.exceptions as exceptions
-from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE, Exchange
+from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE, \
+    compare_unknown_types
 from pytest_factory import logger
 from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
                                                       assert_no_extra_calls as default_assert_no_extra_calls)
@@ -15,22 +16,12 @@ def is_plugin(kallable: Callable) -> bool:
     return hasattr(kallable, 'get_plugin_responses')
 
 
-def compare_unknown_types(a, b) -> bool:
-    if hasattr(a, 'compare'):
-        compare_result = a.compare(b)
-    elif hasattr(b, 'compare'):
-        compare_result = b.compare(a)
-    else:
-        compare_result = a == b
-    return compare_result
-
-
 class Store:
     """
     stores test doubles for a given test method
     """
 
-    def __init__(self, _test_name: str, **kwargs):
+    def __init__(self, _test_name: str):
         self._test_name = _test_name
         self.request_handler_class: Optional[Callable] = None
         self._request_factory: Optional[Factory] = None
@@ -38,26 +29,29 @@ class Store:
         self.assert_no_missing_calls: bool = default_assert_no_missing_calls
         self.factory_names: Set[str] = set()
         self.messages = []
-        for k, v in kwargs.items():
-            if v is not None:
-                setattr(self, k, v)
+        self._opened: bool = False
 
     @property
-    def handler(self) -> object:
-        if not self._request_factory:
+    def sut(self) -> object:
+        if not self._request_factory and self._opened:
             raise exceptions.MissingHandlerException
-        return list(self._request_factory.values())[0]
+        try:
+            return list(self._request_factory.values())[0]
+        except AttributeError as _:
+            return None
 
-    def open(self, **kwargs) -> Shopper:
+    def shop(self, **kwargs) -> Shopper:
         return Shopper(store=self, **kwargs)
 
-    def checkout(self, response: Any) -> Any:
-        self.messages.append(response)
-        return self.messages[-1]
+    def open(self):
+        self._opened = True
+
+    def close(self):
+        self._opened = False
 
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
         """
-        always use this method to modify store AFTER configuration stage ends
+        always use this method to modify store AFTER configuration stage ends and BEFORE test running stage
         note that this will get invoked depth-first
         :param req_obj:
         :param factory_name:
@@ -66,7 +60,7 @@ class Store:
         responses = [response] if not isinstance(response, list) else response
         responses = [(False, _response) for _response in responses]
         self.factory_names.add(factory_name)
-        if not hasattr(self, factory_name):  # store does not already have a test double from factory
+        if not hasattr(self, factory_name) or getattr(self, factory_name) is None:
             new_factory = Factory(req_obj=req_obj, responses=responses)
             setattr(self, factory_name, new_factory)
         else:  # store already has test doubles from this factory
@@ -95,7 +89,11 @@ class Store:
             req_obj
         """
         if not hasattr(self, factory_name):
-            raise exceptions.MissingFactoryException(factory_name=factory_name)
+            ex = exceptions.MissingFactoryException(factory_name=factory_name)
+            if self.assert_no_missing_calls:
+                raise ex
+            else:
+                return None
         factory = getattr(self, factory_name)
         mock_responses = None
         for k, v in factory.items():
@@ -113,10 +111,12 @@ class Store:
                 break
 
         if mock_responses is None:
-            raise exceptions.MissingTestDoubleException(req_obj=req_obj)
+            ex = exceptions.MissingTestDoubleException(req_obj=req_obj)
+            if self.assert_no_missing_calls:
+                raise ex
+            return mock_responses
         final_response, mock_responses = self._mark_and_retrieve_test_double(req_obj=req_obj,
                                                                              mock_responses=mock_responses)
-        self.messages.extend([req_obj, final_response])
 
         if mock_responses and final_response is None:
             final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
@@ -164,13 +164,6 @@ class Store:
                         if factory_name is not list(self._request_factory.keys())[0]}
         return test_doubles
 
-    def load_defaults(self, default_routes: Dict[str, ROUTING_TYPE]):
-        for key, route in default_routes.items():
-            if hasattr(self, key):
-                getattr(self, key).update(route)
-            else:
-                setattr(self, key, route)
-
     def check_no_uncalled_test_doubles(self):
         """
         checks if this Store has any test_doubles that have not been called the
@@ -202,15 +195,16 @@ class Shopper:
         self.response_attr = response_attr
         self.request_attr = request_attr
         for k, v in kwargs.items():
-            setattr(self.store, k, v)
+            if v is not None:
+                setattr(self.store, k, v)
 
     def __enter__(self):
-        sut_input = getattr(self.store.handler, self.request_attr)
+        sut_input = getattr(self.store.sut, self.request_attr)
         self.store.messages.append(sut_input)
         return self.store
 
     def __exit__(self, exc_type, exc_val, traceback):
-        response = exc_val if exc_val else getattr(self.store.handler, self.response_attr)
+        response = exc_val if exc_val else getattr(self.store.sut, self.response_attr)
         self.store.messages.append(response)
         if len(self.store.messages) % 2 != 0:
             raise exceptions.RecorderException(log_msg='failed to record even number of messages!')

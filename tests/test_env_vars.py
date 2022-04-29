@@ -1,8 +1,14 @@
 import os
+import pytest
 
 from pytest_factory.framework.mall import MALL
 
-os.unsetenv('TEST')
+
+@pytest.fixture()
+def env_vars(request):
+    os.unsetenv('TEST')
+    yield request
+    os.unsetenv('TEST')
 
 
 class TestEnvVars:

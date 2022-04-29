@@ -1,13 +1,14 @@
 import inspect
+import json
 from typing import Callable, Optional, Union, Any
 
 import requests
 from tornado.web import Application, RequestHandler
+from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
-from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
-from pytest_factory.framework.mall import MALL
+from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, MALL
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
-from pytest_factory.http import MockHttpRequest, make_factory
+from pytest_factory.http import MockHttpRequest, make_factory, HTTP_METHODS, MockHttpResponse
 from pytest_factory.logger import get_logger
 
 logger = get_logger(__name__)
@@ -18,32 +19,58 @@ class TornadoMonkeyPatchException(PytestFactoryBaseException):
         return log_msg
 
 
-def read_from_write_buffer(buffer) -> Optional[str]:
-    result = buffer[len(buffer) - 1].decode('utf-8') if buffer else None
+def connection(): pass
+
+
+setattr(connection, 'set_close_callback', lambda _: None)
+
+
+def constructor(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
+    request = HTTPServerRequest(method=req_obj.method, uri=req_obj.url, body=req_obj.body, headers=req_obj.headers)
+    request.connection = connection
+    return handler_class(application=Application(), request=request)
+
+
+def read_from_write_buffer(buffer) -> Optional[bytes]:
+    result = buffer[len(buffer) - 1] if buffer else None
     return result
 
 
 class TornadoRequest(MockHttpRequest):
     FACTORY_NAME = 'tornado_handler'
     FACTORY_PATH = 'pytest_factory.monkeypatch.tornado'
+    HANDLER_NAME = 'RequestHandler'
+    HANDLER_PATH = 'tornado.web'
 
+    def __init__(self, method: str = HTTP_METHODS.GET.value, url: Optional[str] = None, **kwargs):
+        """
+        :param method: HTTP method, e.g. GET or POST
+        :param url: HTTP url or path
+        :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
+        """
+        qwargs = {'method': method, 'url': url}
 
-def get_handler_instance(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
-    """
-    this is a tornado-specific adapter for converting a req_obj into an instance of the handler under test and should
-    be generic across all handlers within a test suite
-    """
-    handler = handler_class(Application(), req_obj)
-    return handler
+        if kwargs.get('headers'):
+            qwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
+
+        if kwargs.get('json'):
+            json_dict = kwargs.pop('json')
+            qwargs['body'] = json.dumps(json_dict).encode()
+        elif kwargs.get('body'):
+            qwargs['body'] = kwargs.get('body')
+
+        super().__init__(**qwargs)
+
+    @property
+    def content(self) -> bytes:
+        return self.body
 
 
 def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
                     handler_class: Optional[Callable] = None, **kwargs) -> Callable:
     if req_obj is None:
         req_obj = TornadoRequest(**kwargs)
-    else:
-        req_obj.FACTORY_NAME = TornadoRequest.FACTORY_NAME
-        req_obj.FACTORY_PATH = TornadoRequest.FACTORY_PATH
+
     return make_factory(req_obj=req_obj,
                         handler_class=handler_class,
                         factory_name='tornado_handler')
@@ -77,8 +104,8 @@ class TornadoMonkeyPatches(RequestHandler):
         needs to make an assertion against (e.g. some data within the Response.content)
         :return:
         """
-        store = self._pytest_store
-        with store.open(assert_no_extra_calls=assert_no_extra_calls,
+        store = MALL.get_store()
+        with store.shop(assert_no_extra_calls=assert_no_extra_calls,
                         assert_no_missing_calls=assert_no_missing_calls,
                         request_attr='request',
                         response_attr='_response') as _:
@@ -94,19 +121,16 @@ class TornadoMonkeyPatches(RequestHandler):
 
             if self._write_buffer:
                 raw_resp = read_from_write_buffer(self._write_buffer)
-                response_obj = requests.Response()
-                response_obj._content = raw_resp.encode()
-                response_obj.status_code = self.get_status()
+                response_obj = MockHttpResponse(body=raw_resp, status=self.get_status())
                 if response_parser:
                     response_obj = response_parser(response_obj)
                 self._response = response_obj
                 return response_obj
-
-    def finish(self, *_, **__) -> None:  # pylint: disable=unused-argument
-        # TODO pytest_factory.recorder.TornadoRecorderMixin.finish will get overwritten! maybe toggle by config?
-        pass
+            else:
+                self._response = None
 
 
-patch_members = {'run_test': TornadoMonkeyPatches.run_test, '_transforms': [], 'finish': TornadoMonkeyPatches.finish}
-MALL.get_handler_instance = get_handler_instance
-update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members)
+patch_members = {'run_test': TornadoMonkeyPatches.run_test,
+                 '_transforms': []}
+update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members,
+                            constructor=constructor)

@@ -49,7 +49,14 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Generated unit tests
+tests/actual_response
+tests/test_500_doc.py
+tests/test_unexpected_xml.py
+tests/tests/
+
 # Unit test / coverage reports
+test_reports/
 htmlcov/
 .tox/
 .nox/
@@ -123,5 +130,3 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-test_reports/

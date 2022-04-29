@@ -1,9 +1,33 @@
 from __future__ import annotations
-import json
+from json import loads, dumps, JSONDecodeError
 from importlib import import_module
 from typing import Any, List, Optional, Union, Tuple
 
-from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE
+from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE, ALLOWED_TYPES
+
+
+def infer_type(s: Any):
+    if type(s) in ALLOWED_TYPES and not isinstance(s, str):
+        return s
+    r = {
+        'None': None,
+        'True': True,
+        'False': False
+    }.get(s, Exception)
+    if r is not Exception:
+        return r
+    if len(s) > 2 and s[:2] in {'b"', "b'"}:
+        return s[2:-1].encode()
+    try:
+        d = loads(s)
+        return d
+    except JSONDecodeError as _:
+        if len(s.split('.')) == 2:
+            return float(s)
+        try:
+            return int(s)
+        except ValueError as _:
+            return s
 
 
 def reify(path) -> BASE_RESPONSE_TYPE:
@@ -12,9 +36,8 @@ def reify(path) -> BASE_RESPONSE_TYPE:
     path_parts = path.split('\'')[1].split('.')
     kwargs = None
     if len(path.split(':')) > 1:
-        kwarg_str = path.split('>:')[1]
-        kwargs = {k: v[2:-1].encode() if isinstance(v, str) and v[0] == 'b' else v
-                  for k, v in json.loads(kwarg_str).items()}
+        kwarg_str = ':'.join(path.split(':')[1:]).strip(' ')
+        kwargs = {k: infer_type(v) for k, v in loads(kwarg_str).items()}
     name = '.'.join(path_parts[0:-1]) if len(path_parts) > 2 else None
     module = import_module(name=name)
     kallable = getattr(module, path_parts[-1])
@@ -39,7 +62,7 @@ class Recording:
 
     @classmethod
     def deserialize(cls, b_a: bytes) -> Recording:
-        r = json.loads(b_a.decode())
+        r = loads(b_a.decode())
         incident_type_str = r['incident_type']
         incident_type = reify(incident_type_str)
         r['incident_type'] = incident_type
@@ -76,10 +99,11 @@ class Recording:
     def serialize(self) -> bytes:
         sut_exchange = self.sut_exchange
         if self.raises:
-            sut_exchange = (str(sut_exchange[0]), str(sut_exchange[1]))
+            sut_exchange = (sut_exchange[0].serialize(), str(sut_exchange[1]))
+
         self_dict = {
             'doc_exchanges': self.doc_exchanges,
             'sut_exchange': sut_exchange,
             'incident_type': str(self.incident_type)
         }
-        return json.dumps(self_dict, default=str).encode()
+        return dumps(self_dict, default=lambda x: x.serialize()).encode()
