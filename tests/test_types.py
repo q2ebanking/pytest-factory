@@ -2,7 +2,7 @@
 non async unit tests
 """
 from pytest_factory.http import MockHttpRequest, MockHttpResponse
-from pytest_factory.recorder.recording import reify
+from pytest_factory.lifecycle.recording import reify
 
 
 def test_mock_http_request_compare():

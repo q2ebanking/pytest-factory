@@ -25,10 +25,10 @@ def connection(): pass
 setattr(connection, 'set_close_callback', lambda _: None)
 
 
-def constructor(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
+def constructor(req_obj: MockHttpRequest, sut_callable: Callable) -> RequestHandler:
     request = HTTPServerRequest(method=req_obj.method, uri=req_obj.url, body=req_obj.body, headers=req_obj.headers)
     request.connection = connection
-    return handler_class(application=Application(), request=request)
+    return sut_callable(application=Application(), request=request)
 
 
 def read_from_write_buffer(buffer) -> Optional[bytes]:
@@ -42,13 +42,16 @@ class TornadoRequest(MockHttpRequest):
     HANDLER_NAME = 'RequestHandler'
     HANDLER_PATH = 'tornado.web'
 
-    def __init__(self, method: str = HTTP_METHODS.GET.value, url: Optional[str] = None, **kwargs):
+    def __init__(self, sut_callable: str, method: str = HTTP_METHODS.GET.value,
+                 exchange_id: Optional[str] = None,
+                 url: Optional[str] = None, **kwargs):
         """
         :param method: HTTP method, e.g. GET or POST
         :param url: HTTP url or path
         :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """
-        qwargs = {'method': method, 'url': url}
+        self.sut_callable = sut_callable
+        qwargs = {'method': method, 'url': url, 'sut_callable': sut_callable}
 
         if kwargs.get('headers'):
             qwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
@@ -59,7 +62,7 @@ class TornadoRequest(MockHttpRequest):
         elif kwargs.get('body'):
             qwargs['body'] = kwargs.get('body')
 
-        super().__init__(**qwargs)
+        super().__init__(exchange_id=exchange_id, **qwargs)
 
     @property
     def content(self) -> bytes:
@@ -67,12 +70,10 @@ class TornadoRequest(MockHttpRequest):
 
 
 def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
-                    handler_class: Optional[Callable] = None, **kwargs) -> Callable:
+                    sut_callable: Optional[Union[Callable, str]] = None, **kwargs) -> Callable:
     if req_obj is None:
-        req_obj = TornadoRequest(**kwargs)
-
+        req_obj = TornadoRequest(**kwargs, sut_callable=sut_callable or MALL.sut_callable)
     return make_factory(req_obj=req_obj,
-                        handler_class=handler_class,
                         factory_name='tornado_handler')
 
 

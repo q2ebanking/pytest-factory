@@ -2,8 +2,10 @@ from __future__ import annotations
 from json import loads, dumps, JSONDecodeError
 from importlib import import_module
 from typing import Any, List, Optional, Union, Tuple
+from datetime import datetime
 
-from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE, ALLOWED_TYPES
+from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE, ALLOWED_TYPES, Message
+from pytest_factory.framework.exceptions import RecorderException
 
 
 def infer_type(s: Any):
@@ -30,7 +32,7 @@ def infer_type(s: Any):
             return s
 
 
-def reify(path) -> BASE_RESPONSE_TYPE:
+def reify(path) -> BASE_RESPONSE_TYPE[Message]:
     if not isinstance(path, str) or path[:6] != '<class':
         return path
     path_parts = path.split('\'')[1].split('.')
@@ -38,15 +40,20 @@ def reify(path) -> BASE_RESPONSE_TYPE:
     if len(path.split(':')) > 1:
         kwarg_str = ':'.join(path.split(':')[1:]).strip(' ')
         kwargs = {k: infer_type(v) for k, v in loads(kwarg_str).items()}
-    name = '.'.join(path_parts[0:-1]) if len(path_parts) > 2 else None
-    module = import_module(name=name)
-    kallable = getattr(module, path_parts[-1])
+    if len(path_parts) > 1:
+        name = '.'.join(path_parts[0:-1])
+        module = import_module(name=name)
+        kallable = getattr(module, path_parts[-1])
+    elif len(path_parts) == 1:
+        kallable = __builtins__.get(path_parts[0])
+    else:
+        raise Exception
     if kwargs:
         return kallable(**kwargs)
     return kallable
 
 
-class Recording:
+class Recording(Message):
     """
     represents the inputs and output of the SUT, including those of any DOC. can be created from deployed code
     or locally when running pytest
@@ -54,11 +61,20 @@ class Recording:
 
     def __init__(self, incident_type: Union[Exception, type], sut_exchange: Exchange,
                  doc_exchanges: Optional[List[Exchange]] = None) -> None:
+        """
+        :param incident_type: the Exception whose raising led to the system-under-test needing to ship out a Recording
+        :param sut_exchange: the Exchange of the Message received by the system-under-test and the Message to be sent
+        :param doc_exchanges: the list of Exchanges between the system-under-test and its depended-on-components
+        """
         if not isinstance(incident_type, Exception) and not issubclass(incident_type, Exception):
-            raise Exception  # TODO
+            raise RecorderException(log_msg=f"Recording.__init__ expects incident_type to be of type "
+                                            f"Exception, not {type(incident_type)}!")
+        # TODO more validation?
         self.sut_exchange = sut_exchange
+        self.handler_path = self.first.handler_class_path if hasattr(self.first, 'handler_class_path') else None
         self.doc_exchanges = doc_exchanges or []
         self.incident_type = incident_type
+        self.created_at = datetime.utcnow()
 
     @classmethod
     def deserialize(cls, b_a: bytes) -> Recording:

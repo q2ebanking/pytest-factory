@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Callable, Iterable, Union
+from typing import Dict, Any, Optional, Callable, Iterable, Union
 from functools import cached_property
 from importlib import import_module
 
@@ -86,8 +86,8 @@ class Mall:
         return self._get_prop('env_vars') or {}
 
     @property
-    def request_handler_class(self) -> Callable:
-        return self._get_prop('request_handler_class')
+    def sut_callable(self) -> Callable:
+        return self._get_prop('sut_callable')
 
     @property
     def assert_no_missing_calls(self) -> bool:

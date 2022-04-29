@@ -24,7 +24,7 @@ def write_readme_examples_to_file():
             elif in_code_block:
                 file_lines_buffer.append(line)
 
-    out_dir = Path(__file__).parent.joinpath('tests')
+    out_dir = Path(__file__).parent.joinpath('test_factory_tests')
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     for file_name, file_lines in files.items():

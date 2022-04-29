@@ -6,7 +6,7 @@ from tornado.web import RequestHandler, Application
 from tornado.httputil import HTTPServerRequest
 from tornado.concurrent import Future
 
-from pytest_factory.recorder.recording import Recording, Exchange
+from pytest_factory.lifecycle.recording import Recording, Exchange
 from pytest_factory.http import MockHttpRequest
 from pytest_factory.monkeypatch.tornado import read_from_write_buffer
 

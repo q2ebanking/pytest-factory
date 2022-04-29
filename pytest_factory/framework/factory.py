@@ -14,7 +14,6 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
                  setup: Optional[Callable] = None,
                  teardown: Optional[Callable] = None,
                  response: Optional[BASE_RESPONSE_TYPE] = None,
-                 handler_class: Optional[Callable] = None,
                  factory_name: Optional[str] = None) -> Callable:
     """
     Creates a factory. For use by contributors and plugin
@@ -24,9 +23,7 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     See http.py for an example of usage.
 
     :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
-    :param response: test double - generally a string or Response - should be None if handler_class defined
-    :param handler_class: the class of the handler that this factory will mock - should be None if response is defined
-    within the given factory is the correct test double
+    :param response: test double - generally a string or Response - should be None if the test double is the request
     :param factory_name: name of the factory that create test doubles for the
         returned Callable (TestClass or test_method_or_function; defaults to name of function that called this
         function
@@ -67,22 +64,22 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
             if teardown:
                 teardown(resp=resp, store=store)
 
-        if hasattr(store, factory_name) and store._request_factory \
-                and store._request_factory.FACTORY_NAME == factory_name:
+        if store.sut and response is None:
             return pytest_func_wrapper
         store.update(factory_name=factory_name,
                      req_obj=req_obj, response=response)
         if response is None:
-            final_handler_class = handler_class or store.request_handler_class or MALL.request_handler_class
-            if not final_handler_class:
+            sut_callable = req_obj.sut_callable if hasattr(req_obj, 'sut_callable') \
+                else MALL.sut_callable
+            if not sut_callable:
                 raise MissingHandlerException
             if hasattr(req_obj, 'HANDLER_NAME'):
                 key = req_obj.HANDLER_NAME
                 constructor = MALL.get_constructor(handler_type=key)
-                handler = constructor(handler_class=final_handler_class, req_obj=req_obj)
+                sut = constructor(sut_callable=sut_callable, req_obj=req_obj)
             else:
-                handler = final_handler_class(req_obj)
-            store._request_factory = Factory(req_obj=factory_name, responses=handler)
+                sut = sut_callable(req_obj)
+            store._request_factory = Factory(req_obj=factory_name, responses=sut)
 
         return pytest_func_wrapper
 

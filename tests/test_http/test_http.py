@@ -1,5 +1,4 @@
 from json import JSONDecodeError
-from typing import List
 import pytest
 
 from requests import Timeout
@@ -8,6 +7,8 @@ from pytest_factory.http import mock_http_server, MockHttpResponse
 from pytest_factory.framework.exceptions import UnCalledTestDoubleException
 from pytest_factory.monkeypatch.tornado import tornado_handler
 from pytest_factory import logger
+
+from tests.utils import get_logs
 
 logger = logger.get_logger(__name__)
 
@@ -23,9 +24,6 @@ pytest-factory WARNING: will repeat last response: yup'''
 }
 
 
-def get_logs(caplog, levelname: str = 'WARNING') -> List[str]:
-    actual = [rec.message for rec in caplog.records if rec.levelname == levelname]
-    return actual
 
 
 @tornado_handler(url='endpoint0')

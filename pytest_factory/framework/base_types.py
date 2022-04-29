@@ -1,8 +1,9 @@
 from __future__ import annotations
 import json
+from dataclasses import dataclass
 from typing import Any, Dict, Union, List, Tuple, AnyStr, Optional, TypeVar, Set
 
-ALLOWED_TYPES = {int, bytes, str, type(None), bool, dict}
+ALLOWED_TYPES = {int, bytes, str, type(None), bool, dict, type}
 
 
 def get_kwargs(o: object, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
@@ -29,7 +30,10 @@ def convert(x):
         return str(x)
 
 
+@dataclass
 class Message:
+    exchange_id: str
+
     def write(self, just_args: bool = False) -> str:
         d = get_kwargs(self, pre_not_de=True)
         s = ', '.join([f"{k}={convert(v)}" for k, v in d.items()])
@@ -69,6 +73,12 @@ class BaseMockRequest(Message):
         """
         raise NotImplementedError
 
+
+    def __hash__(self) -> int:
+        """
+        this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
+        """
+        return id(self)
 
 def compare_unknown_types(a, b) -> bool:
     if hasattr(a, 'compare'):
@@ -131,7 +141,7 @@ T = TypeVar("T")
 
 MAGIC_TYPE = Optional[Union[List[T], T]]
 
-BASE_RESPONSE_TYPE = Union[Exception, T, AnyStr]
+BASE_RESPONSE_TYPE = Union[Exception, T]
 MOCK_RESPONSES_TYPE = List[Tuple[bool, BASE_RESPONSE_TYPE]]
-ANY_MOCK_RESPONSE = MAGIC_TYPE[BASE_RESPONSE_TYPE[T, T]]
+ANY_MOCK_RESPONSE = MAGIC_TYPE[BASE_RESPONSE_TYPE[T]]
 Exchange = Tuple[Union[BaseMockRequest], BASE_RESPONSE_TYPE]

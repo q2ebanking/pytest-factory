@@ -50,10 +50,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Generated unit tests
-tests/actual_response
-tests/test_500_doc.py
-tests/test_unexpected_xml.py
-tests/tests/
+tests/test_factory_tests
 
 # Unit test / coverage reports
 test_reports/

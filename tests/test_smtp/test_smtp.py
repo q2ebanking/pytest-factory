@@ -10,7 +10,7 @@ from pytest_factory.monkeypatch.tornado import tornado_handler
 from pytest_factory.monkeypatch.smtplib import mock_smtp_server
 from pytest_factory import logger
 from tests.test_smtp.smtp_app import test_url_map
-from tests.test_http.test_http import get_logs
+from tests.utils import get_logs
 
 logger = logger.get_logger(__name__)
 
