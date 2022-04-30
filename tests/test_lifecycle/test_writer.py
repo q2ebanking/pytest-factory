@@ -1,6 +1,7 @@
 from json import JSONDecodeError
+from typing import List
 
-from pytest_factory.lifecycle.writer import List, Recording, Writer
+from pytest_factory.lifecycle.writer import Recording, Writer
 from pytest_factory.framework.base_types import Exchange
 from pytest_factory.http import MockHttpResponse
 from pytest_factory.monkeypatch.tornado import TornadoRequest, MockHttpRequest

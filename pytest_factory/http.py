@@ -1,8 +1,8 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, AnyStr
 
 from pytest_factory.framework.factory import make_factory
-from pytest_factory.framework.base_types import Union, MAGIC_TYPE, AnyStr
-from pytest_factory.framework.http_types import HTTP_METHODS, MockHttpRequest, MockHttpResponse
+from pytest_factory.framework.base_types import Union, MAGIC_TYPE
+from pytest_factory.framework.http_types import MockHttpRequest, MockHttpResponse
 from pytest_factory.framework.exceptions import RequestNormalizationException
 
 

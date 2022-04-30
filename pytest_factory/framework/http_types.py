@@ -1,6 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 from uuid import uuid4
+from datetime import datetime
 from typing import Optional, Dict
 from urllib.parse import urlparse, parse_qs
 
@@ -11,12 +12,14 @@ from pytest_factory.framework.default_configs import http_req_wildcard_fields as
 
 class MockHttpResponse(Message):
     def __init__(self, body: Optional[bytes] = b'', status: Optional[int] = 200,
-                 headers: Optional[Dict[str, str]] = None, exchange_id: Optional[str] = None):
+                 headers: Optional[Dict[str, str]] = None, exchange_id: Optional[str] = None,
+                 timestamp: Optional[str] = None):
         self.kwargs = {k: v for k, v in locals().items() if k != 'self'}
         self.body = body
         self.status = status
         self.headers = headers or {}
         self.exchange_id = exchange_id
+        self.timestamp = datetime.fromisoformat(timestamp) if timestamp else datetime.utcnow()
 
 
 # based on what the requests module supports
@@ -45,7 +48,7 @@ class MockHttpRequest(BaseMockRequest):
     FACTORY_PATH = 'pytest_factory.http'
 
     def __init__(self, url: str, method: str = 'get', body: Optional[bytes] = b'', headers: Optional[dict] = None,
-                 exchange_id: Optional[str] = None, **kwargs):
+                 exchange_id: Optional[str] = None, timestamp: Optional[str] = None, **kwargs):
         """
         :param url:
         :param method:
@@ -55,11 +58,13 @@ class MockHttpRequest(BaseMockRequest):
         """
         self.kwargs = {k: v for k, v in locals().items() if k not in {'kwargs', 'self'}}
         self.kwargs.update(kwargs)
+        self.allow_redirects = False
         self.url = url
         self.method = method
         self.body = body
         self.headers = headers or {}
         self.exchange_id = exchange_id or uuid4()
+        self.timestamp = datetime.fromisoformat(timestamp) if timestamp else datetime.utcnow()
 
     @staticmethod
     def _urlparse_to_dict(uri: str) -> dict:

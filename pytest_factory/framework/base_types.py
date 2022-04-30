@@ -1,18 +1,13 @@
 from __future__ import annotations
 import json
+from datetime import datetime
 from dataclasses import dataclass
-from typing import Any, Dict, Union, List, Tuple, AnyStr, Optional, TypeVar, Set
+from typing import Any, Dict, Union, List, Tuple, Optional, TypeVar, Set
 
 ALLOWED_TYPES = {int, bytes, str, type(None), bool, dict, type}
 
+HIDDEN_MSG_PROPS = {'exchange_id', 'timestamp'}
 
-def get_kwargs(o: object, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
-    allowed_types = allowed_types or ALLOWED_TYPES
-    d = o.kwargs if pre_not_de else vars(o)
-    d = {k: v if type(v) in allowed_types else str(v)
-         for k, v in d.items()
-         if v is not o and k not in {'__class__', 'kwargs'}}
-    return d
 
 
 def convert(x):
@@ -33,20 +28,30 @@ def convert(x):
 @dataclass
 class Message:
     exchange_id: str
+    timestamp: datetime
+
+    def _get_kwargs(self, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
+        allowed_types = allowed_types or ALLOWED_TYPES
+        d = self.kwargs if pre_not_de else vars(self)
+        d = {k: v if type(v) in allowed_types else str(v)
+             for k, v in d.items()
+             if v is not self and k not in {'__class__', 'kwargs'}}
+        return d
 
     def write(self, just_args: bool = False) -> str:
-        d = get_kwargs(self, pre_not_de=True)
-        s = ', '.join([f"{k}={convert(v)}" for k, v in d.items()])
+        d = self._get_kwargs(pre_not_de=True)
+        s = ', '.join([f"{k}={convert(v)}" for k, v in d.items() if k not in HIDDEN_MSG_PROPS])
         if just_args:
             return s
         return f"{self.__class__.__name__}({s})"
 
     def serialize(self):
-        d = get_kwargs(self, pre_not_de=True)
+        d = self._get_kwargs(pre_not_de=True)
         return f"{self.__class__}: {json.dumps(d, default=convert)}"
 
     def __repr__(self):
-        return f"<class {self.__class__.__module__}.{self.__class__.__name__}: {get_kwargs(self)}>"
+        kwargs = {k: v for k, v in self._get_kwargs().items() if k not in HIDDEN_MSG_PROPS}
+        return f"<class {self.__class__.__module__}.{self.__class__.__name__}: {kwargs}>"
 
 
 class BaseMockRequest(Message):

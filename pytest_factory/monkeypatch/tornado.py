@@ -8,7 +8,8 @@ from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, MALL
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
-from pytest_factory.http import MockHttpRequest, make_factory, HTTP_METHODS, MockHttpResponse
+from pytest_factory.framework.http_types import HTTP_METHODS
+from pytest_factory.http import MockHttpRequest, make_factory, MockHttpResponse
 from pytest_factory.logger import get_logger
 
 logger = get_logger(__name__)

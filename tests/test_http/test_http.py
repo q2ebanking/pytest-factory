@@ -24,8 +24,6 @@ pytest-factory WARNING: will repeat last response: yup'''
 }
 
 
-
-
 @tornado_handler(url='endpoint0')
 @mock_http_server(url='http://www.test.com/endpoint0', response='TestHttp')
 class TestHttp:
@@ -56,8 +54,10 @@ class TestHttp:
     @mock_http_server(url='http://www.test.com/endpoint0', response=Timeout)
     async def test_http_response_exception(self, store):
         resp = await store.sut.run_test()
-        msg = "caught RequestException: <class pytest_factory.framework.http_types.MockHttpRequest: {'url': " \
-              "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': {}}>"
+        msg = ('caught RequestException: <class '
+               "pytest_factory.framework.http_types.MockHttpRequest: {'allow_redirects': "
+               "False, 'url': 'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', "
+               "'headers': {}}>")
         assert resp.body.decode() == msg
 
     class TestResponseTracking:
@@ -67,12 +67,13 @@ class TestHttp:
             assert resp.body.decode() == ''
             actual = get_logs(caplog)
             msg = ['UnCalledTestDoubleException: the following test doubles were NOT used in '
-                   "this test: {'mock_http_server': "
-                   "{<class pytest_factory.framework.http_types.MockHttpRequest: {'url': "
-                   "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': "
-                   "{}}>: [<class pytest_factory.framework.http_types.MockHttpResponse: {'body': "
-                   "b'TestHttp', 'status': 200, 'headers': {}}>]}} if this is not expected, "
-                   'set assert_no_missing_calls to True']
+                   "this test: {'mock_http_server': {<class "
+                   "pytest_factory.framework.http_types.MockHttpRequest: {'allow_redirects': "
+                   "False, 'url': 'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', "
+                   "'headers': {}}>: [<class "
+                   "pytest_factory.framework.http_types.MockHttpResponse: {'body': b'TestHttp', "
+                   "'status': 200, 'headers': {}}>]}} if this is not expected, set "
+                   'assert_no_missing_calls to True']
             assert actual == msg
 
         @tornado_handler(url='endpoint0?num=2')
@@ -83,9 +84,9 @@ class TestHttp:
             assert resp.body.decode() == 'TestHttpTestHttp'
             actual = get_logs(caplog)
             assert actual == ['OverCalledTestDoubleException: expected only 1 calls to <class '
-                              "pytest_factory.framework.http_types.MockHttpRequest: {'url': "
-                              "'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': "
-                              '{}}>! will repeat last response: "<class '
+                              "pytest_factory.framework.http_types.MockHttpRequest: {'allow_redirects': "
+                              "False, 'url': 'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', "
+                              '\'headers\': {}}>! will repeat last response: "<class '
                               "pytest_factory.framework.http_types.MockHttpResponse: {'body': b'TestHttp', "
                               '\'status\': 200, \'headers\': {}}>"']
 
