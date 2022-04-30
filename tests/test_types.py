@@ -4,8 +4,6 @@ non async unit tests
 from pytest_factory.http import MockHttpRequest, MockHttpResponse
 from pytest_factory.lifecycle.recording import reify
 
-from tests.utils import get_masked_pair
-
 
 def test_mock_http_request_compare():
     mhr0 = MockHttpRequest(url='abcd/fdsa?a=0&b=true')

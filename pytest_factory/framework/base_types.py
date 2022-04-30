@@ -9,7 +9,6 @@ ALLOWED_TYPES = {int, bytes, str, type(None), bool, dict, type}
 HIDDEN_MSG_PROPS = {'exchange_id', 'timestamp'}
 
 
-
 def convert(x):
     if isinstance(x, bytes):
         return f"b'{x.decode()}'"
@@ -78,12 +77,12 @@ class BaseMockRequest(Message):
         """
         raise NotImplementedError
 
-
     def __hash__(self) -> int:
         """
         this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
         """
         return id(self)
+
 
 def compare_unknown_types(a, b) -> bool:
     if hasattr(a, 'compare'):
@@ -95,8 +94,34 @@ def compare_unknown_types(a, b) -> bool:
     return compare_result
 
 
+class TrackedResponses(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.count = 0
+
+    @classmethod
+    def from_any(cls, response: Union[Any, List]):
+        responses = [response] if not isinstance(response, list) else response
+        tr = cls((False, _response) for _response in responses)
+        return tr
+
+    def response(self, i=0):
+        if len(self) == 0:
+            return None
+        return self[i][1]
+
+    def mark_and_retrieve_next(self) -> Any:
+        if self.count >= len(self):
+            self.count += 1
+            return None
+        response = self[self.count][1]
+        self[self.count] = (True, response)
+        self.count += 1
+        return response
+
+
 class Factory(dict):
-    def __init__(self, req_obj: Union[str, BaseMockRequest], responses: Any):
+    def __init__(self, req_obj: Union[str, BaseMockRequest], responses: TrackedResponses):
         super().__init__()
         self.__setitem__(req_obj, responses)
 
@@ -105,6 +130,10 @@ class Factory(dict):
             if compare_unknown_types(key, _key):
                 return
         super().__setitem__(key, value)
+
+    @property
+    def get_sut(self) -> Any:
+        return list(self.values())[0].response()
 
     @property
     def FACTORY_NAME(self):

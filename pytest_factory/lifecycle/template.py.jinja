@@ -4,7 +4,7 @@ from pathlib import Path
 {% if recording.raises: %}
 from {{recording.last.__module__}} import {{recording.last.__name__}}
 {% else %}
-from pytest_factory.recorder.recording import reify
+from pytest_factory.lifecycle.recording import reify
 {% endif %}
 {% for request, response in recording.doc_exchanges: %}
 from {{request.FACTORY_PATH}} import {{request.FACTORY_NAME}}
@@ -31,7 +31,7 @@ class Test{{handler_name}}{{incident_name}}:
     {% for request, response in recording.doc_exchanges: %}
     @{{request.FACTORY_NAME}}({{request.write(just_args=True)}}, response={{response.write()}})
     {% endfor %}
-    @{{recording.first.FACTORY_NAME}}({{recording.first.write(just_args=True)}}, handler_class={{handler_name}})
+    @{{recording.first.FACTORY_NAME}}({{recording.first.write(just_args=True)}})
     async def test_{{generated_test_id}}(self, store):
         {% if recording.raises %}
         with pytest.raises({{recording.last.__name__}}):

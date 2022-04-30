@@ -4,7 +4,7 @@ from functools import cached_property
 
 import pytest_factory.framework.exceptions as exceptions
 from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE, \
-    compare_unknown_types
+    compare_unknown_types, TrackedResponses
 from pytest_factory import logger
 from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
                                                       assert_no_extra_calls as default_assert_no_extra_calls)
@@ -24,7 +24,7 @@ class Store:
     def __init__(self, _test_name: str):
         self._test_name = _test_name
         self._sut_callable: Optional[Callable] = None
-        self._request_factory: Optional[Factory] = None
+        self._sut_factory: Optional[Factory] = None
         self.assert_no_extra_calls: bool = default_assert_no_extra_calls
         self.assert_no_missing_calls: bool = default_assert_no_missing_calls
         self.factory_names: Set[str] = set()
@@ -33,12 +33,15 @@ class Store:
 
     @property
     def sut(self) -> object:
-        if not self._request_factory and self._opened:
+        if not self._sut_factory and self._opened:
             raise exceptions.MissingHandlerException
+        if not self._sut_factory:
+            return None
         try:
-            return list(self._request_factory.values())[0]
+            _sut = self._sut_factory.get_sut
         except AttributeError as _:
             return None
+        return _sut
 
     def shop(self, **kwargs) -> Shopper:
         return Shopper(store=self, **kwargs)
@@ -49,19 +52,23 @@ class Store:
     def close(self):
         self._opened = False
 
-    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str, response: Union[Any, List[Any]]):
+    def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str,
+               response: Union[Any, List[Any]],
+               response_is_sut: Optional[bool] = False):
         """
         always use this method to modify store AFTER configuration stage ends and BEFORE test running stage
-        note that this will get invoked depth-first
-        :param req_obj:
-        :param factory_name:
-        :param response:
+        note that this will get invoked depth-first.
+        :param req_obj: the input to the system-under-test or depended-on-component
+        :param factory_name: the name of the factory that created this exchange
+        :param response: the output from the depended-on-component or the system-under-test itself
+        :param response_is_sut: if True, response is the system-under-test
         """
-        responses = [response] if not isinstance(response, list) else response
-        responses = [(False, _response) for _response in responses]
+        responses = TrackedResponses.from_any(response=response)
         self.factory_names.add(factory_name)
         if not hasattr(self, factory_name) or getattr(self, factory_name) is None:
             new_factory = Factory(req_obj=req_obj, responses=responses)
+            if response_is_sut:
+                self._sut_factory = new_factory
             setattr(self, factory_name, new_factory)
         else:  # store already has test doubles from this factory
             old_factory = getattr(self, factory_name)
@@ -115,32 +122,15 @@ class Store:
             if self.assert_no_missing_calls:
                 raise ex
             return mock_responses
-        final_response, mock_responses = self._mark_and_retrieve_test_double(req_obj=req_obj,
-                                                                             mock_responses=mock_responses)
+        next_response = mock_responses.mark_and_retrieve_next()
+        if isinstance(next_response, Callable):
+            final_response = next_response(req_obj)
+        else:
+            final_response = next_response
 
         if mock_responses and final_response is None:
             final_response = self._check_overcalled_test_doubles(req_obj=req_obj, mock_responses=mock_responses)
         return final_response
-
-    @staticmethod
-    def _mark_and_retrieve_test_double(req_obj: BaseMockRequest,
-                                       mock_responses: MOCK_RESPONSES_TYPE) -> Tuple[
-        Optional[Any], MOCK_RESPONSES_TYPE]:
-        final_response = None
-        for index, (called, response) in enumerate(mock_responses):
-            if called:
-                continue
-            else:
-                # if response requires mapping values from original request:
-                if isinstance(response, Callable):
-                    final_response = response(req_obj)
-                else:
-                    final_response = response
-
-                # this is where we mark the response as having been called so
-                # we don't call it again unless we are allowed by the user
-                mock_responses[index] = (True, response)
-        return final_response, mock_responses
 
     def _check_overcalled_test_doubles(self, req_obj: BaseMockRequest, mock_responses: MOCK_RESPONSES_TYPE) -> Any:
         final_response = mock_responses[-1][1]
@@ -161,7 +151,7 @@ class Store:
     def _get_test_doubles(self) -> Dict[str, ROUTING_TYPE]:
         test_doubles = {factory_name: getattr(self, factory_name)
                         for factory_name in self.factory_names
-                        if factory_name is not list(self._request_factory.keys())[0]}
+                        if factory_name is not self._sut_factory.FACTORY_NAME}
         return test_doubles
 
     def check_no_uncalled_test_doubles(self):
@@ -172,6 +162,8 @@ class Store:
         uncalled_test_doubles = {}
 
         for test_double, response_dict in self._get_test_doubles.items():
+            if response_dict == self._sut_factory:
+                continue
             uncalled_test_double_endpoints = {}
             for key, responses in response_dict.items():
                 if is_plugin(responses):

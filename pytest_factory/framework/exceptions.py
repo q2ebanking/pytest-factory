@@ -100,7 +100,8 @@ class UnCalledTestDoubleException(PytestFactoryBaseException):
 
 class OverCalledTestDoubleException(PytestFactoryBaseException):
     def get_error_msg(self, mock_responses: list, req_obj: Any) -> str:
-        return f'OverCalledTestDoubleException: expected only {len(mock_responses)} calls to {req_obj}!'
+        return f'OverCalledTestDoubleException: expected only {len(mock_responses)} ' \
+               f'calls to {req_obj}! got {mock_responses.count}!'
 
     def get_warning_msg(self, mock_responses: list, req_obj: Any) -> str:
         warning_msg = f" will repeat last response: \"{mock_responses[-1][1]}\""

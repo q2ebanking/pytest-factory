@@ -16,7 +16,7 @@ pytestmark = pytest.mark.asyncio
 class TestAioHttp:
     @mock_http_server(url='http://www.test.com/endpoint0', response='test_http_func_override')
     async def test_http_func_override_aio(self, store):
-        resp = await store.sut.run_test(assert_no_extra_calls = False)
+        resp = await store.sut.run_test(assert_no_extra_calls=False)
         assert resp.body.decode() == 'test_http_func_override'
         assert len(store.messages) == 4
         assert store.messages[3] == resp
@@ -41,6 +41,8 @@ class TestAioHttp:
     @mock_http_server(url='http://www.test.com/endpoint0', response=ClientConnectionError)
     async def test_http_response_exception_aio(self, store):
         resp = await store.sut.run_test()
-        msg = "caught RequestException: <class pytest_factory.framework.http_types.MockHttpRequest: " \
-              "{'url': 'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', 'headers': {}}>"
+        msg = ('caught RequestException: <class '
+               "pytest_factory.framework.http_types.MockHttpRequest: {'allow_redirects': "
+               "False, 'url': 'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', "
+               "'headers': {}}>")
         assert resp.body.decode() == msg

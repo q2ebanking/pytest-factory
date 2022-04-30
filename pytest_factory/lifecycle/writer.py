@@ -20,7 +20,8 @@ class Writer:
 
     def __init__(self, recording: Recording):
         self.recording = recording
-        self.handler_path, self.handler_name = recording.handler_path.rsplit('.', 1)
+        sut_callable = recording.first.sut_callable
+        self.handler_path, self.handler_name = sut_callable.__module__, sut_callable.__name__
 
     def write_test(self, output_path: Path):
         """

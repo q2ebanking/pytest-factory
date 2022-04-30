@@ -86,7 +86,7 @@ class TestHttp:
             assert actual == ['OverCalledTestDoubleException: expected only 1 calls to <class '
                               "pytest_factory.framework.http_types.MockHttpRequest: {'allow_redirects': "
                               "False, 'url': 'http://www.test.com/endpoint0', 'method': 'get', 'body': b'', "
-                              '\'headers\': {}}>! will repeat last response: "<class '
+                              '\'headers\': {}}>! got 2! will repeat last response: "<class '
                               "pytest_factory.framework.http_types.MockHttpResponse: {'body': b'TestHttp', "
                               '\'status\': 200, \'headers\': {}}>"']
 

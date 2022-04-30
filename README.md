@@ -68,7 +68,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @mock_http_server(method='get', url='https://www.world.com/hello', response='blah blah')
-@tornado_handler(handler_class=MainHandler, method='get')
+@tornado_handler(sut_callable=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
         resp = await store.sut.run_test()

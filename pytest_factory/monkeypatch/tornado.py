@@ -6,7 +6,8 @@ import requests
 from tornado.web import Application, RequestHandler
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
-from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, MALL
+from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
+from pytest_factory.framework.mall import MALL, import_from_str_path
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
 from pytest_factory.framework.http_types import HTTP_METHODS
 from pytest_factory.http import MockHttpRequest, make_factory, MockHttpResponse
@@ -51,8 +52,12 @@ class TornadoRequest(MockHttpRequest):
         :param url: HTTP url or path
         :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """
-        self.sut_callable = sut_callable
-        qwargs = {'method': method, 'url': url, 'sut_callable': sut_callable}
+        self.sut_callable = import_from_str_path(sut_callable) if isinstance(sut_callable, str) else sut_callable
+        qwargs = {
+            'method': method,
+            'url': url or '',
+            'sut_callable': sut_callable
+        }
 
         if kwargs.get('headers'):
             qwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
@@ -73,7 +78,7 @@ class TornadoRequest(MockHttpRequest):
 def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
                     sut_callable: Optional[Union[Callable, str]] = None, **kwargs) -> Callable:
     if req_obj is None:
-        req_obj = TornadoRequest(**kwargs, sut_callable=sut_callable or MALL.sut_callable)
+        req_obj = TornadoRequest(**kwargs, sut_callable=sut_callable)
     return make_factory(req_obj=req_obj,
                         factory_name='tornado_handler')
 
