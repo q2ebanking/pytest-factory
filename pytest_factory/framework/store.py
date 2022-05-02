@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Dict, Optional, Any, Union, List, Callable, Set, Tuple
+from typing import Dict, Optional, Any, Union, List, Callable, Set
 from functools import cached_property
+from pytest import Item
 
 import pytest_factory.framework.exceptions as exceptions
 from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE, \
@@ -21,8 +22,9 @@ class Store:
     stores test doubles for a given test method
     """
 
-    def __init__(self, _test_name: str):
-        self._test_name = _test_name
+    def __init__(self, test_path: str):
+        self._test_name = test_path
+        self._item: Optional[Item] = None
         self._sut_callable: Optional[Callable] = None
         self._sut_factory: Optional[Factory] = None
         self.assert_no_extra_calls: bool = default_assert_no_extra_calls

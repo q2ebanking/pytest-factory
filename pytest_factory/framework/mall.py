@@ -1,4 +1,5 @@
 import os
+from pytest import Item, Session
 from pathlib import Path
 from typing import Dict, Any, Optional, Callable, Iterable, Union
 from functools import cached_property
@@ -7,7 +8,7 @@ from importlib import import_module
 from pytest_factory.framework.store import Store, is_plugin
 from pytest_factory import logger
 from pytest_factory.framework.exceptions import ConfigException
-from pytest_factory.framework.parse_configs import prep_stores_update_local
+from pytest_factory.framework.parse_configs import prep_stores_update_local, DEFAULT_FOLDER_NAME
 from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
                                                       assert_no_extra_calls as default_assert_no_extra_calls)
 
@@ -36,7 +37,7 @@ class Mall:
         self._by_test: Dict[str, Store] = {}
         self._by_dir: Dict[str, Dict] = {}
         self._backup_env_vars: Dict[str, str] = {}
-        self.current_test: Optional[str] = None
+        self._current_test: Optional[str] = None
         self._current_test_dir: Optional[str] = None
         self._monkey_patch_configs: Dict[str, Dict[str, Union[Callable, Dict[str, Callable]]]] = {}
 
@@ -97,7 +98,10 @@ class Mall:
     def assert_no_extra_calls(self) -> bool:
         return self._get_prop('assert_no_extra_calls') or default_assert_no_extra_calls
 
-    def open(self, test_dir: Optional[str] = None):
+    def open(self, session: Session):
+        self._session = session
+        test_dir = session.config.invocation_dir.basename
+        test_dir = test_dir if test_dir[:5] == 'test_' else DEFAULT_FOLDER_NAME
         if test_dir:
             self._current_test_dir = test_dir
 
@@ -134,24 +138,20 @@ class Mall:
                 return_dict[v.PLUGIN_URL] = v
         return return_dict
 
-    def get_store(self, test_name: Optional[str] = None, test_dir: Optional[str] = None) -> Store:
+    def get_store(self, item: Optional[Item] = None, test_name: Optional[str] = None,
+                  test_dir: Optional[str] = None) -> Store:
         """
-        :param test_name: name of the pytest test function associated with the
-            requested store
-        :param test_dir: name of the pytest test directory we are currently in
-        :return: the Store associated with the given test_name; a new Store if
+        :param item: pytest.Item
+        :return: the Store associated with the given Item; a new Store if
             a Store has not already been created for this test
         """
-        if test_name:
-            self.current_test = test_name
-        if test_dir:
-            self._current_test_dir = test_dir
-
-        store = self._by_test.get(self.current_test)
+        self._current_test = item.name if item else test_name or self._current_test
+        self._current_test_dir = item.path.parent.name if item else test_dir or self._current_test_dir
+        key = '.'.join([self._current_test_dir, self._current_test])
+        store = self._by_test.get(key)
         if not store:
-            store = Store(_test_name=self.current_test)
-
-            self._by_test[self.current_test] = store
+            store = Store(test_path=key)
+            self._by_test[key] = store
         return store
 
 

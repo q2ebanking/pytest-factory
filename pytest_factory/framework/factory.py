@@ -46,29 +46,27 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
         """
         is executed during pytest collection; the store is bound to the test case at this time
         if response is not None, and store.sut is not yet assigned, this factory will create the
-    system-under-test (SUT).
+        system-under-test (SUT).
         """
-        test_name = pytest_func.__name__
-        module_parts = pytest_func.__module__.split('.')
-        test_dir = module_parts[-2] if len(module_parts) > 1 else DEFAULT_FOLDER_NAME
-        store = MALL.get_store(test_name=test_name, test_dir=test_dir)
 
         @functools.wraps(pytest_func)
         async def pytest_func_wrapper(*args, **kwargs):
             """
             is executed during pytest run; executes setup, then the test function, finally teardown
             """
-            resp = setup(store) if setup else None
+            resp = setup() if setup else None
             if iscoroutine(pytest_func) or iscoroutinefunction(pytest_func):
                 await pytest_func(*args, **kwargs)
             else:
                 pytest_func(*args, **kwargs)
             if teardown:
-                teardown(resp=resp, store=store)
+                teardown(resp=resp)
 
-        if store.sut and response is None:
-            return pytest_func_wrapper
-
+        test_name = pytest_func.__name__
+        module_parts = pytest_func.__module__.split('.')
+        test_dir = module_parts[-2] if len(module_parts) > 1 else DEFAULT_FOLDER_NAME
+        store = MALL.get_store(test_name=test_name, test_dir=test_dir)
+        # store = MALL.get_store(test_name=test_name, test_dir=test_dir)
         response_is_sut = False
         if response is None:
             response_is_sut = True

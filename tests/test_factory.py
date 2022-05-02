@@ -28,13 +28,11 @@ def test_abtract(store):
     assert resp == 42
 
 
-def _setup(store: Store):
-    # TODO not sure about this - do we want these to have side effects on store?
-    store.ASDF = 'asfd'
+def _setup():
     return 'jkl;'
 
 
-def _teardown(store: Store, resp: str):
+def _teardown(resp: str):
     assert resp == 'jkl;'
 
 
