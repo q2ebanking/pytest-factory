@@ -170,6 +170,7 @@ class Stocker:
         for key in import_keys:
             module_path = getattr(MALL, key)
             if not module_path:
+                test_dir = MALL._current_test_dir
                 msg = f"could not find module path for key: {key} in section: {test_dir} of config.ini"
                 raise ConfigException(log_msg=msg)
             kallable = import_from_str_path(module_path) if isinstance(module_path, str) else module_path
