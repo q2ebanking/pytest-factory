@@ -36,15 +36,22 @@ def patch_callables(monkeypatch, request):
         for member_name, member_patch in configs.get('patch_methods').items():
             monkeypatch.setattr(callable_obj, member_name, member_patch, raising=False)
 
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_collect_file(file_path, path, parent):
     if file_path.parts[-1][:4] == 'test_' and DEFAULT_FOLDER_NAME \
             in {parent.name, parent.parent.name if parent.parent else None}:
         MALL._current_test_dir = parent.name
     outcome = yield
+    if isinstance(outcome, Exception):
+        raise outcome
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_collection(session):
-    MALL.open(session=session)
+    test_dir = session.config.invocation_dir.basename
+    MALL.open(test_dir=test_dir)
     outcome = yield
+    if isinstance(outcome, Exception):
+        raise outcome
     MALL.close()

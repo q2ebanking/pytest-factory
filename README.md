@@ -128,13 +128,3 @@ to pytest_factory.monkeypatch.tornado.
 
 ### support for other languages/frameworks
 support for non-python frameworks like node or rails is an eventual goal.
-
-### caveats
-testing a test framework is fundamentally challenging. please beware of the
-following limitations in the current code (re: please submit a PR with a better way!):
-- test function names must be unique across the project or you will have test double
-  collision
-- when possible please use the included logger in pytest_factory.framework.logger,
-    especially if pytest is suppressing your print or warn statements or if you
-    need to assert that a warning/error was emitted by your test code or if you
-    are trying to emit from teardown (which pytest is hardcoded to suppress).

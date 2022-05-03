@@ -1,6 +1,7 @@
 import functools
 import inspect
 import sys
+from pathlib import Path
 from asyncio import iscoroutine, iscoroutinefunction
 from typing import Callable, Optional, Union
 
@@ -64,9 +65,15 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
 
         test_name = pytest_func.__name__
         module_parts = pytest_func.__module__.split('.')
-        test_dir = module_parts[-2] if len(module_parts) > 1 else DEFAULT_FOLDER_NAME
+        if len(module_parts) > 1:
+            test_dir = module_parts[-2]
+        elif len(module_parts) == 1:
+            p = MALL.get_full_path()
+            p_list = list(p.rglob(module_parts[0]+'.py'))
+            test_dir = p_list[0].parent.name
+        else:
+            test_dir = DEFAULT_FOLDER_NAME
         store = MALL.get_store(test_name=test_name, test_dir=test_dir)
-        # store = MALL.get_store(test_name=test_name, test_dir=test_dir)
         response_is_sut = False
         if response is None:
             response_is_sut = True

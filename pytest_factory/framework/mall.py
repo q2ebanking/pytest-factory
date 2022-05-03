@@ -98,9 +98,7 @@ class Mall:
     def assert_no_extra_calls(self) -> bool:
         return self._get_prop('assert_no_extra_calls') or default_assert_no_extra_calls
 
-    def open(self, session: Session):
-        self._session = session
-        test_dir = session.config.invocation_dir.basename
+    def open(self, test_dir: str):
         test_dir = test_dir if test_dir[:5] == 'test_' else DEFAULT_FOLDER_NAME
         if test_dir:
             self._current_test_dir = test_dir

@@ -39,7 +39,8 @@ class Message:
 
     def write(self, just_args: bool = False) -> str:
         d = self._get_kwargs(pre_not_de=True)
-        s = ', '.join([f"{k}={convert(v)}" for k, v in d.items() if k not in HIDDEN_MSG_PROPS])
+        s = ', '.join([f"{k}={v.split('.')[-1] if k == 'sut_callable' else convert(v)}"
+                       for k, v in d.items() if k not in HIDDEN_MSG_PROPS])
         if just_args:
             return s
         return f"{self.__class__.__name__}({s})"
