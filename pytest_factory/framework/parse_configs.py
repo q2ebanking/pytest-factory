@@ -79,13 +79,9 @@ def prep_stores_update_local(dir_name: Optional[str] = DEFAULT_FOLDER_NAME,
     conf_dict = {}
     conf = get_config_parser(path=path)
     conf_dict[DEFAULT_FOLDER_NAME] = parse_section(conf=conf)
-    if dir_name == DEFAULT_FOLDER_NAME:
-        sub_sections = [k for k in conf._sections.keys() if k != DEFAULT_FOLDER_NAME]
-    else:
-        sub_sections = [dir_name] if dir_name in conf._sections else []
 
-    for section in sub_sections:
-        sub_dict = parse_section(conf=conf, section=section)
-        conf_dict[section] = sub_dict
+    if dir_name in conf.sections():
+        sub_dict = parse_section(conf=conf, section=dir_name)
+        conf_dict[dir_name] = sub_dict
 
     return conf_dict

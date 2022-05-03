@@ -27,6 +27,8 @@ def write_readme_examples_to_file():
     out_dir = Path(__file__).parent.joinpath('test_factory_tests')
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
+    with open(out_dir.joinpath('__init__.py'), 'w') as f:
+        f.write('')
     for file_name, file_lines in files.items():
         if file_name in {'conftest.py', 'config.ini'}:
             continue

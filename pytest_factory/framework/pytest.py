@@ -17,10 +17,9 @@ def store(request):
     :return:
     """
     store = MALL.get_store(item=request.node)
-    store.register_plugins(plugins=MALL.plugins)
-    store.open()
-    yield store
-    store.close()
+    with MALL.stock():
+        store.register_plugins(plugins=MALL.plugins)
+        yield store
 
 
 @pytest.fixture(autouse=True)
@@ -39,19 +38,20 @@ def patch_callables(monkeypatch, request):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_collect_file(file_path, path, parent):
-    if file_path.parts[-1][:4] == 'test_' and DEFAULT_FOLDER_NAME \
-            in {parent.name, parent.parent.name if parent.parent else None}:
-        MALL._current_test_dir = parent.name
-    outcome = yield
-    if isinstance(outcome, Exception):
-        raise outcome
+    """
+    this is where the MALL gets stocked: during the collection of each test file, as each factory is invoked
 
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_collection(session):
-    test_dir = session.config.invocation_dir.basename
-    MALL.open(test_dir=test_dir)
-    outcome = yield
-    if isinstance(outcome, Exception):
-        raise outcome
-    MALL.close()
+    Note: the last two params are for compatibility with pytest
+    """
+    parts = file_path.parts
+    test_dir = None
+    if len(parts) > 1 and parts[-2] == DEFAULT_FOLDER_NAME:
+        test_dir = parts[-2]
+    elif len(parts) > 2 and parts[-3] == DEFAULT_FOLDER_NAME:
+        test_dir = parts[-2]
+    if test_dir and parts[-1][:4] == 'test':
+        with MALL.stock(test_dir=test_dir):
+            outcome = yield
+    else:
+        outcome = yield
+    outcome.get_result()

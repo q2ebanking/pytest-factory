@@ -37,12 +37,6 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     if factory_name == '<module>':
         factory_name = 'make_factory'
 
-    if not isinstance(req_obj, BaseMockRequest) and not isinstance(req_obj, str):
-        try:
-            req_obj = str(req_obj)
-        except Exception as _:
-            req_obj = id(req_obj)
-
     def register_test_func(pytest_func: Callable) -> Callable:
         """
         is executed during pytest collection; the store is bound to the test case at this time
@@ -50,18 +44,26 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
         system-under-test (SUT).
         """
 
-        @functools.wraps(pytest_func)
-        async def pytest_func_wrapper(*args, **kwargs):
-            """
-            is executed during pytest run; executes setup, then the test function, finally teardown
-            """
-            resp = setup() if setup else None
-            if iscoroutine(pytest_func) or iscoroutinefunction(pytest_func):
+        if iscoroutine(pytest_func) or iscoroutinefunction(pytest_func):
+            @functools.wraps(pytest_func)
+            async def pytest_func_wrapper(*args, **kwargs):
+                """
+                is executed during pytest run; executes setup, then the test function, finally teardown
+                """
+                resp = setup() if setup else None
                 await pytest_func(*args, **kwargs)
-            else:
+                if teardown:
+                    teardown(resp=resp)
+        else:
+            @functools.wraps(pytest_func)
+            def pytest_func_wrapper(*args, **kwargs):
+                """
+                is executed during pytest run; executes setup, then the test function, finally teardown
+                """
+                resp = setup() if setup else None
                 pytest_func(*args, **kwargs)
-            if teardown:
-                teardown(resp=resp)
+                if teardown:
+                    teardown(resp=resp)
 
         test_name = pytest_func.__name__
         module_parts = pytest_func.__module__.split('.')

@@ -44,7 +44,7 @@ class TornadoRequest(MockHttpRequest):
     HANDLER_NAME = 'RequestHandler'
     HANDLER_PATH = 'tornado.web'
 
-    def __init__(self, sut_callable: str, method: str = HTTP_METHODS.GET.value,
+    def __init__(self, sut_callable: Union[Callable, str], method: str = HTTP_METHODS.GET.value,
                  exchange_id: Optional[str] = None,
                  url: Optional[str] = None, **kwargs):
         """
@@ -52,6 +52,8 @@ class TornadoRequest(MockHttpRequest):
         :param url: HTTP url or path
         :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """
+        if sut_callable is None:
+            sut_callable = MALL.sut_callable
         self.sut_callable = import_from_str_path(sut_callable) if isinstance(sut_callable, str) else sut_callable
         qwargs = {
             'method': method,

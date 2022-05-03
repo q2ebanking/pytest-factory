@@ -48,12 +48,6 @@ class Store:
     def shop(self, **kwargs) -> Shopper:
         return Shopper(store=self, **kwargs)
 
-    def open(self):
-        self._opened = True
-
-    def close(self):
-        self._opened = False
-
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str,
                response: Union[Any, List[Any]],
                response_is_sut: Optional[bool] = False):

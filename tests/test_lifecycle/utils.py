@@ -1,10 +1,9 @@
 from pathlib import Path
-from pytest_factory.framework.parse_configs import DEFAULT_FOLDER_NAME
+
+from pytest_factory.framework.mall import MALL
 
 
 def get_file_path(join: str):
-    p = Path.cwd()
-    if p.parts[-1] != DEFAULT_FOLDER_NAME:
-        p = p.joinpath(DEFAULT_FOLDER_NAME)
+    p = Path(MALL._config_path).parent
     p = p.joinpath(join)
     return p

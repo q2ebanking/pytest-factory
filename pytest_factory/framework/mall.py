@@ -1,5 +1,5 @@
 import os
-from pytest import Item, Session
+from pytest import Item
 from pathlib import Path
 from typing import Dict, Any, Optional, Callable, Iterable, Union
 from functools import cached_property
@@ -40,6 +40,7 @@ class Mall:
         self._current_test: Optional[str] = None
         self._current_test_dir: Optional[str] = None
         self._monkey_patch_configs: Dict[str, Dict[str, Union[Callable, Dict[str, Callable]]]] = {}
+        self.memory = []
 
     def __getattr__(self, name):
         if name not in vars(self).keys():
@@ -76,8 +77,11 @@ class Mall:
         return prop
 
     def get_full_path(self, new_file_name: Optional[str] = None):
-        p = Path(self._config_path)
-        p = p.parent
+        if self._config_path:
+            p = Path(self._config_path)
+            p = p.parent
+        else:
+            p = Path(DEFAULT_FOLDER_NAME).resolve()
         if new_file_name:
             p = p.joinpath(new_file_name)
         return p
@@ -85,6 +89,10 @@ class Mall:
     @property
     def env_vars(self) -> Dict[str, Any]:
         return self._get_prop('env_vars') or {}
+
+    @property
+    def imports(self):
+        return [x.replace(' ', '') for x in self._get_prop('imports').split(',')]
 
     @property
     def sut_callable(self) -> Callable:
@@ -98,40 +106,21 @@ class Mall:
     def assert_no_extra_calls(self) -> bool:
         return self._get_prop('assert_no_extra_calls') or default_assert_no_extra_calls
 
-    def open(self, test_dir: str):
-        test_dir = test_dir if test_dir[:5] == 'test_' else DEFAULT_FOLDER_NAME
-        if test_dir:
-            self._current_test_dir = test_dir
+    def stock(self, test_dir: Optional[str] = None):
+        """
+        invoked twice:
+        1. by pytest_collect_file pytest hook to temporarily set environment variables and
+        import modules to instantiate test doubles
+        2. by
+        """
+        return Stocker(test_dir=test_dir or self._current_test_dir)
 
-        conf = prep_stores_update_local(dir_name=test_dir)
-        self._by_dir = conf
-        env_vars = self.env_vars or {}
-        self._backup_env_vars.update({k: os.getenv(k) for k, v in env_vars.items()})
-        for k, v in env_vars.items():
-            os.environ[k] = v
-
-        for _dir, configs in self._by_dir.items():
-            import_str = configs.get('imports')
-            if import_str:
-                import_keys = import_str.replace(' ', '').split(',')
-                for key in import_keys:
-                    module_path = configs.get(key)
-                    if not module_path:
-                        msg = f"could not find module path for key: {key} in section: {_dir} of config.ini"
-                        raise ConfigException(log_msg=msg)
-                    kallable = import_from_str_path(module_path)
-
-                    self._by_dir[_dir][key] = kallable
-
-    def close(self):
-        for k, v in self._backup_env_vars.items():
-            if v:
-                os.environ[k] = v
-
-    @cached_property
+    @property
     def plugins(self) -> Dict[str, Callable]:
         return_dict = {}
-        for _, v in self._by_dir.get('tests').items():
+        sub_dict = self._by_dir.get(self._current_test_dir) or {}
+        search_dict = {**self._by_dir.get(DEFAULT_FOLDER_NAME), **sub_dict}
+        for _, v in search_dict.items():
             if is_plugin(v):
                 return_dict[v.PLUGIN_URL] = v
         return return_dict
@@ -154,3 +143,48 @@ class Mall:
 
 
 MALL = Mall()
+
+
+class Stocker:
+    def __init__(self, test_dir: str):
+        test_dir = test_dir if test_dir[:5] == 'test_' else DEFAULT_FOLDER_NAME
+        conf = None
+        if MALL._current_test_dir != test_dir:
+            MALL._current_test_dir = test_dir
+            conf = prep_stores_update_local(dir_name=test_dir)
+            MALL._by_dir.update(conf)
+        self.conf = conf.get(DEFAULT_FOLDER_NAME) if conf else MALL._by_dir.get(MALL._current_test_dir)
+
+    def __enter__(self):
+        env_vars = MALL.env_vars or {}
+        MALL._backup_env_vars.update({k: os.getenv(k) for k, v in env_vars.items()})
+        for k, v in env_vars.items():
+            os.environ[k] = v
+        if self.conf and self.conf.get('imports'):
+            import_str = self.conf.get('imports')
+            import_keys = set(import_str.replace(' ', '').split(','))
+            sub_imports = set(MALL.imports)
+            import_keys.update(sub_imports)
+        else:
+            import_keys = MALL.imports
+        for key in import_keys:
+            module_path = getattr(MALL, key)
+            if not module_path:
+                msg = f"could not find module path for key: {key} in section: {test_dir} of config.ini"
+                raise ConfigException(log_msg=msg)
+            kallable = import_from_str_path(module_path) if isinstance(module_path, str) else module_path
+
+            dir_conf = self.conf or MALL._by_dir.get(DEFAULT_FOLDER_NAME)
+            dir_conf[key] = kallable
+        if MALL._current_test:
+            store = MALL.get_store()
+            store._opened = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if MALL._current_test:
+            store = MALL.get_store()
+            store._opened = False
+
+        for k, v in MALL._backup_env_vars.items():
+            if v:
+                os.environ[k] = v

@@ -2,7 +2,7 @@ import pytest
 import json
 
 from pytest_factory.monkeypatch.tornado import tornado_handler
-from tests.mock_plugin.plugin import mock_service0, mock_service1
+from tests.test_plugin.mock_plugin.plugin import mock_service0, mock_service1
 
 pytestmark = pytest.mark.asyncio
 
@@ -24,7 +24,6 @@ class TestFactoryPlugin:
     @tornado_handler(method='post', url="plugin0", body=get_body('mock_service0', 'route0'))
     @mock_service0(key='route0', response='nope')
     async def test_plugin_override(self, store):
-        # also testing response_parser TODO move elsewhere?
         resp = await store.sut.run_test(response_parser=lambda x: x.body.decode())
         assert resp == 'nope'
 
