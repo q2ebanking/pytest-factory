@@ -2,7 +2,6 @@ import os
 from pytest import Item
 from pathlib import Path
 from typing import Dict, Any, Optional, Callable, Iterable, Union
-from functools import cached_property
 from importlib import import_module
 
 from pytest_factory.framework.store import Store, is_plugin
