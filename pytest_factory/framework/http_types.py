@@ -1,7 +1,5 @@
 from __future__ import annotations
 from enum import Enum
-from uuid import uuid4
-from datetime import datetime
 from typing import Optional, Dict
 from urllib.parse import urlparse, parse_qs
 
@@ -14,6 +12,14 @@ class MockHttpResponse(BaseMockResponse):
     def __init__(self, body: Optional[bytes] = None, status: Optional[int] = None,
                  headers: Optional[Dict[str, str]] = None, exchange_id: Optional[str] = None,
                  timestamp: Optional[str] = None):
+        """
+        :param body: body in bytes
+        :param status: HTTP status code
+        :param headers: headers
+        :param exchange_id: the exchange_id of the MockHttpRequest corresponding to this object
+        :param timestamp: if provided, when the HTTP response that this object represents was received,
+            otherwise defaults to datetime.utcnow()
+        """
         self.kwargs = {k: v for k, v in locals().items() if k != 'self'}
         self.body = body or b''
         self.status = status or 200
@@ -34,7 +40,7 @@ class HTTP_METHODS(Enum):
 
 class MockHttpRequest(BaseMockRequest):
     """
-    abstract HTTP request class representing simulated and actual inbound and outbound requests.
+    HTTP request class representing simulated and actual inbound and outbound requests.
     normalizing all requests within pytest-factory allows for direct comparison of requests, which has
     different purposes for each request type:
      - inbound: enables redefinition of inputs to system-under-test at method level over class-level
@@ -53,7 +59,7 @@ class MockHttpRequest(BaseMockRequest):
         :param method:
         :param body:
         :param headers:
-        :param exchange_id:
+        :param exchange_id: any id that uniquely identifies this request
         """
         self.kwargs = {k: v for k, v in locals().items() if k not in {'kwargs', 'self'}}
         self.kwargs.update(kwargs)

@@ -12,6 +12,17 @@ from pytest_factory.monkeypatch.tornado import read_from_write_buffer, TornadoRe
 
 
 class TornadoRecorderRequestHandler(RequestHandler):
+    """
+    Can be inherited directly or as mixin to instrument your Tornado RequestHandler so that
+    it emits Recordings of exceptions to an accumulator from where it can be written as a unit test
+    and/or an incident raised
+    it will only add two protected properties:
+    self._doc_exchanges
+    self._incident_type
+    and a suggested wrapper self.call_get() for outbound HTTP calls (using requests) so that exchanges with
+    depended-on-components can also be captured
+    finally, it overrides self.send_error to ship a Recording to the accumulator
+    """
     def __init__(self, application: Application, request: HTTPServerRequest, **kwargs) -> None:
         super().__init__(application=application, request=request, **kwargs)
         self._doc_exchanges: List[types.Exchange] = []

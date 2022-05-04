@@ -79,6 +79,9 @@ class MissingFactoryException(PytestFactoryBaseException):
 
 
 class DocAssertionException(PytestFactoryBaseException):
+    """
+    exception for when AssertionError is raised inside the depended-on-component response callable
+    """
     def get_error_msg(self, assertion_error: AssertionError, factory_name: str, req_obj: Any, *_, **__) -> str:
         log_msg = f'DocAssertionException: response function for {factory_name} -> {req_obj} raised ' \
                   f'AssertionError: {assertion_error}'

@@ -9,6 +9,10 @@ from pytest_factory.framework.exceptions import RecorderException
 
 
 class LiveException(types.Writable, Exception):
+    """
+    recommended parent class for the final exception raised within an instrumented system-under-test
+    if the contents of the exception are significant for a high-fidelity reproduction of the live defect
+    """
     pass
 
 
@@ -37,6 +41,9 @@ def infer_type(s: Any):
 
 
 def deserialize(path) -> types.BASE_RESPONSE_TYPE[types.Message]:
+    """
+    deserialize object of unknown type from serialization
+    """
     if not isinstance(path, str) or path[:6] != '<class':
         return path
     path_parts = path.split('\'')[1].split('.')

@@ -45,7 +45,11 @@ class TornadoRequest(MockHttpRequest):
                  exchange_id: Optional[str] = None,
                  url: Optional[str] = None, **kwargs):
         """
+        :param sut_callable: the class of the Tornado RequestHandler that will handle this request
         :param method: HTTP method, e.g. GET or POST
+        :param exchange_id: should only be provided if being deserialized from a serialized live Recording
+            or if being instantiated within a TornadoRecorderRequestHandler that already has a uuid for
+            uniquely identifying requests
         :param url: HTTP url or path
         :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """

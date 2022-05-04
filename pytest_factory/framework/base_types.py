@@ -9,7 +9,7 @@ ALLOWED_TYPES = {int, bytes, str, type(None), bool, dict, type}
 HIDDEN_MSG_PROPS = {'exchange_id', '_exchange_id', 'timestamp', '_timestamp'}
 
 
-def convert(x):
+def stringify(x):
     if isinstance(x, bytes):
         return f"b'{x.decode()}'"
     elif isinstance(x, str):
@@ -28,6 +28,12 @@ def convert(x):
 
 class Writable:
     def _get_kwargs(self, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
+        """
+        :param pre_not_de: the requested kwargs are prescriptive i.e. they can be used to create a copy of this object
+            if False, the requested kwargs are descriptive i.e. they were used to create this object
+        :allowed_types: the data types that are allowed in the kwargs to be returned
+        :return: the prescriptive or descriptive kwargs for this object
+        """
         allowed_types = allowed_types or ALLOWED_TYPES
         d = self.kwargs if pre_not_de and hasattr(self, 'kwargs') else vars(self)
         d = {k: v if type(v) in allowed_types else str(v)
@@ -43,8 +49,14 @@ class Writable:
         return str(self)
 
     def write(self, just_args: bool = False) -> str:
+        """
+        invoked within the test template when rendered so that the output test module can
+        instantiate a copy of this object
+        :param just_args: just the arguments, without the Callable or parentheses e.g. "a=1, b=2"
+        :return: the python that creates this object e.g. "BaseMockRequest(a=1, b=2)"
+        """
         d = self._get_kwargs(pre_not_de=True)
-        s = ', '.join([f"{k}={v.split('.')[-1] if k == 'sut_callable' else convert(v)}"
+        s = ', '.join([f"{k}={v.split('.')[-1] if k == 'sut_callable' else stringify(v)}"
                        for k, v in d.items() if k not in HIDDEN_MSG_PROPS])
         if just_args:
             return s
@@ -52,7 +64,7 @@ class Writable:
 
     def serialize(self):
         d = self._get_kwargs(pre_not_de=True)
-        return f"{self.__class__}: {json.dumps(d, default=convert)}"
+        return f"{self.__class__}: {json.dumps(d, default=stringify)}"
 
 
 class Message(Writable):
@@ -114,6 +126,11 @@ class BaseMockRequest(Message):
 
 class BaseMockResponse(Message):
     def __init__(self, exchange_id: str, timestamp: datetime = None):
+        """
+        :param exchange_id: the exchange_id of the BaseMockRequest corresponding to this object
+        :param timestamp: when the response that this object represents was actually created;
+            if None, sets to datetime.utcnow
+        """
         self._exchange_id = exchange_id
         self._timestamp = self.timestamp or timestamp
 
@@ -129,6 +146,9 @@ def compare_unknown_types(a, b) -> bool:
 
 
 class TrackedResponses(list):
+    """
+    a queue that dequeues by flipping a bool paired with the item so that the next dequeue skips it
+    """
     def __init__(self, *args, exchange_id: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.count = 0
@@ -147,6 +167,9 @@ class TrackedResponses(list):
         return self[i][1]
 
     def mark_and_retrieve_next(self) -> Any:
+        """
+        the dequeue method
+        """
         if self.count >= len(self):
             self.count += 1
             return None
@@ -157,6 +180,10 @@ class TrackedResponses(list):
 
 
 class Factory(dict):
+    """
+    wrapping the mapping between requests and test doubles in an object so
+    we can add attributes to it
+    """
     def __init__(self, req_obj: Union[str, BaseMockRequest], responses: TrackedResponses):
         super().__init__()
         self.__setitem__(req_obj, responses)
@@ -178,13 +205,20 @@ class Factory(dict):
 
 class BasePlugin:
     """
-    to create a pytest-factory plugin, inherit from this base class and define the following:
+    to create a pytest-factory plugin:
+    1. inherit from this base class
+    2. define the following:
     - self.PLUGIN_URL
     - self.get_plugin_responses
+    3. add the new plugin class to your config.ini imports
+
+    alternatively:
+    1. create a module
+    2. define PLUGIN_URL and get_plugin_responses in that module, then set your config.ini import to point
+    to the module
 
     PLUGIN_URL is the url that corresponds to the depended-on-component that this plugin simulates
     """
-    # TODO seems unnecessary to make this a class - rework to replace with module
     PLUGIN_URL = None
 
     def __init__(self):

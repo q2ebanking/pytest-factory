@@ -20,6 +20,9 @@ class Store:
     """
 
     def __init__(self, test_path: str):
+        """
+        :param test_path: the full name of the test this Store belongs to
+        """
         self._test_name = test_path
         self._item: Optional[Item] = None
         self._sut_callable: Optional[Callable] = None
@@ -32,6 +35,9 @@ class Store:
 
     @property
     def sut(self) -> object:
+        """
+        the system-under-test
+        """
         if not self._sut_factory and self._opened:
             raise exceptions.MissingHandlerException
         if not self._sut_factory:
@@ -43,6 +49,11 @@ class Store:
         return _sut
 
     def shop(self, **kwargs) -> Shopper:
+        """
+        provides a context manager for test execution where the store can record the session
+        :param kwargs: values passed from test execution wrapper (e.g. run_test) to override MALL configs for this store
+        :return a Shopper ready to enter the store
+        """
         return Shopper(store=self, **kwargs)
 
     def update(self, req_obj: Union[BaseMockRequest, str], factory_name: str,
@@ -180,6 +191,12 @@ class Store:
 
 
 class Shopper:
+    """
+    captures all Messages between SUT and DOC in three phases:
+    1. capture input to SUT
+    2. yield to test execution, during which DOC I/O are captured
+    3. capture SUT output
+    """
     def __init__(self, response_attr: str, request_attr: str, store: Store, *_, **kwargs):
         self.store = store
         self.response_attr = response_attr
