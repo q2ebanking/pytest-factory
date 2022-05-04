@@ -137,7 +137,7 @@ class TornadoMonkeyPatches(RequestHandler):
             self._response = response_obj
             return response_obj
 
-    def finish(self, chunk: Optional[Union[str, bytes, dict]] = None) -> "Future[None]":
+    def finish(self, chunk: Optional[Union[str, bytes, dict]] = None):
         pass
 
 
