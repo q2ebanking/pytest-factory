@@ -3,14 +3,11 @@ import pytest
 
 from requests import Timeout
 
-from pytest_factory.http import mock_http_server, MockHttpResponse
+from pytest_factory.http import mock_http_server, MockHttpResponse as mhr
 from pytest_factory.framework.exceptions import UnCalledTestDoubleException
 from pytest_factory.monkeypatch.tornado import tornado_handler
-from pytest_factory import logger
 
 from tests.utils import get_logs
-
-logger = logger.get_logger(__name__)
 
 pytestmark = pytest.mark.asyncio
 
@@ -35,7 +32,7 @@ class TestHttp:
         assert store.messages[3] == resp
         assert store.messages[2].content == resp.body
 
-    @mock_http_server(url='http://www.test.com/endpoint0', response=MockHttpResponse(status=500))
+    @mock_http_server(url='http://www.test.com/endpoint0', response=mhr(status=500))
     async def test_http_500(self, store):
         resp = await store.sut.run_test()
         assert resp.status == 500
@@ -45,6 +42,12 @@ class TestHttp:
     async def test_http_wildcard_path(self, store):
         resp = await store.sut.run_test()
         assert resp.body.decode() == 'test_http_wildcard_path'
+
+    @tornado_handler(url='endpoint0?num=3')
+    @mock_http_server(url='http://www.test.com/endpoint0', response=[mhr(body=b) for b in [b'b', b'a', b'r']])
+    async def test_http_call_thrice(self, store):
+        resp = await store.sut.run_test()
+        assert resp.body.decode() == 'bar'
 
     @mock_http_server(url='http://www.test.com/endpoint0', response=lambda x: x.url)
     async def test_http_response_function(self, store):

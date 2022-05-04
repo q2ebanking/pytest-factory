@@ -1,12 +1,12 @@
 from __future__ import annotations
 import json
+from uuid import uuid4
 from datetime import datetime
-from dataclasses import dataclass
 from typing import Any, Dict, Union, List, Tuple, Optional, TypeVar, Set
 
 ALLOWED_TYPES = {int, bytes, str, type(None), bool, dict, type}
 
-HIDDEN_MSG_PROPS = {'exchange_id', 'timestamp'}
+HIDDEN_MSG_PROPS = {'exchange_id', '_exchange_id', 'timestamp', '_timestamp'}
 
 
 def convert(x):
@@ -24,18 +24,21 @@ def convert(x):
         return str(x)
 
 
-@dataclass
-class Message:
-    exchange_id: str
-    timestamp: datetime
-
+class Writable:
     def _get_kwargs(self, pre_not_de: bool = False, allowed_types: Optional[Set[type]] = None) -> Dict[str, Any]:
         allowed_types = allowed_types or ALLOWED_TYPES
-        d = self.kwargs if pre_not_de else vars(self)
+        d = self.kwargs if pre_not_de and hasattr(self, 'kwargs') else vars(self)
         d = {k: v if type(v) in allowed_types else str(v)
              for k, v in d.items()
              if v is not self and k not in {'__class__', 'kwargs'}}
         return d
+
+    def __str__(self):
+        kwargs = {k: v for k, v in self._get_kwargs().items() if k not in HIDDEN_MSG_PROPS}
+        return f"<class {self.__class__.__module__}.{self.__class__.__name__}: {kwargs}>"
+
+    def __repr__(self):
+        return str(self)
 
     def write(self, just_args: bool = False) -> str:
         d = self._get_kwargs(pre_not_de=True)
@@ -49,9 +52,24 @@ class Message:
         d = self._get_kwargs(pre_not_de=True)
         return f"{self.__class__}: {json.dumps(d, default=convert)}"
 
-    def __repr__(self):
-        kwargs = {k: v for k, v in self._get_kwargs().items() if k not in HIDDEN_MSG_PROPS}
-        return f"<class {self.__class__.__module__}.{self.__class__.__name__}: {kwargs}>"
+
+class Message(Writable):
+    @property
+    def exchange_id(self):
+        if not hasattr(self, '_exchange_id'):
+            setattr(self, '_exchange_id', uuid4())
+        self._exchange_id = self._exchange_id or uuid4()
+        return self._exchange_id
+
+    @property
+    def timestamp(self):
+        if not hasattr(self, '_timestamp'):
+            setattr(self, '_timestamp', uuid4())
+        self._timestamp = self._timestamp or datetime.utcnow()
+        return self._timestamp
+
+
+OptDateOrStr = Optional[Union[datetime, str]]
 
 
 class BaseMockRequest(Message):
@@ -67,6 +85,13 @@ class BaseMockRequest(Message):
 
     FACTORY_NAME = 'make_factory'
     FACTORY_PATH = 'pytest_factory.framework.factory'
+
+    def __init__(self, exchange_id: Optional[str] = None, timestamp: OptDateOrStr = None):
+        timestamp = timestamp or datetime.utcnow()
+        if isinstance(timestamp, str):
+            timestamp = datetime.fromisoformat(timestamp)
+        self._timestamp = timestamp
+        self._exchange_id = exchange_id
 
     def compare(self, other) -> bool:
         """
@@ -85,6 +110,12 @@ class BaseMockRequest(Message):
         return id(self)
 
 
+class BaseMockResponse(Message):
+    def __init__(self, exchange_id: str, timestamp: datetime = None):
+        self._exchange_id = exchange_id
+        self._timestamp = self.timestamp or timestamp
+
+
 def compare_unknown_types(a, b) -> bool:
     if hasattr(a, 'compare'):
         compare_result = a.compare(b)
@@ -96,14 +127,16 @@ def compare_unknown_types(a, b) -> bool:
 
 
 class TrackedResponses(list):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, exchange_id: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.count = 0
+        self.exchange_id = exchange_id
 
     @classmethod
-    def from_any(cls, response: Union[Any, List]):
+    def from_any(cls, exchange_id: str, response: Union[Any, List]):
         responses = [response] if not isinstance(response, list) else response
-        tr = cls((False, _response) for _response in responses)
+        tracked_responses = [(False, _response) for _response in responses]
+        tr = cls(tracked_responses, exchange_id=exchange_id)
         return tr
 
     def response(self, i=0):

@@ -11,9 +11,6 @@ from pytest_factory.framework.mall import MALL, import_from_str_path
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
 from pytest_factory.framework.http_types import HTTP_METHODS
 from pytest_factory.http import MockHttpRequest, make_factory, MockHttpResponse
-from pytest_factory.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 class TornadoMonkeyPatchException(PytestFactoryBaseException):
@@ -138,8 +135,12 @@ class TornadoMonkeyPatches(RequestHandler):
             else:
                 self._response = None
 
+    def finish(self, chunk: Optional[Union[str, bytes, dict]] = None) -> "Future[None]":
+        pass
+
 
 patch_members = {'run_test': TornadoMonkeyPatches.run_test,
+                 'finish': TornadoMonkeyPatches.finish,
                  '_transforms': []}
 update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members,
                             constructor=constructor)

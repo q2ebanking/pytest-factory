@@ -6,11 +6,8 @@ from pytest import Item
 import pytest_factory.framework.exceptions as exceptions
 from pytest_factory.framework.base_types import Factory, BaseMockRequest, MOCK_RESPONSES_TYPE, ROUTING_TYPE, \
     compare_unknown_types, TrackedResponses
-from pytest_factory import logger
 from pytest_factory.framework.default_configs import (assert_no_missing_calls as default_assert_no_missing_calls,
                                                       assert_no_extra_calls as default_assert_no_extra_calls)
-
-logger = logger.get_logger(__name__)
 
 
 def is_plugin(kallable: Callable) -> bool:
@@ -52,14 +49,14 @@ class Store:
                response: Union[Any, List[Any]],
                response_is_sut: Optional[bool] = False):
         """
-        always use this method to modify store AFTER configuration stage ends and BEFORE test running stage
-        note that this will get invoked depth-first.
+        adds factory-made test doubles to this Store
         :param req_obj: the input to the system-under-test or depended-on-component
-        :param factory_name: the name of the factory that created this exchange
+        :param factory_name: the name of the factory that created the test double being added to Store
         :param response: the output from the depended-on-component or the system-under-test itself
         :param response_is_sut: if True, response is the system-under-test
         """
-        responses = TrackedResponses.from_any(response=response)
+        exchange_id = req_obj.exchange_id if hasattr(req_obj, 'exchange_id') else None
+        responses = TrackedResponses.from_any(exchange_id=exchange_id, response=response)
         self.factory_names.add(factory_name)
         if not hasattr(self, factory_name) or getattr(self, factory_name) is None:
             new_factory = Factory(req_obj=req_obj, responses=responses)

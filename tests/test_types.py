@@ -2,7 +2,7 @@
 non async unit tests
 """
 from pytest_factory.http import MockHttpRequest, MockHttpResponse
-from pytest_factory.lifecycle.recording import reify
+from pytest_factory.lifecycle.recording import deserialize
 
 
 def test_mock_http_request_compare():
@@ -15,14 +15,14 @@ def test_mock_http_request_compare():
                          "{'allow_redirects': False, 'url': 'abcd/fdsa?a=0&b=true', 'method': 'get', "
                          "'body': b'', 'headers': {}}>")
     s = mhr0.serialize()
-    mhr3 = reify(s)
+    mhr3 = deserialize(s)
     assert mhr0.kwargs == mhr3.kwargs
 
 
 def test_http_response():
     mhr0 = MockHttpResponse(body=b'hi', status=201, headers={'Content-Type': 'text'})
     s = mhr0.serialize()
-    mhr1 = reify(s)
+    mhr1 = deserialize(s)
     p = mhr0.write()
     args = mhr0.write(just_args=True)
     assert args == "body=b'hi', status=201, headers={'Content-Type': 'text'}"

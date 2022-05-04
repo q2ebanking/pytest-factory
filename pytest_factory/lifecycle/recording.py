@@ -4,12 +4,16 @@ from importlib import import_module
 from typing import Any, List, Optional, Union, Tuple
 from datetime import datetime
 
-from pytest_factory.framework.base_types import Exchange, BaseMockRequest, BASE_RESPONSE_TYPE, ALLOWED_TYPES, Message
+import pytest_factory.framework.base_types as types
 from pytest_factory.framework.exceptions import RecorderException
 
 
+class LiveException(types.Writable, Exception):
+    pass
+
+
 def infer_type(s: Any):
-    if type(s) in ALLOWED_TYPES and not isinstance(s, str):
+    if type(s) in types.ALLOWED_TYPES and not isinstance(s, str):
         return s
     r = {
         'None': None,
@@ -32,7 +36,7 @@ def infer_type(s: Any):
             return s
 
 
-def reify(path) -> BASE_RESPONSE_TYPE[Message]:
+def deserialize(path) -> types.BASE_RESPONSE_TYPE[types.Message]:
     if not isinstance(path, str) or path[:6] != '<class':
         return path
     path_parts = path.split('\'')[1].split('.')
@@ -53,14 +57,14 @@ def reify(path) -> BASE_RESPONSE_TYPE[Message]:
     return kallable
 
 
-class Recording(Message):
+class Recording(types.Message):
     """
     represents the inputs and output of the SUT, including those of any DOC. can be created from deployed code
     or locally when running pytest
     """
 
-    def __init__(self, incident_type: Union[Exception, type], sut_exchange: Exchange,
-                 doc_exchanges: Optional[List[Exchange]] = None) -> None:
+    def __init__(self, incident_type: Union[Exception, type], sut_exchange: types.Exchange,
+                 doc_exchanges: Optional[List[types.Exchange]] = None) -> None:
         """
         :param incident_type: the Exception whose raising led to the system-under-test needing to ship out a Recording
         :param sut_exchange: the Exchange of the Message received by the system-under-test and the Message to be sent
@@ -80,13 +84,13 @@ class Recording(Message):
     def deserialize(cls, b_a: bytes) -> Recording:
         r = loads(b_a.decode())
         incident_type_str = r['incident_type']
-        incident_type = reify(incident_type_str)
+        incident_type = deserialize(incident_type_str)
         r['incident_type'] = incident_type
         last = r['sut_exchange'][1]
-        first = reify(r['sut_exchange'][0])
+        first = deserialize(r['sut_exchange'][0])
         docs = r['doc_exchanges']
         for index, (request_str, response_str) in enumerate(docs):
-            reified_doc = (reify(request_str), reify(response_str))
+            reified_doc = (deserialize(request_str), deserialize(response_str))
             docs[index] = reified_doc
         if last == incident_type_str:
             last = incident_type
@@ -98,7 +102,7 @@ class Recording(Message):
         return isinstance(self.last, Exception) or isinstance(self.last, type) and issubclass(self.last, Exception)
 
     @property
-    def first(self) -> Union[Any, BaseMockRequest]:
+    def first(self) -> Union[Any, types.BaseMockRequest]:
         return self.sut_exchange[0]
 
     @property
@@ -109,7 +113,7 @@ class Recording(Message):
             return 'pytest_factory.framework.factory', 'make_factory'
 
     @property
-    def last(self) -> BASE_RESPONSE_TYPE:
+    def last(self) -> types.BASE_RESPONSE_TYPE:
         return self.sut_exchange[1]
 
     def serialize(self) -> bytes:
@@ -120,6 +124,13 @@ class Recording(Message):
         self_dict = {
             'doc_exchanges': self.doc_exchanges,
             'sut_exchange': sut_exchange,
-            'incident_type': str(self.incident_type)
+            'incident_type': self.incident_type
         }
-        return dumps(self_dict, default=lambda x: x.serialize()).encode()
+        return dumps(self_dict, default=serialize_default).encode()
+
+
+def serialize_default(x):
+    if hasattr(x, 'serialize'):
+        return x.serialize()
+    else:
+        return str(x)

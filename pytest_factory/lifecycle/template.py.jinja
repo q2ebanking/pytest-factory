@@ -5,7 +5,7 @@ from {{recording.last.__module__}} import {{recording.last.__name__}}
 {%- else %}
 from pathlib import Path
 
-from pytest_factory.lifecycle.recording import reify
+from pytest_factory.lifecycle.recording import deserialize
 {%- endif %}
 {%- for request, response in recording.doc_exchanges: %}
 from {{request.FACTORY_PATH}} import {{request.FACTORY_NAME}}
@@ -36,7 +36,7 @@ class Test{{handler_name}}{{incident_name}}:
         with pytest.raises({{recording.last.__name__}}):
             await store.sut.run_test()
         {%- else: %}
-        actual_response = reify(actual_response_str)
+        actual_response = deserialize(actual_response_str)
         simulated_response = await store.sut.run_test()
         {% for attribute in response_attributes: %}
         assert simulated_response.{{attribute}} == actual_response.{{attribute}}

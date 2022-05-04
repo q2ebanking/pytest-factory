@@ -5,12 +5,12 @@ from datetime import datetime
 from typing import Optional, Dict
 from urllib.parse import urlparse, parse_qs
 
-from pytest_factory.framework.base_types import BaseMockRequest, Message
+from pytest_factory.framework.base_types import BaseMockRequest, BaseMockResponse
 from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.default_configs import http_req_wildcard_fields as default_http_req_wildcard_fields
 
 
-class MockHttpResponse(Message):
+class MockHttpResponse(BaseMockResponse):
     def __init__(self, body: Optional[bytes] = b'', status: Optional[int] = 200,
                  headers: Optional[Dict[str, str]] = None, exchange_id: Optional[str] = None,
                  timestamp: Optional[str] = None):
@@ -18,8 +18,7 @@ class MockHttpResponse(Message):
         self.body = body
         self.status = status
         self.headers = headers or {}
-        self.exchange_id = exchange_id
-        self.timestamp = datetime.fromisoformat(timestamp) if timestamp else datetime.utcnow()
+        super().__init__(exchange_id=exchange_id, timestamp=timestamp)
 
 
 # based on what the requests module supports
@@ -63,8 +62,6 @@ class MockHttpRequest(BaseMockRequest):
         self.method = method
         self.body = body
         self.headers = headers or {}
-        self.exchange_id = exchange_id or uuid4()
-        self.timestamp = datetime.fromisoformat(timestamp) if timestamp else datetime.utcnow()
 
     @staticmethod
     def _urlparse_to_dict(uri: str) -> dict:

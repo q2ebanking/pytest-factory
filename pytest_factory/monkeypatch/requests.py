@@ -50,6 +50,8 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
         body = kwargs.get('body')
         body_bytes = body if isinstance(body, bytes) else body.encode()
         mock_http_request_kwargs['body'] = body_bytes
+    elif kwargs.get('data'):
+        mock_http_request_kwargs['body'] = kwargs.get('data')
 
     elif kwargs.get('json'):
         mock_http_request_kwargs['body'] = json.dumps(kwargs.get('json')).encode()

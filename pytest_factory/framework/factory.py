@@ -1,7 +1,6 @@
 import functools
 import inspect
 import sys
-from pathlib import Path
 from asyncio import iscoroutine, iscoroutinefunction
 from typing import Callable, Optional, Union
 
@@ -24,7 +23,9 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     See http.py for an example of usage.
 
     :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
-    :param response: test double - generally a string or Response - should be None if the test double is the request
+    :param response: test double or list of test doubles - generally a string or Message;
+        should be None if the test double is the request;
+        if a list of responses, this factory will return each response in order
     :param factory_name: name of the factory that create test doubles for the
         returned Callable (TestClass or test_method_or_function; defaults to name of function that called this
         function

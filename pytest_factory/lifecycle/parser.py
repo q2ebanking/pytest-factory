@@ -1,6 +1,6 @@
 from typing import List
 
-from pytest_factory.lifecycle.recording import reify, BaseMockRequest, Recording, RecorderException
+from pytest_factory.lifecycle.recording import deserialize, BaseMockRequest, Recording, RecorderException
 
 
 def parse(logs: List[str]) -> Recording:
@@ -10,7 +10,7 @@ def parse(logs: List[str]) -> Recording:
     requests = []
     responses = []
     for log_line in logs:
-        new_obj = reify(path=log_line)
+        new_obj = deserialize(path=log_line)
         if isinstance(new_obj, BaseMockRequest):
             requests.append(new_obj)
         else:
