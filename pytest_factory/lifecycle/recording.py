@@ -80,7 +80,6 @@ class Recording(types.Message):
         if not isinstance(incident_type, Exception) and not issubclass(incident_type, Exception):
             raise RecorderException(log_msg=f"Recording.__init__ expects incident_type to be of type "
                                             f"Exception, not {type(incident_type)}!")
-        # TODO more validation?
         self.sut_exchange = sut_exchange
         self.handler_path = self.first.handler_class_path if hasattr(self.first, 'handler_class_path') else None  # TODO needed?
         self.doc_exchanges = doc_exchanges or []
@@ -116,6 +115,9 @@ class Recording(types.Message):
 
     @property
     def request_factory(self) -> Tuple[str, str]:
+        """
+        returns the import path and name of the factory that creates the SUT for this recording
+        """
         if hasattr(self.first, 'FACTORY_PATH') and hasattr(self.first, 'FACTORY_NAME'):
             return getattr(self.first, 'FACTORY_PATH'), getattr(self.first, 'FACTORY_NAME')
         else:

@@ -24,7 +24,6 @@ class Store:
         :param test_path: the full name of the test this Store belongs to
         """
         self._test_name = test_path
-        self._item: Optional[Item] = None
         self._sut_callable: Optional[Callable] = None
         self._sut_factory: Optional[Factory] = None
         self.assert_no_extra_calls: bool = default_assert_no_extra_calls
