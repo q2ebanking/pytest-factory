@@ -16,17 +16,22 @@ def get_validator(expected: Recording) -> Callable:
         r = Recording.deserialize(req_obj.body)
         assert r.incident_type == expected.incident_type
         assert r.first.compare(expected.first)
-        assert r.last == expected.last
+        assert r.last.status == expected.last.status
+        assert r.last.body == expected.last.body
         for actual_x, expected_x in zip(r.doc_exchanges, expected.doc_exchanges):
             assert actual_x[0].compare(expected_x[0])
-            assert actual_x[1] == expected_x[1]
+            assert actual_x[1].status == expected_x[1].status
+            assert actual_x[1].body == expected_x[1].body
         return mhr()
+
     return validate_payload
 
-sut_exchange = (tr(sut_callable=InstrumentedHandler), mhr(status=500))
-EXC_REC = Recording(sut_exchange=sut_exchange, incident_type=LiveException)
+
+sut_exchange0 = (tr(sut_callable=InstrumentedHandler), mhr(status=500))
+sut_exchange1 = (tr(sut_callable=InstrumentedHandler, url='dependency'), mhr(status=500))
+EXC_REC = Recording(sut_exchange=sut_exchange0, incident_type=LiveException)
 doc_exchanges = [(mhrq(url=dependency_url), mhr(body=b'foo'))]
-DEP_EXC_REC = Recording(sut_exchange=sut_exchange, doc_exchanges=doc_exchanges, incident_type=LiveException)
+DEP_EXC_REC = Recording(sut_exchange=sut_exchange1, doc_exchanges=doc_exchanges, incident_type=LiveException)
 
 
 class TestLifecycle:
@@ -35,7 +40,6 @@ class TestLifecycle:
     async def test_exception(self, store):
         resp = await store.sut.run_test()
         assert resp.status == 500
-        # TODO assert store._messages matches
 
     @mock_http_server(method='get', url=dependency_url, response=b'foo')
     @mock_http_server(method='post', url=ACC_URL, response=get_validator(expected=DEP_EXC_REC))

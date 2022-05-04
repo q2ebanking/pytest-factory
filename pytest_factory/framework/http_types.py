@@ -11,12 +11,12 @@ from pytest_factory.framework.default_configs import http_req_wildcard_fields as
 
 
 class MockHttpResponse(BaseMockResponse):
-    def __init__(self, body: Optional[bytes] = b'', status: Optional[int] = 200,
+    def __init__(self, body: Optional[bytes] = None, status: Optional[int] = None,
                  headers: Optional[Dict[str, str]] = None, exchange_id: Optional[str] = None,
                  timestamp: Optional[str] = None):
         self.kwargs = {k: v for k, v in locals().items() if k != 'self'}
-        self.body = body
-        self.status = status
+        self.body = body or b''
+        self.status = status or 200
         self.headers = headers or {}
         super().__init__(exchange_id=exchange_id, timestamp=timestamp)
 

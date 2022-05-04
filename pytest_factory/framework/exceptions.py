@@ -78,6 +78,13 @@ class MissingFactoryException(PytestFactoryBaseException):
         return log_msg
 
 
+class DocAssertionException(PytestFactoryBaseException):
+    def get_error_msg(self, assertion_error: AssertionError, factory_name: str, req_obj: Any, *_, **__) -> str:
+        log_msg = f'DocAssertionException: response function for {factory_name} -> {req_obj} raised ' \
+                  f'AssertionError: {assertion_error}'
+        return log_msg
+
+
 class MissingTestDoubleException(PytestFactoryBaseException):
     """
     exception for when Store cannot find the expected test double; this can indicate either a test code error in

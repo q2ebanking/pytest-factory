@@ -8,7 +8,7 @@ from tornado.httputil import HTTPServerRequest
 
 from pytest_factory.lifecycle.recording import Recording, types
 from pytest_factory.http import MockHttpRequest, MockHttpResponse
-from pytest_factory.monkeypatch.tornado import read_from_write_buffer
+from pytest_factory.monkeypatch.tornado import read_from_write_buffer, TornadoRequest
 
 
 class TornadoRecorderRequestHandler(RequestHandler):
@@ -35,12 +35,14 @@ class TornadoRecorderRequestHandler(RequestHandler):
     def send_error(self, status_code: int = 500, **kwargs: Any) -> None:
         incident_type = kwargs.pop('exception')
         super().send_error(status_code=status_code, **kwargs)
-        request = MockHttpRequest(method=self.request.method, url=self.request.uri, body=self.request.body)
+        request = TornadoRequest(sut_callable=self.__class__, method=self.request.method, url=self.request.uri,
+                                 body=self.request.body)
         status = self.get_status()
         body = read_from_write_buffer(self._write_buffer)
         response = MockHttpResponse(status=status, body=body, exchange_id=request.exchange_id)
         sut_exchange = (request, response)
         # TODO capture env vars - scrub them of test environment vars in test code
         r = Recording(sut_exchange=sut_exchange, doc_exchanges=self._doc_exchanges, incident_type=incident_type)
+        s = r.serialize()
         url = os.environ.get('accumulator_url')
-        requests.post(url=url, data=r.serialize())
+        requests.post(url=url, data=s)

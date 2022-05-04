@@ -75,7 +75,7 @@ class Recording(types.Message):
                                             f"Exception, not {type(incident_type)}!")
         # TODO more validation?
         self.sut_exchange = sut_exchange
-        self.handler_path = self.first.handler_class_path if hasattr(self.first, 'handler_class_path') else None
+        self.handler_path = self.first.handler_class_path if hasattr(self.first, 'handler_class_path') else None  # TODO needed?
         self.doc_exchanges = doc_exchanges or []
         self.incident_type = incident_type
         self.created_at = datetime.utcnow()
@@ -94,6 +94,8 @@ class Recording(types.Message):
             docs[index] = reified_doc
         if last == incident_type_str:
             last = incident_type
+        else:
+            last = deserialize(last)
         r['sut_exchange'] = (first, last)
         return Recording(**r)
 

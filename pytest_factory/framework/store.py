@@ -117,7 +117,12 @@ class Store:
             return mock_responses
         next_response = mock_responses.mark_and_retrieve_next()
         if isinstance(next_response, Callable):
-            final_response = next_response(req_obj)
+            try:
+                final_response = next_response(req_obj)
+            except AssertionError as ae:
+                doc_exc = exceptions.DocAssertionException(assertion_error=ae, factory_name=factory_name,
+                                                           req_obj=req_obj)
+                raise doc_exc from ae
         else:
             final_response = next_response
 

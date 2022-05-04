@@ -124,16 +124,14 @@ class TornadoMonkeyPatches(RequestHandler):
 
             if inspect.isawaitable(result):
                 await result
-
+            raw_resp = b''
             if self._write_buffer:
                 raw_resp = read_from_write_buffer(self._write_buffer)
-                response_obj = MockHttpResponse(body=raw_resp, status=self.get_status())
-                if response_parser:
-                    response_obj = response_parser(response_obj)
-                self._response = response_obj
-                return response_obj
-            else:
-                self._response = None
+            response_obj = MockHttpResponse(body=raw_resp, status=self.get_status())
+            if response_parser:
+                response_obj = response_parser(response_obj)
+            self._response = response_obj
+            return response_obj
 
     def finish(self, chunk: Optional[Union[str, bytes, dict]] = None) -> "Future[None]":
         pass

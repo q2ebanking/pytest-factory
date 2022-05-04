@@ -20,6 +20,8 @@ def convert(x):
         return 'True'
     elif x is False:
         return 'False'
+    elif isinstance(x, type):
+        return x.__module__ + '.' + x.__name__
     else:
         return str(x)
 
