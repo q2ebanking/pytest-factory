@@ -3,12 +3,12 @@ monkeypatches requests module to intercept http calls and lookup mock response
 in store
 """
 import requests
+from requests.structures import CaseInsensitiveDict
 import json
 from typing import Union
 
-from tornado.httputil import HTTPHeaders
-
-from pytest_factory.http import MockHttpRequest, HTTP_METHODS, MockHttpResponse
+from pytest_factory.framework.http_types import HTTP_METHODS
+from pytest_factory.http import MockHttpRequest, MockHttpResponse
 from pytest_factory.framework.exceptions import TypeTestDoubleException
 from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, get_generic_caller
 
@@ -41,21 +41,27 @@ def _request_callable(method_name: str, *args, **kwargs) -> MockHttpRequest:
     }
 
     if kwargs.get('headers'):
-        mock_http_request_kwargs['headers'] = HTTPHeaders(
+        mock_http_request_kwargs['headers'] = CaseInsensitiveDict(
             kwargs.get('headers'))
+    else:
+        mock_http_request_kwargs['headers'] = CaseInsensitiveDict()
 
     if kwargs.get('body'):
         body = kwargs.get('body')
         body_bytes = body if isinstance(body, bytes) else body.encode()
         mock_http_request_kwargs['body'] = body_bytes
+    elif kwargs.get('data'):
+        mock_http_request_kwargs['body'] = kwargs.get('data')
 
     elif kwargs.get('json'):
         mock_http_request_kwargs['body'] = json.dumps(kwargs.get('json')).encode()
         if mock_http_request_kwargs.get('headers'):
             mock_http_request_kwargs['headers']['Content-Type'] = 'application/json'
         else:
-            mock_http_request_kwargs['headers'] = HTTPHeaders({'Content-Type': 'application/json'})
-
+            mock_http_request_kwargs['headers'] = CaseInsensitiveDict({'Content-Type': 'application/json'})
+    allow_redirects = kwargs.get('allow_redirects')
+    allow_redirects = True if allow_redirects is None else allow_redirects
+    mock_http_request_kwargs['allow_redirects'] = allow_redirects
     req_obj = MockHttpRequest(**mock_http_request_kwargs)
     return req_obj
 
@@ -89,9 +95,6 @@ def _response_callable(*_, mock_response: MOCK_RESP_TYPE,
     response.reason = response.url = ''
     response.encoding = 'utf-8'
     response.status_code = response.status_code or 200
-
-    # if response.status_code == 302 and 'allow_redirects' is True:
-    #  TODO
     return response
 
 

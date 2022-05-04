@@ -1,15 +1,13 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, AnyStr
 
 from pytest_factory.framework.factory import make_factory
-from pytest_factory.framework.base_types import Union, MAGIC_TYPE, AnyStr
-from pytest_factory.framework.http_types import HTTP_METHODS, MockHttpRequest, MockHttpResponse
+from pytest_factory.framework.base_types import Union, MAGIC_TYPE
+from pytest_factory.framework.http_types import MockHttpRequest, MockHttpResponse
 from pytest_factory.framework.exceptions import RequestNormalizationException
 
 
 def mock_http_server(response: MAGIC_TYPE[Union[Exception, AnyStr, MockHttpResponse]] = None,
-                     req_obj: Optional[MockHttpRequest] = None,
-                     method: Optional[str] = HTTP_METHODS.GET.value,
-                     path: Optional[str] = None, **kwargs) -> Callable:
+                     req_obj: Optional[MockHttpRequest] = None, **kwargs) -> Callable:
     """
     decorate your test method or class with this factory to generate test doubles for an HTTP depended-on
     component
@@ -34,9 +32,9 @@ def mock_http_server(response: MAGIC_TYPE[Union[Exception, AnyStr, MockHttpRespo
     :return: the test class or function being decorated
     """
     try:
-        expected_request = req_obj or MockHttpRequest(method=method, url=path, **kwargs)
+        expected_request = req_obj or MockHttpRequest(**kwargs)
     except Exception as ex:
-        raise RequestNormalizationException(req_obj_cls=MockHttpRequest, method=method, path=path, ex=ex, **kwargs)
+        raise RequestNormalizationException(req_obj_cls=MockHttpRequest, ex=ex, **kwargs)
     if isinstance(response, str):
         response = response.encode()
     if isinstance(response, bytes):

@@ -3,20 +3,28 @@ from enum import Enum
 from typing import Optional, Dict
 from urllib.parse import urlparse, parse_qs
 
-from pytest_factory.framework.base_types import BaseMockRequest
+from pytest_factory.framework.base_types import BaseMockRequest, BaseMockResponse
 from pytest_factory.framework.mall import MALL
 from pytest_factory.framework.default_configs import http_req_wildcard_fields as default_http_req_wildcard_fields
 
 
-class MockHttpResponse:
-    def __init__(self, body: Optional[bytes] = b'', status: Optional[int] = 200,
-                 headers: Optional[Dict[str, str]] = None):
-        self.body = body
-        self.status = status
+class MockHttpResponse(BaseMockResponse):
+    def __init__(self, body: Optional[bytes] = None, status: Optional[int] = None,
+                 headers: Optional[Dict[str, str]] = None, exchange_id: Optional[str] = None,
+                 timestamp: Optional[str] = None):
+        """
+        :param body: body in bytes
+        :param status: HTTP status code
+        :param headers: headers
+        :param exchange_id: the exchange_id of the MockHttpRequest corresponding to this object
+        :param timestamp: if provided, when the HTTP response that this object represents was received,
+            otherwise defaults to datetime.utcnow()
+        """
+        self.kwargs = {k: v for k, v in locals().items() if k != 'self'}
+        self.body = body or b''
+        self.status = status or 200
         self.headers = headers or {}
-
-    def __repr__(self):
-        return self.body.decode()
+        super().__init__(exchange_id=exchange_id, timestamp=timestamp)
 
 
 # based on what the requests module supports
@@ -32,7 +40,7 @@ class HTTP_METHODS(Enum):
 
 class MockHttpRequest(BaseMockRequest):
     """
-    abstract HTTP request class representing simulated and actual inbound and outbound requests.
+    HTTP request class representing simulated and actual inbound and outbound requests.
     normalizing all requests within pytest-factory allows for direct comparison of requests, which has
     different purposes for each request type:
      - inbound: enables redefinition of inputs to system-under-test at method level over class-level
@@ -44,7 +52,18 @@ class MockHttpRequest(BaseMockRequest):
     FACTORY_NAME = 'mock_http_server'
     FACTORY_PATH = 'pytest_factory.http'
 
-    def __init__(self, url: str, method: str = 'get', body: Optional[bytes] = b'', headers: Optional[dict] = None):
+    def __init__(self, url: str, method: str = 'get', body: Optional[bytes] = b'', headers: Optional[dict] = None,
+                 exchange_id: Optional[str] = None, timestamp: Optional[str] = None, **kwargs):
+        """
+        :param url:
+        :param method:
+        :param body:
+        :param headers:
+        :param exchange_id: any id that uniquely identifies this request
+        """
+        self.kwargs = {k: v for k, v in locals().items() if k not in {'kwargs', 'self'}}
+        self.kwargs.update(kwargs)
+        self.allow_redirects = False
         self.url = url
         self.method = method
         self.body = body
@@ -82,9 +101,3 @@ class MockHttpRequest(BaseMockRequest):
                 return False
 
         return True
-
-    def __hash__(self) -> int:
-        """
-        this is necessary because https://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable
-        """
-        return id(self)

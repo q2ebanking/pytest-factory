@@ -1,6 +1,6 @@
 from typing import Sequence, Tuple, Dict, Union, Optional
 
-from pytest_factory.framework.base_types import BaseMockRequest
+from pytest_factory.framework.base_types import BaseMockRequest, OptDateOrStr
 
 MOCK_SMTP_RESPONSE = Union[Exception, Dict[str, Tuple[int, str]]]
 
@@ -10,12 +10,15 @@ class SMTPRequest(BaseMockRequest):
                  from_addr: str,
                  to_addrs: Union[str, Sequence[str]], *args,
                  host: Optional[str],
+                 exchange_id: Optional[str] = None,
+                 timestamp: OptDateOrStr = None,
                  **kwargs):
         self.host = host
         self.from_addr = from_addr
         self.to_addrs = to_addrs
         self.args = args
         self.kwargs = {**kwargs, **{'from_addr': from_addr, 'to_addrs': to_addrs, 'host': host}}
+        super().__init__(exchange_id=exchange_id, timestamp=timestamp)
 
     def compare(self, other) -> bool:
         attr_name = 'host' if self.host else 'to_addrs'

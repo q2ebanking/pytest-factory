@@ -3,10 +3,7 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Callable, Optional, Any
 
-from pytest_factory.logger import get_logger
 from pytest_factory.framework.exceptions import ConfigException
-
-logger = get_logger(__name__)
 
 
 def get_config_parser(path: Optional[str] = None) -> ConfigParser:
@@ -14,12 +11,15 @@ def get_config_parser(path: Optional[str] = None) -> ConfigParser:
     p = Path()
     path = path or '**/config.ini'
     p_list = list(p.glob(path))
-    if len(p_list) != 1:
+    if len(p_list) < 1:
         path = '../' + path
         p_list = list(p.glob(path))
-    if len(p_list) != 1:
+    if len(p_list) < 1:
         raise ConfigException(log_msg=f'{path} is missing from project!')
-    config.read(p_list[0])
+    config_path = p_list[0]
+    config.read(config_path)
+    config_path = config_path.resolve()
+    config.set(DEFAULT_FOLDER_NAME, '_config_path', str(config_path))
     return config
 
 
@@ -76,13 +76,9 @@ def prep_stores_update_local(dir_name: Optional[str] = DEFAULT_FOLDER_NAME,
     conf_dict = {}
     conf = get_config_parser(path=path)
     conf_dict[DEFAULT_FOLDER_NAME] = parse_section(conf=conf)
-    if dir_name == DEFAULT_FOLDER_NAME:
-        sub_sections = [k for k in conf._sections.keys() if k != DEFAULT_FOLDER_NAME]
-    else:
-        sub_sections = [dir_name]
 
-    for section in sub_sections:
-        sub_dict = parse_section(conf=conf, section=section)
-        conf_dict[section] = sub_dict
+    if dir_name in conf.sections():
+        sub_dict = parse_section(conf=conf, section=dir_name)
+        conf_dict[dir_name] = sub_dict
 
     return conf_dict

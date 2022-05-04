@@ -17,7 +17,7 @@ class MockClientResponse(ClientResponse):
 
 
 def _request_callable(*_, **kwargs) -> MockHttpRequest:
-    qwargs = {k: v for k, v in kwargs.items() if k in {'url', 'method'}}
+    qwargs = {k: v for k, v in kwargs.items() if k in {'url', 'method', 'headers'}}
     mhr = MockHttpRequest(**qwargs)
     return mhr
 
