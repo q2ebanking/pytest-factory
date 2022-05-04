@@ -3,10 +3,7 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Callable, Optional, Any
 
-from pytest_factory.logger import get_logger
 from pytest_factory.framework.exceptions import ConfigException
-
-logger = get_logger(__name__)
 
 
 def get_config_parser(path: Optional[str] = None) -> ConfigParser:
