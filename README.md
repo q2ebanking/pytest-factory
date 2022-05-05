@@ -13,9 +13,10 @@ SUT packages supported:
 * tornado
 
 ## example
-given a tornado application app.py (see tests/app.py for a more complex
-example):
+given a tornado application app.py (see tests/ for a more complex
+examples):
 ```python
+#app.py
 import requests
 
 from tornado.ioloop import IOLoop
@@ -41,42 +42,42 @@ if __name__ == "__main__":
 
 ```
 
-touch conftest.py:
 ```python
+#conftest.py
 pytest_plugins = ["pytest_factory.framework.pytest"]
+
 ```
 
-touch config.ini:
 ```ini
+;config.ini
 [tests]
 requests = pytest_factory.monkeypatch.requests
 tornado = pytest_factory.monkeypatch.tornado
 imports = requests, tornado
 ```
 
-touch test.py:
-
 ```python
+#test.py
 import pytest
 from pytest_factory import mock_http_server
 from pytest_factory.monkeypatch.tornado import tornado_handler
 
-from .app import MainHandler
+from app import MainHandler
 
 pytestmark = pytest.mark.asyncio
 
 
-@mock_http_server(method='get', path='https://www.world.com/hello', response='blah blah')
-@tornado_handler(handler_class=MainHandler, method='get')
+@mock_http_server(method='get', url='https://www.world.com/hello', response='blah blah')
+@tornado_handler(sut_callable=MainHandler, method='get')
 class TestClass:
     async def test_a(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'blah blah'
+        assert resp.body.decode() == 'blah blah'
 
-    @mock_http_server(method='get', path='https://www.world.com/hello', response='Hello, world!')
+    @mock_http_server(method='get', url='https://www.world.com/hello', response='Hello, world!')
     async def test_b(self, store):
         resp = await store.sut.run_test()
-        assert resp.content.decode() == 'Hello, world!'
+        assert resp.body.decode() == 'Hello, world!'
 
 ```
 
@@ -127,18 +128,3 @@ to pytest_factory.monkeypatch.tornado.
 
 ### support for other languages/frameworks
 support for non-python frameworks like node or rails is an eventual goal.
-
-### caveats
-testing a test framework is fundamentally challenging. please beware of the
-following limitations in the current code (re: please submit a PR with a better way!):
-- test function names must be unique across the project or you will have test double
-  collision
-- when possible please use the included logger in pytest_factory.framework.logger,
-    especially if pytest is suppressing your print or warn statements or if you
-    need to assert that a warning/error was emitted by your test code or if you
-    are trying to emit from teardown (which pytest is hardcoded to suppress).
-- if you define pytest_runtest_call in pytest.py and
-    execute it within your pytest_runtest_call, it will execute
-    item.runtest() TWICE. i do not know if this is a bug
-    or incorrect pytest documentation, but it can break pytest-factory and will cause confusing
-    behavior.

@@ -66,20 +66,25 @@ class UnhandledPluginException(PytestFactoryBaseException):
 
 
 class RequestNormalizationException(PytestFactoryBaseException):
-    def get_error_msg(self, req_obj_cls: Callable, method: str, path: str, ex: Exception, *args, **kwargs) -> str:
-        qwargs = {
-            "method": method,
-            "path": path,
-            **kwargs
-        }
+    def get_error_msg(self, req_obj_cls: Callable, ex: Exception, *args, **kwargs) -> str:
         log_msg = f'RequestNormalizationException: while creating {req_obj_cls} with kwargs:' \
-                  f' {qwargs}, encountered unhandled exception: {ex}'
+                  f' {kwargs}, encountered unhandled exception: {ex}'
         return log_msg
 
 
 class MissingFactoryException(PytestFactoryBaseException):
     def get_error_msg(self, factory_name: str, *_, **__) -> str:
         log_msg = f'MissingFactoryException: this test case is missing the requested factory: {factory_name}! '
+        return log_msg
+
+
+class DocAssertionException(PytestFactoryBaseException):
+    """
+    exception for when AssertionError is raised inside the depended-on-component response callable
+    """
+    def get_error_msg(self, assertion_error: AssertionError, factory_name: str, req_obj: Any, *_, **__) -> str:
+        log_msg = f'DocAssertionException: response function for {factory_name} -> {req_obj} raised ' \
+                  f'AssertionError: {assertion_error}'
         return log_msg
 
 
@@ -105,7 +110,8 @@ class UnCalledTestDoubleException(PytestFactoryBaseException):
 
 class OverCalledTestDoubleException(PytestFactoryBaseException):
     def get_error_msg(self, mock_responses: list, req_obj: Any) -> str:
-        return f'OverCalledTestDoubleException: expected only {len(mock_responses)} calls to {req_obj}!'
+        return f'OverCalledTestDoubleException: expected only {len(mock_responses)} ' \
+               f'calls to {req_obj}! got {mock_responses.count}!'
 
     def get_warning_msg(self, mock_responses: list, req_obj: Any) -> str:
         warning_msg = f" will repeat last response: \"{mock_responses[-1][1]}\""

@@ -4,7 +4,8 @@ import sys
 from asyncio import iscoroutine, iscoroutinefunction
 from typing import Callable, Optional, Union
 
-from pytest_factory.framework.base_types import BaseMockRequest, Factory, BASE_RESPONSE_TYPE
+from pytest_factory.framework.base_types import BaseMockRequest, BASE_RESPONSE_TYPE
+from pytest_factory.framework.parse_configs import DEFAULT_FOLDER_NAME
 from pytest_factory.framework.exceptions import MissingHandlerException
 from pytest_factory.framework.mall import MALL
 
@@ -13,7 +14,6 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
                  setup: Optional[Callable] = None,
                  teardown: Optional[Callable] = None,
                  response: Optional[BASE_RESPONSE_TYPE] = None,
-                 handler_class: Optional[Callable] = None,
                  factory_name: Optional[str] = None) -> Callable:
     """
     Creates a factory. For use by contributors and plugin
@@ -23,9 +23,9 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     See http.py for an example of usage.
 
     :param req_obj: used as key to map to mock responses; either a BaseMockRequest type object or a string
-    :param response: test double - generally a string or Response - should be None if handler_class defined
-    :param handler_class: the class of the handler that this factory will mock - should be None if response is defined
-    within the given factory is the correct test double
+    :param response: test double or list of test doubles - generally a string or Message;
+        should be None if the test double is the request;
+        if a list of responses, this factory will return each response in order
     :param factory_name: name of the factory that create test doubles for the
         returned Callable (TestClass or test_method_or_function; defaults to name of function that called this
         function
@@ -35,52 +35,68 @@ def make_factory(req_obj: Union[BaseMockRequest, str],
     """
 
     factory_name = factory_name if factory_name else sys._getframe(1).f_code.co_name
-
-    if not isinstance(req_obj, BaseMockRequest) and not isinstance(req_obj, str):
-        try:
-            req_obj = str(req_obj)
-        except Exception as _:
-            req_obj = id(req_obj)
+    if factory_name == '<module>':
+        factory_name = 'make_factory'
 
     def register_test_func(pytest_func: Callable) -> Callable:
         """
         is executed during pytest collection; the store is bound to the test case at this time
         if response is not None, and store.sut is not yet assigned, this factory will create the
-    system-under-test (SUT).
+        system-under-test (SUT).
         """
-        test_name = pytest_func.__name__
-        test_dir = pytest_func.__module__.split('.')[-2]
-        store = MALL.get_store(test_name=test_name, test_dir=test_dir)
 
-        @functools.wraps(pytest_func)
-        async def pytest_func_wrapper(*args, **kwargs):
-            """
-            is executed during pytest run; executes setup, then the test function, finally teardown
-            """
-            resp = setup(store) if setup else None
-            if iscoroutine(pytest_func) or iscoroutinefunction(pytest_func):
+        if iscoroutine(pytest_func) or iscoroutinefunction(pytest_func):
+            @functools.wraps(pytest_func)
+            async def pytest_func_wrapper(*args, **kwargs):
+                """
+                is executed during pytest run; executes setup, then the test function, finally teardown
+                """
+                resp = setup() if setup else None
                 await pytest_func(*args, **kwargs)
-            else:
+                if teardown:
+                    teardown(resp=resp)
+        else:
+            @functools.wraps(pytest_func)
+            def pytest_func_wrapper(*args, **kwargs):
+                """
+                is executed during pytest run; executes setup, then the test function, finally teardown
+                """
+                resp = setup() if setup else None
                 pytest_func(*args, **kwargs)
-            if teardown:
-                teardown(resp=resp, store=store)
+                if teardown:
+                    teardown(resp=resp)
 
-        if hasattr(store, factory_name) and store._request_factory \
-                and store._request_factory.FACTORY_NAME == factory_name:
-            return pytest_func_wrapper
-        store.update(factory_name=factory_name,
-                     req_obj=req_obj, response=response)
+        test_name = pytest_func.__name__
+        module_parts = pytest_func.__module__.split('.')
+        if len(module_parts) > 1:
+            test_dir = module_parts[-2]
+        elif len(module_parts) == 1:
+            p = MALL.get_full_path()
+            p_list = list(p.rglob(module_parts[0]+'.py'))
+            test_dir = p_list[0].parent.name
+        else:
+            test_dir = DEFAULT_FOLDER_NAME
+        store = MALL.get_store(test_name=test_name, test_dir=test_dir)
+        response_is_sut = False
         if response is None:
-            final_handler_class = handler_class or store.request_handler_class or MALL.request_handler_class
-            if not final_handler_class:
+            response_is_sut = True
+            if hasattr(req_obj, 'sut_callable') and req_obj.sut_callable:
+                sut_callable = req_obj.sut_callable
+            else:
+                sut_callable = MALL.sut_callable
+            if not sut_callable:
                 raise MissingHandlerException
             if hasattr(req_obj, 'HANDLER_NAME'):
                 key = req_obj.HANDLER_NAME
                 constructor = MALL.get_constructor(handler_type=key)
-                handler = constructor(handler_class=final_handler_class, req_obj=req_obj)
+                sut = constructor(sut_callable=sut_callable, req_obj=req_obj)
             else:
-                handler = final_handler_class(req_obj)
-            store._request_factory = Factory(req_obj=factory_name, responses=handler)
+                sut = sut_callable(req_obj)
+            final_response = sut
+        else:
+            final_response = response
+        store.update(factory_name=factory_name,
+                     req_obj=req_obj, response=final_response, response_is_sut=response_is_sut)
 
         return pytest_func_wrapper
 

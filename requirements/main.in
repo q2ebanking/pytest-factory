@@ -1,2 +1,4 @@
 pytest
 python-json-logger
+jinja2
+black

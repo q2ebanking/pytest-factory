@@ -12,22 +12,22 @@ async def test_function_missing_handler(store):
         await store.sut.run_test()
 
 
-@tornado_handler(path='solo')
+@tornado_handler(url='solo')
 async def test_function(store):
     resp = await store.sut.run_test()
-    assert resp.content.decode() == 'Hello, world'
+    assert resp.body.decode() == 'Hello, world'
 
 
 class TestInheritance:
-    @tornado_handler(path='?num=0')
+    @tornado_handler(url='?num=0')
     class TestOverride:
         async def test_http_inherit_handler(self, store):
             resp = await store.sut.run_test()
-            assert resp.content.decode() == ''
+            assert resp.body.decode() == ''
 
-        @tornado_handler(path='something')
+        @tornado_handler(url='something')
         async def test_http_explicit_handler(self, store):
             """
             """
             resp = await store.sut.run_test()
-            assert resp.content.decode() == 'yay'
+            assert resp.body.decode() == 'yay'

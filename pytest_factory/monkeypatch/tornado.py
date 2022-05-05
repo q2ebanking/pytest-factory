@@ -6,12 +6,11 @@ import requests
 from tornado.web import Application, RequestHandler
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 
-from pytest_factory.monkeypatch.utils import update_monkey_patch_configs, MALL
+from pytest_factory.monkeypatch.utils import update_monkey_patch_configs
+from pytest_factory.framework.mall import MALL, import_from_str_path
 from pytest_factory.framework.exceptions import PytestFactoryBaseException
-from pytest_factory.http import MockHttpRequest, make_factory, HTTP_METHODS
-from pytest_factory.logger import get_logger
-
-logger = get_logger(__name__)
+from pytest_factory.framework.http_types import HTTP_METHODS
+from pytest_factory.http import MockHttpRequest, make_factory, MockHttpResponse
 
 
 class TornadoMonkeyPatchException(PytestFactoryBaseException):
@@ -25,10 +24,10 @@ def connection(): pass
 setattr(connection, 'set_close_callback', lambda _: None)
 
 
-def constructor(req_obj: MockHttpRequest, handler_class: Callable) -> RequestHandler:
+def constructor(req_obj: MockHttpRequest, sut_callable: Callable) -> RequestHandler:
     request = HTTPServerRequest(method=req_obj.method, uri=req_obj.url, body=req_obj.body, headers=req_obj.headers)
     request.connection = connection
-    return handler_class(application=Application(), request=request)
+    return sut_callable(application=Application(), request=request)
 
 
 def read_from_write_buffer(buffer) -> Optional[bytes]:
@@ -42,22 +41,37 @@ class TornadoRequest(MockHttpRequest):
     HANDLER_NAME = 'RequestHandler'
     HANDLER_PATH = 'tornado.web'
 
-    def __init__(self, method: str = HTTP_METHODS.GET.value, path: Optional[str] = None, **kwargs):
+    def __init__(self, sut_callable: Union[Callable, str], method: str = HTTP_METHODS.GET.value,
+                 exchange_id: Optional[str] = None,
+                 url: Optional[str] = None, **kwargs):
         """
+        :param sut_callable: the class of the Tornado RequestHandler that will handle this request
         :param method: HTTP method, e.g. GET or POST
-        :param path: HTTP url or path
+        :param exchange_id: should only be provided if being deserialized from a serialized live Recording
+            or if being instantiated within a TornadoRecorderRequestHandler that already has a uuid for
+            uniquely identifying requests
+        :param url: HTTP url or path
         :param kwargs: additional properties of an HTTP request e.g. headers, body, etc.
         """
-        self.kwargs = {**kwargs, 'method': method, 'path': path}
+        if sut_callable is None:
+            sut_callable = MALL.sut_callable
+        self.sut_callable = import_from_str_path(sut_callable) if isinstance(sut_callable, str) else sut_callable
+        qwargs = {
+            'method': method,
+            'url': url or '',
+            'sut_callable': sut_callable
+        }
 
         if kwargs.get('headers'):
-            kwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
+            qwargs['headers'] = HTTPHeaders(kwargs.get('headers'))
 
         if kwargs.get('json'):
             json_dict = kwargs.pop('json')
-            kwargs['body'] = json.dumps(json_dict).encode()
+            qwargs['body'] = json.dumps(json_dict).encode()
+        elif kwargs.get('body'):
+            qwargs['body'] = kwargs.get('body')
 
-        super().__init__(method=method, url=path, **kwargs)
+        super().__init__(exchange_id=exchange_id, **qwargs)
 
     @property
     def content(self) -> bytes:
@@ -65,12 +79,10 @@ class TornadoRequest(MockHttpRequest):
 
 
 def tornado_handler(req_obj: Optional[MockHttpRequest] = None,
-                    handler_class: Optional[Callable] = None, **kwargs) -> Callable:
+                    sut_callable: Optional[Union[Callable, str]] = None, **kwargs) -> Callable:
     if req_obj is None:
-        req_obj = TornadoRequest(**kwargs)
-
+        req_obj = TornadoRequest(**kwargs, sut_callable=sut_callable)
     return make_factory(req_obj=req_obj,
-                        handler_class=handler_class,
                         factory_name='tornado_handler')
 
 
@@ -116,21 +128,21 @@ class TornadoMonkeyPatches(RequestHandler):
 
             if inspect.isawaitable(result):
                 await result
-
+            raw_resp = b''
             if self._write_buffer:
                 raw_resp = read_from_write_buffer(self._write_buffer)
-                response_obj = requests.Response()
-                response_obj._content = raw_resp
-                response_obj.status_code = self.get_status()
-                if response_parser:
-                    response_obj = response_parser(response_obj)
-                self._response = response_obj
-                return response_obj
-            else:
-                self._response = None
+            response_obj = MockHttpResponse(body=raw_resp, status=self.get_status())
+            if response_parser:
+                response_obj = response_parser(response_obj)
+            self._response = response_obj
+            return response_obj
+
+    def finish(self, chunk: Optional[Union[str, bytes, dict]] = None):
+        pass
 
 
 patch_members = {'run_test': TornadoMonkeyPatches.run_test,
+                 'finish': TornadoMonkeyPatches.finish,
                  '_transforms': []}
 update_monkey_patch_configs(callable_obj=RequestHandler, patch_members=patch_members,
                             constructor=constructor)
