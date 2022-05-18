@@ -148,7 +148,6 @@ MALL = Mall()
 
 class Stocker:
     def __init__(self, test_dir: str):
-        test_dir = test_dir if test_dir[:5] == 'test_' else DEFAULT_FOLDER_NAME
         conf = None
         if MALL._current_test_dir != test_dir:
             MALL._current_test_dir = test_dir
