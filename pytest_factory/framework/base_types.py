@@ -149,6 +149,7 @@ class TrackedResponses(list):
     """
     a queue that dequeues by flipping a bool paired with the item so that the next dequeue skips it
     """
+
     def __init__(self, *args, exchange_id: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.count = 0
@@ -184,6 +185,7 @@ class Factory(dict):
     wrapping the mapping between requests and test doubles in an object so
     we can add attributes to it
     """
+
     def __init__(self, req_obj: Union[str, BaseMockRequest], responses: TrackedResponses):
         super().__init__()
         self.__setitem__(req_obj, responses)
@@ -200,7 +202,7 @@ class Factory(dict):
 
     @property
     def FACTORY_NAME(self):
-        return list(self.keys())[0]
+        return list(self.keys())[0].FACTORY_NAME
 
 
 class BasePlugin:

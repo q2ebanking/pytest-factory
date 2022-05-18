@@ -37,19 +37,19 @@ def patch_callables(monkeypatch, request):
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_collect_file(path, parent):
+def pytest_collect_file(file_path, path, parent):
     """
     this is where the MALL gets stocked: during the collection of each test file, as each factory is invoked
 
     Note: the last two params are for compatibility with pytest
     """
-    parts = path.parts()
+    parts = file_path.parts
     test_dir = None
-    if len(parts) > 1 and parts[-2].basename == DEFAULT_FOLDER_NAME:
-        test_dir = parts[-2].basename
-    elif len(parts) > 2 and parts[-3].basename == DEFAULT_FOLDER_NAME:
-        test_dir = parts[-2].basename
-    if test_dir and parts[-1].basename[:4] == 'test':
+    if len(parts) > 1 and parts[-2] == DEFAULT_FOLDER_NAME:
+        test_dir = parts[-2]
+    elif len(parts) > 2 and parts[-3] == DEFAULT_FOLDER_NAME:
+        test_dir = parts[-2]
+    if test_dir and parts[-1][:4] == 'test':
         with MALL.stock(test_dir=test_dir):
             outcome = yield
     else:
