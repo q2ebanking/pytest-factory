@@ -219,7 +219,7 @@ class BasePlugin:
 
     PLUGIN_URL is the url that corresponds to the depended-on-component that this plugin simulates
     """
-    PLUGIN_URL = None
+    PLUGIN_URL: Union[str, List[str]] = None
 
     def __init__(self):
         if self.PLUGIN_URL is None:

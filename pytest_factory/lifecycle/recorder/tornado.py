@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union, List, Any
+from typing import Optional, List, Any
 
 import requests
 from requests import Response
