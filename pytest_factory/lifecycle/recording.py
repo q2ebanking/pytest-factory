@@ -124,7 +124,7 @@ class Recording(types.Message):
             return 'pytest_factory.framework.factory', 'make_factory'
 
     @property
-    def last(self) -> types.BASE_RESPONSE_TYPE:
+    def last(self) -> types.BASE_RESPONSE_TYPE[types.Message]:
         return self.sut_exchange[1]
 
     def serialize(self) -> bytes:

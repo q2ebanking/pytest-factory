@@ -68,6 +68,10 @@ class Writable:
 
 
 class Message(Writable):
+    """
+    inheriting classes should implement __init__ so that
+    self._exchange_id and self._timestamp are set
+    """
     @property
     def exchange_id(self):
         if not hasattr(self, '_exchange_id'):
