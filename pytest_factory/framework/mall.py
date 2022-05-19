@@ -175,7 +175,7 @@ class Stocker:
                 raise ConfigException(log_msg=msg)
             kallable = import_from_str_path(module_path) if isinstance(module_path, str) else module_path
 
-            dir_conf = self.conf or MALL._by_dir.get(DEFAULT_FOLDER_NAME)
+            dir_conf = MALL._by_dir.get(MALL._current_test_dir) or MALL._by_dir.get(DEFAULT_FOLDER_NAME)
             dir_conf[key] = kallable
         if MALL._current_test:
             store = MALL.get_store()
