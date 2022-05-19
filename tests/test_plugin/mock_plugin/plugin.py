@@ -8,7 +8,7 @@ from pytest_factory.framework.mall import MALL
 
 
 class MockPlugin(BasePlugin):
-    PLUGIN_URL = 'http://somedomain.com'
+    PLUGIN_URL = ['http://somedomain.com', 'https://somedomain.net']
 
     @staticmethod
     def get_plugin_responses(req_obj: MockHttpRequest) -> TrackedResponses:

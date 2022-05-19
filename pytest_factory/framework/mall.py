@@ -1,7 +1,7 @@
 import os
 from pytest import Item
 from pathlib import Path
-from typing import Dict, Any, Optional, Callable, Iterable, Union
+from typing import Dict, Any, Optional, Callable, Iterable, Union, List
 from importlib import import_module
 
 from pytest_factory.framework.store import Store, is_plugin
@@ -121,7 +121,9 @@ class Mall:
         search_dict = {**self._by_dir.get(DEFAULT_FOLDER_NAME), **sub_dict}
         for _, v in search_dict.items():
             if is_plugin(v):
-                return_dict[v.PLUGIN_URL] = v
+                plugin_urls: List[str] = v.PLUGIN_URL if isinstance(v.PLUGIN_URL, list) else [v.PLUGIN_URL]
+                for url in plugin_urls:  # TODO this may not be the cleanest solution if there are alot of these - will clutter mock_http_server
+                    return_dict[url] = v
         return return_dict
 
     def get_store(self, item: Optional[Item] = None, test_name: Optional[str] = None,
@@ -146,7 +148,6 @@ MALL = Mall()
 
 class Stocker:
     def __init__(self, test_dir: str):
-        test_dir = test_dir if test_dir[:5] == 'test_' else DEFAULT_FOLDER_NAME
         conf = None
         if MALL._current_test_dir != test_dir:
             MALL._current_test_dir = test_dir

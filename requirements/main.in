@@ -1,4 +1,4 @@
-pytest
+pytest>=7.0.0
 python-json-logger
 jinja2
 black

@@ -7,7 +7,8 @@ from tornado.web import RequestHandler, Application
 
 test_url_map = {
     'endpoint0': 'http://www.test.com',
-    'plugin0': 'http://somedomain.com'
+    'plugin0': 'http://somedomain.com',
+    'plugin0_alt': 'https://somedomain.net'
 }
 
 

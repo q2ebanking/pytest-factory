@@ -12,6 +12,8 @@ DOC packages supported:
 SUT packages supported:
 * tornado
 
+Requires pytest >= 7.x.x
+
 ## example
 given a tornado application app.py (see tests/ for a more complex
 examples):

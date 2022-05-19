@@ -8,6 +8,8 @@ with open("README.md", "r") as fh:
 
 def get_reqs():
     """Reads requirements from the pip-tools generated requirements/main.txt
+    because of the strict dependency on pytest, that requirement's version constraints will
+    be parsed, but all others will ignore version constraints
 
     :return: Required package names
     :rtype: list
@@ -17,7 +19,7 @@ def get_reqs():
         text = f.read()
     pattern = re.compile(r"^\w.*?")
     lines = text.split("\n")
-    reqs = [line.split("==")[0] for line in lines if re.search(pattern, line)]
+    reqs = ['pytest>=7.0.0' if line[:6] == 'pytest' else line.split("==")[0] for line in lines if re.search(pattern, line)]
     return reqs
 
 
