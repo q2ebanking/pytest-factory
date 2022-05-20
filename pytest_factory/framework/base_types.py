@@ -68,6 +68,10 @@ class Writable:
 
 
 class Message(Writable):
+    """
+    inheriting classes should implement __init__ so that
+    self._exchange_id and self._timestamp are set
+    """
     @property
     def exchange_id(self):
         if not hasattr(self, '_exchange_id'):
@@ -149,6 +153,7 @@ class TrackedResponses(list):
     """
     a queue that dequeues by flipping a bool paired with the item so that the next dequeue skips it
     """
+
     def __init__(self, *args, exchange_id: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.count = 0
@@ -184,6 +189,7 @@ class Factory(dict):
     wrapping the mapping between requests and test doubles in an object so
     we can add attributes to it
     """
+
     def __init__(self, req_obj: Union[str, BaseMockRequest], responses: TrackedResponses):
         super().__init__()
         self.__setitem__(req_obj, responses)
@@ -200,7 +206,7 @@ class Factory(dict):
 
     @property
     def FACTORY_NAME(self):
-        return list(self.keys())[0]
+        return list(self.keys())[0].FACTORY_NAME
 
 
 class BasePlugin:
@@ -219,7 +225,7 @@ class BasePlugin:
 
     PLUGIN_URL is the url that corresponds to the depended-on-component that this plugin simulates
     """
-    PLUGIN_URL = None
+    PLUGIN_URL: Union[str, List[str]] = None
 
     def __init__(self):
         if self.PLUGIN_URL is None:

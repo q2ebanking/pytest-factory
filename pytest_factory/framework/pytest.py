@@ -49,7 +49,8 @@ def pytest_collect_file(file_path, path, parent):
         test_dir = parts[-2]
     elif len(parts) > 2 and parts[-3] == DEFAULT_FOLDER_NAME:
         test_dir = parts[-2]
-    if test_dir and parts[-1][:4] == 'test':
+    file_name = parts[-1]
+    if test_dir and len(file_name) >= 7 and 'test' in [file_name[:4], file_name[-7:-3]]:
         with MALL.stock(test_dir=test_dir):
             outcome = yield
     else:
