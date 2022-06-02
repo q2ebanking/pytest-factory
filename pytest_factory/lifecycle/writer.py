@@ -1,7 +1,6 @@
 import re
 from pathlib import Path
 
-from black import format_str, FileMode
 from jinja2 import Template
 
 from pytest_factory.framework.mall import MALL
@@ -53,8 +52,7 @@ class Writer:
 
             test_module_str = template.render(**inputs)
 
-            res = format_str(test_module_str, mode=FileMode())
-            test_file.write(res)
+            test_file.write(test_module_str)
         sut_response = self.recording.last
         if not self.recording.raises:
             if not isinstance(sut_response, str):

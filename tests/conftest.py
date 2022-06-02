@@ -17,10 +17,11 @@ def write_readme_examples_to_file():
                     in_code_block = False
                     files[file_name] = file_lines_buffer
                     file_lines_buffer = []
+                    file_name = ''
                 else:
                     in_code_block = True
-            elif line[0] in {';', '#'} and in_code_block:
-                file_name = line[1:-1]
+            elif line[0] in {';', '#'} and in_code_block and not file_name:
+                file_name = line[1:-1].strip()
             elif in_code_block:
                 file_lines_buffer.append(line)
 

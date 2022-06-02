@@ -10,10 +10,10 @@ WORKDIR /code
 
 COPY . /code
 
-COPY dev_requirements.txt ./dev_requirements.txt
+COPY requirements/dev.txt ./dev.txt
 
 RUN pip install -U pip \
-    && pip install -r dev_requirements.txt \
+    && pip install -r dev.txt \
     && chown -R appuser:appuser -R /code
 
 USER appuser
